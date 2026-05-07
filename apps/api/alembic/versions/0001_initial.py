@@ -7,16 +7,16 @@ Create Date: 2026-05-04
 
 from __future__ import annotations
 
-from typing import Sequence, Union
+from collections.abc import Sequence
 
 import sqlalchemy as sa
 from alembic import op
 from sqlalchemy.dialects import postgresql
 
 revision: str = "0001_initial"
-down_revision: Union[str, None] = None
-branch_labels: Union[str, Sequence[str], None] = None
-depends_on: Union[str, Sequence[str], None] = None
+down_revision: str | None = None
+branch_labels: str | Sequence[str] | None = None
+depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
@@ -43,9 +43,7 @@ def upgrade() -> None:
             "status IN ('trialing','active','suspended','terminated')",
             name="ck_tenants_status",
         ),
-        sa.CheckConstraint(
-            "tier IN ('poc','production','enterprise')", name="ck_tenants_tier"
-        ),
+        sa.CheckConstraint("tier IN ('poc','production','enterprise')", name="ck_tenants_tier"),
     )
 
     # ── cast_events ─────────────────────────────────────────────────────────
@@ -78,9 +76,7 @@ def upgrade() -> None:
             name="ck_cast_events_status",
         ),
     )
-    op.create_index(
-        "ix_cast_events_tenant_received", "cast_events", ["tenant_id", "received_at"]
-    )
+    op.create_index("ix_cast_events_tenant_received", "cast_events", ["tenant_id", "received_at"])
 
     # ── dpp_records ─────────────────────────────────────────────────────────
     op.create_table(
@@ -137,15 +133,9 @@ def upgrade() -> None:
             name="ck_dpp_records_state",
         ),
     )
-    op.create_index(
-        "ix_dpp_records_tenant_brand", "dpp_records", ["tenant_id", "brand"]
-    )
-    op.create_index(
-        "ix_dpp_records_tenant_cast", "dpp_records", ["tenant_id", "cast_number"]
-    )
-    op.create_index(
-        "ix_dpp_records_tenant_issued", "dpp_records", ["tenant_id", "issued_at"]
-    )
+    op.create_index("ix_dpp_records_tenant_brand", "dpp_records", ["tenant_id", "brand"])
+    op.create_index("ix_dpp_records_tenant_cast", "dpp_records", ["tenant_id", "cast_number"])
+    op.create_index("ix_dpp_records_tenant_issued", "dpp_records", ["tenant_id", "issued_at"])
 
     # ── audit_log ───────────────────────────────────────────────────────────
     op.create_table(
@@ -220,7 +210,10 @@ def upgrade() -> None:
         ON CONFLICT (id) DO NOTHING;
         """
     )
-    op.execute("SELECT setval(pg_get_serial_sequence('tenants','id'), GREATEST(1, (SELECT max(id) FROM tenants)));")
+    op.execute(
+        "SELECT setval(pg_get_serial_sequence('tenants','id'), "
+        "GREATEST(1, (SELECT max(id) FROM tenants)));"
+    )
 
 
 def downgrade() -> None:

@@ -98,13 +98,9 @@ def upgrade() -> None:
         ),
         sa.Column("ordinal", sa.Integer, nullable=False),
         sa.Column("notes", sa.Text, nullable=True),
-        sa.UniqueConstraint(
-            "product_id", "process_step_id", name="uq_chain_product_step"
-        ),
+        sa.UniqueConstraint("product_id", "process_step_id", name="uq_chain_product_step"),
     )
-    op.create_index(
-        "ix_chain_product", "product_process_chains", ["product_id", "ordinal"]
-    )
+    op.create_index("ix_chain_product", "product_process_chains", ["product_id", "ordinal"])
 
     # ── dpp_manifest_attrs (canonical reference) ──────────────────────────
     op.create_table(
@@ -128,12 +124,15 @@ def upgrade() -> None:
         sa.Column("regulatory_anchor", sa.String(256), nullable=True),
         sa.Column("description", sa.Text, nullable=True),
         sa.UniqueConstraint(
-            "process_step_id", "dpp_version", "attribute_path",
+            "process_step_id",
+            "dpp_version",
+            "attribute_path",
             name="uq_manifest_step_version_attr",
         ),
     )
     op.create_index(
-        "ix_manifest_step_version", "dpp_manifest_attrs",
+        "ix_manifest_step_version",
+        "dpp_manifest_attrs",
         ["process_step_id", "dpp_version"],
     )
 
@@ -184,13 +183,9 @@ def upgrade() -> None:
             server_default=sa.func.now(),
             nullable=False,
         ),
-        sa.UniqueConstraint(
-            "product_id", "dpp_version", name="uq_pdpcfg_product_version"
-        ),
+        sa.UniqueConstraint("product_id", "dpp_version", name="uq_pdpcfg_product_version"),
     )
-    op.create_index(
-        "ix_pdpcfg_tenant", "product_dpp_configs", ["tenant_id"]
-    )
+    op.create_index("ix_pdpcfg_tenant", "product_dpp_configs", ["tenant_id"])
 
     # ── data_sources ──────────────────────────────────────────────────────
     op.create_table(
@@ -217,7 +212,9 @@ def upgrade() -> None:
         sa.Column("origin", sa.String(16), nullable=False),  # internal | third_party
         sa.Column("supplier_name", sa.String(256), nullable=True),
         sa.Column("supplier_did", sa.String(256), nullable=True),
-        sa.Column("connector_kind", sa.String(32), nullable=True),  # http_pull | api_push | sftp | manual_csv
+        sa.Column(
+            "connector_kind", sa.String(32), nullable=True
+        ),  # http_pull | api_push | sftp | manual_csv
         sa.Column(
             "connector_config",
             JSONB,
@@ -246,13 +243,9 @@ def upgrade() -> None:
             server_default=sa.func.now(),
             nullable=False,
         ),
-        sa.UniqueConstraint(
-            "product_id", "process_step_id", name="uq_data_source_product_step"
-        ),
+        sa.UniqueConstraint("product_id", "process_step_id", name="uq_data_source_product_step"),
     )
-    op.create_index(
-        "ix_data_sources_tenant", "data_sources", ["tenant_id"]
-    )
+    op.create_index("ix_data_sources_tenant", "data_sources", ["tenant_id"])
 
     # ── RLS for tenant-scoped tables ──────────────────────────────────────
     for table in ("products", "product_dpp_configs", "data_sources"):

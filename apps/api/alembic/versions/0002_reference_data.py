@@ -8,18 +8,18 @@ Create Date: 2026-05-04
 from __future__ import annotations
 
 import json
-from datetime import datetime, timezone
+from collections.abc import Sequence
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Sequence, Union
 
 import sqlalchemy as sa
 from alembic import op
 from sqlalchemy.dialects import postgresql
 
 revision: str = "0002_reference_data"
-down_revision: Union[str, None] = "0001_initial"
-branch_labels: Union[str, Sequence[str], None] = None
-depends_on: Union[str, Sequence[str], None] = None
+down_revision: str | None = "0001_initial"
+branch_labels: str | Sequence[str] | None = None
+depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
@@ -164,10 +164,10 @@ def _seed_from_presets() -> None:
                 "brand": brand,
                 "facility_ufi": preset["casthouseUfi"],
                 "period_from": datetime.fromisoformat(carbon["reportingPeriod"]["from"]).replace(
-                    tzinfo=timezone.utc
+                    tzinfo=UTC
                 ),
                 "period_to": datetime.fromisoformat(carbon["reportingPeriod"]["to"]).replace(
-                    tzinfo=timezone.utc
+                    tzinfo=UTC
                 ),
                 "value_kg_co2e_per_tonne": float(carbon["valueKgCo2ePerTonne"]),
                 "industry_average": float(carbon["industryAverageKgCo2ePerTonne"]),

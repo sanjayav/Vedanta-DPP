@@ -37,9 +37,7 @@ depends_on = None
 
 
 # ── BPN syntax constraint reused on all three BP* tables ──────────────────
-_BPN_CHECK = (
-    "{col} ~ '^BPN[LSA][A-Z0-9]{{10}}[A-Z0-9]{{2}}$'"
-)
+_BPN_CHECK = "{col} ~ '^BPN[LSA][A-Z0-9]{{10}}[A-Z0-9]{{2}}$'"
 
 
 def upgrade() -> None:
@@ -70,7 +68,7 @@ def upgrade() -> None:
             "did",
             sa.String(512),
             nullable=True,
-            comment="did:web of this legal entity, e.g. did:web:passport.hzlindia.com:BPNLHZL0000001QX",
+            comment="did:web of this legal entity (Chem-X Material ID Guideline §5.4)",
         ),
         sa.Column(
             "state",
@@ -129,14 +127,14 @@ def upgrade() -> None:
             "owner_bpnl",
             sa.String(16),
             nullable=False,
-            comment="Owning legal entity. CX-0010: every address is owned by exactly one legal entity.",
+            comment="Owning legal entity (CX-0010: every address has one owner)",
         ),
         sa.Column("name", sa.String(256), nullable=True),
         sa.Column(
             "address_type",
             sa.String(32),
             nullable=False,
-            comment="legal_address | site_main_address | legal_and_site_main_address | additional_address",
+            comment="legal_address | site_main_address | legal_and_site_main_address | additional_address",  # noqa: E501
         ),
         sa.Column("country", sa.String(2), nullable=False),
         sa.Column("subdivision", sa.String(8), nullable=True, comment="ISO 3166-2"),
@@ -174,10 +172,14 @@ def upgrade() -> None:
         ),
         sa.UniqueConstraint("bpna", name="uq_addresses_bpna"),
         sa.CheckConstraint(_BPN_CHECK.format(col="bpna"), name="ck_addresses_bpna_syntax"),
-        sa.CheckConstraint(_BPN_CHECK.format(col="owner_bpnl"), name="ck_addresses_owner_bpnl_syntax"),
+        sa.CheckConstraint(
+            _BPN_CHECK.format(col="owner_bpnl"), name="ck_addresses_owner_bpnl_syntax"
+        ),
         sa.CheckConstraint("country ~ '^[A-Z]{2}$'", name="ck_addresses_country_iso"),
         sa.CheckConstraint(
-            "address_type IN ('legal_address','site_main_address','legal_and_site_main_address','additional_address')",
+            "address_type IN ("
+            "'legal_address','site_main_address',"
+            "'legal_and_site_main_address','additional_address')",
             name="ck_addresses_type",
         ),
         sa.CheckConstraint("state IN ('active','inactive')", name="ck_addresses_state"),
@@ -217,7 +219,7 @@ def upgrade() -> None:
             "function",
             sa.String(32),
             nullable=False,
-            comment="mine | concentrator | smelter_hydro | smelter_pyro | refinery | casthouse | rolling_mill | powder_atomiser | warehouse | depot",
+            comment="mine|concentrator|smelter_*|refinery|casthouse|rolling_mill|powder_atomiser|warehouse|depot",
         ),
         sa.Column(
             "main_address_bpna",
@@ -262,7 +264,10 @@ def upgrade() -> None:
         sa.CheckConstraint(_BPN_CHECK.format(col="bpns"), name="ck_sites_bpns_syntax"),
         sa.CheckConstraint(_BPN_CHECK.format(col="owner_bpnl"), name="ck_sites_owner_bpnl_syntax"),
         sa.CheckConstraint(
-            "function IN ('mine','concentrator','smelter_hydro','smelter_pyro','refinery','casthouse','rolling_mill','powder_atomiser','warehouse','depot')",
+            "function IN ("
+            "'mine','concentrator','smelter_hydro','smelter_pyro',"
+            "'refinery','casthouse','rolling_mill','powder_atomiser',"
+            "'warehouse','depot')",
             name="ck_sites_function",
         ),
         sa.CheckConstraint("state IN ('active','inactive')", name="ck_sites_state"),
@@ -319,12 +324,8 @@ def upgrade() -> None:
             name="ck_legal_entity_identifiers_category",
         ),
     )
-    op.create_index(
-        "ix_legal_entity_identifiers_tenant", "legal_entity_identifiers", ["tenant_id"]
-    )
-    op.create_index(
-        "ix_legal_entity_identifiers_bpnl", "legal_entity_identifiers", ["bpnl"]
-    )
+    op.create_index("ix_legal_entity_identifiers_tenant", "legal_entity_identifiers", ["tenant_id"])
+    op.create_index("ix_legal_entity_identifiers_bpnl", "legal_entity_identifiers", ["bpnl"])
 
     # ── Row-level security ────────────────────────────────────────────────
     for table in ("legal_entities", "addresses", "sites", "legal_entity_identifiers"):

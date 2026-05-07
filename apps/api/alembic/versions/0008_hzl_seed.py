@@ -32,8 +32,8 @@ from __future__ import annotations
 
 import json
 
+import sqlalchemy as sa
 from alembic import op
-
 from dpp_api.services import bpn
 
 revision = "0008_hzl_seed"
@@ -70,7 +70,9 @@ SITES: tuple[dict[str, object], ...] = (
         "postal_code": "311029",
         "street": None,
         "production_capacity": {"metal": "zinc_lead_ore", "tpa": 6_150_000, "unit": "ore"},
-        "metadata": {"profile": "World's largest underground zinc mine; transitioned from open-pit to UG."},
+        "metadata": {
+            "profile": "World's largest underground zinc mine; transitioned from open-pit to UG."
+        },
     },
     {
         "bpns": bpn.SINDESAR_KHURD_BPNS,
@@ -95,7 +97,12 @@ SITES: tuple[dict[str, object], ...] = (
         "admin_area_level_2": "Rajsamand",
         "postal_code": "313211",
         "street": None,
-        "production_capacity": {"metal": "zinc_lead_ore", "tpa": 1_500_000, "unit": "ore", "expansion_target_tpa": 4_000_000},
+        "production_capacity": {
+            "metal": "zinc_lead_ore",
+            "tpa": 1_500_000,
+            "unit": "ore",
+            "expansion_target_tpa": 4_000_000,
+        },
         "metadata": {"profile": "Co-located with Dariba Smelting Complex."},
     },
     {
@@ -108,7 +115,12 @@ SITES: tuple[dict[str, object], ...] = (
         "admin_area_level_2": "Udaipur",
         "postal_code": "313901",
         "street": None,
-        "production_capacity": {"metal": "zinc_lead_ore", "tpa": 4_750_000, "unit": "ore", "sub_mines": ["Mochia", "Balaria", "Zawar Mala", "Baroi"]},
+        "production_capacity": {
+            "metal": "zinc_lead_ore",
+            "tpa": 4_750_000,
+            "unit": "ore",
+            "sub_mines": ["Mochia", "Balaria", "Zawar Mala", "Baroi"],
+        },
         "metadata": {"profile": "World's oldest known zinc mining site; 80 MW captive power."},
     },
     {
@@ -141,7 +153,10 @@ SITES: tuple[dict[str, object], ...] = (
             "routes": ["RLE_hydro_480000_tpa", "ISP_pyro_105000_tpa"],
         },
         "metadata": {
-            "profile": "Largest integrated Pb-Zn smelter in HZL group; produces SHG, EcoZen, CGG, PW, HZDA, refined lead.",
+            "profile": (
+                "Largest integrated Pb-Zn smelter in HZL group; "
+                "produces SHG, EcoZen, CGG, PW, HZDA, refined lead."
+            ),
             "zinc_mark_certified": True,
             "zinc_mark_date": "2026-04-01",
         },
@@ -156,8 +171,16 @@ SITES: tuple[dict[str, object], ...] = (
         "admin_area_level_2": "Rajsamand",
         "postal_code": "313211",
         "street": None,
-        "production_capacity": {"zinc_tpa": 240_000, "lead_tpa": 120_000, "sulphuric_acid_tpa": None},
-        "metadata": {"profile": "Hydrometallurgical RLE; co-located with Rajpura Dariba and Sindesar Khurd mines."},
+        "production_capacity": {
+            "zinc_tpa": 240_000,
+            "lead_tpa": 120_000,
+            "sulphuric_acid_tpa": None,
+        },
+        "metadata": {
+            "profile": (
+                "Hydrometallurgical RLE; co-located with Rajpura Dariba and Sindesar Khurd mines."
+            ),
+        },
     },
     {
         "bpns": bpn.DEBARI_BPNS,
@@ -184,7 +207,10 @@ SITES: tuple[dict[str, object], ...] = (
         "street": "SIDCUL Integrated Industrial Estate",
         "production_capacity": {"silver_tpa": 800, "zinc_alloy_value_add": True},
         "metadata": {
-            "profile": "LBMA Good Delivery silver refinery; renewable-power claim flagged for verification.",
+            "profile": (
+                "LBMA Good Delivery silver refinery; renewable-power "
+                "claim flagged for verification."
+            ),
             "lbma_good_delivery_silver": True,
             "renewable_power_claim_verified": False,
         },
@@ -299,13 +325,55 @@ SITES: tuple[dict[str, object], ...] = (
 
 # Identifiers attached to the legal entity (Chem-X §13/§14 categories).
 LE_IDENTIFIERS = (
-    {"category": "NBR", "type": "CIN", "value": HZL_CIN, "issuing_country": "IN", "issuing_body": "Ministry of Corporate Affairs (MCA)"},
-    {"category": "IBR", "type": "LEI", "value": HZL_LEI, "issuing_country": None, "issuing_body": "GLEIF"},
-    {"category": "TIN", "type": "PAN", "value": HZL_PAN, "issuing_country": "IN", "issuing_body": "Income Tax Department"},
-    {"category": "VAT", "type": "GSTIN", "value": HZL_GSTIN_RJ, "issuing_country": "IN", "issuing_body": "GSTN — Rajasthan"},
-    {"category": "OTH", "type": "ISIN", "value": HZL_ISIN, "issuing_country": "IN", "issuing_body": "NSDL"},
-    {"category": "OTH", "type": "NSE_TICKER", "value": HZL_NSE_TICKER, "issuing_country": "IN", "issuing_body": "NSE"},
-    {"category": "OTH", "type": "BSE_CODE", "value": HZL_BSE_CODE, "issuing_country": "IN", "issuing_body": "BSE"},
+    {
+        "category": "NBR",
+        "type": "CIN",
+        "value": HZL_CIN,
+        "issuing_country": "IN",
+        "issuing_body": "Ministry of Corporate Affairs (MCA)",
+    },
+    {
+        "category": "IBR",
+        "type": "LEI",
+        "value": HZL_LEI,
+        "issuing_country": None,
+        "issuing_body": "GLEIF",
+    },
+    {
+        "category": "TIN",
+        "type": "PAN",
+        "value": HZL_PAN,
+        "issuing_country": "IN",
+        "issuing_body": "Income Tax Department",
+    },
+    {
+        "category": "VAT",
+        "type": "GSTIN",
+        "value": HZL_GSTIN_RJ,
+        "issuing_country": "IN",
+        "issuing_body": "GSTN — Rajasthan",
+    },
+    {
+        "category": "OTH",
+        "type": "ISIN",
+        "value": HZL_ISIN,
+        "issuing_country": "IN",
+        "issuing_body": "NSDL",
+    },
+    {
+        "category": "OTH",
+        "type": "NSE_TICKER",
+        "value": HZL_NSE_TICKER,
+        "issuing_country": "IN",
+        "issuing_body": "NSE",
+    },
+    {
+        "category": "OTH",
+        "type": "BSE_CODE",
+        "value": HZL_BSE_CODE,
+        "issuing_country": "IN",
+        "issuing_body": "BSE",
+    },
 )
 
 
@@ -313,11 +381,22 @@ def _jsonb(value: object) -> str:
     return json.dumps(value, ensure_ascii=False)
 
 
+def _exec(bind, sql: str, params: dict | None = None) -> None:
+    """Run a parameterised SQL statement.
+
+    `bind.exec_driver_sql` uses the driver's native paramstyle (psycopg's
+    `%(name)s`); SQLAlchemy `text` accepts `:name` and translates per dialect.
+    Wrapping in `text()` keeps the raw `:name` placeholders working.
+    """
+    bind.execute(sa.text(sql), params or {})
+
+
 def upgrade() -> None:
     bind = op.get_bind()
 
     # ── Tenant 1: rebrand EGA → HZL ──────────────────────────────────────
-    bind.exec_driver_sql(
+    _exec(
+        bind,
         """
         UPDATE tenants
            SET slug = 'hzl',
@@ -330,19 +409,22 @@ def upgrade() -> None:
         """,
         {
             "did": HZL_DID,
-            "branding": _jsonb({
-                "primaryColor": "#0E7C5A",
-                "secondaryColor": "#1A4480",
-                "accentColor": "#A8D5BA",
-                "logo": "/branding/hzl-logo.svg",
-                "wordmark": "Vedanta · Hindustan Zinc",
-                "publicHost": "passport.hzlindia.com",
-            }),
+            "branding": _jsonb(
+                {
+                    "primaryColor": "#0E7C5A",
+                    "secondaryColor": "#1A4480",
+                    "accentColor": "#A8D5BA",
+                    "logo": "/branding/hzl-logo.svg",
+                    "wordmark": "Vedanta · Hindustan Zinc",
+                    "publicHost": "passport.hzlindia.com",
+                }
+            ),
         },
     )
 
     # If tenant 1 doesn't exist (greenfield install), insert it.
-    bind.exec_driver_sql(
+    _exec(
+        bind,
         """
         INSERT INTO tenants (id, slug, legal_name, issuer_did, status, tier, branding)
         VALUES (1, 'hzl', 'Hindustan Zinc Limited', :did, 'active', 'production', :branding)
@@ -350,22 +432,27 @@ def upgrade() -> None:
         """,
         {
             "did": HZL_DID,
-            "branding": _jsonb({
-                "primaryColor": "#0E7C5A",
-                "secondaryColor": "#1A4480",
-                "accentColor": "#A8D5BA",
-                "logo": "/branding/hzl-logo.svg",
-                "wordmark": "Vedanta · Hindustan Zinc",
-                "publicHost": "passport.hzlindia.com",
-            }),
+            "branding": _jsonb(
+                {
+                    "primaryColor": "#0E7C5A",
+                    "secondaryColor": "#1A4480",
+                    "accentColor": "#A8D5BA",
+                    "logo": "/branding/hzl-logo.svg",
+                    "wordmark": "Vedanta · Hindustan Zinc",
+                    "publicHost": "passport.hzlindia.com",
+                }
+            ),
         },
     )
-    bind.exec_driver_sql(
-        "SELECT setval(pg_get_serial_sequence('tenants','id'), GREATEST(1, (SELECT max(id) FROM tenants)));"
+    _exec(
+        bind,
+        "SELECT setval(pg_get_serial_sequence('tenants','id'), "
+        "GREATEST(1, (SELECT max(id) FROM tenants)));",
     )
 
     # ── Registered-office address (must exist before legal_entities FK) ──
-    bind.exec_driver_sql(
+    _exec(
+        bind,
         """
         INSERT INTO addresses
             (tenant_id, bpna, owner_bpnl, name, address_type,
@@ -398,7 +485,8 @@ def upgrade() -> None:
     )
 
     # ── Legal entity ─────────────────────────────────────────────────────
-    bind.exec_driver_sql(
+    _exec(
+        bind,
         """
         INSERT INTO legal_entities
             (tenant_id, bpnl, legal_name, legal_form, short_name, trade_name,
@@ -429,24 +517,27 @@ def upgrade() -> None:
             "reg_bpna": bpn.HZL_REGISTERED_BPNA,
             "did": HZL_DID,
             "inc_date": HZL_INCORPORATION_DATE,
-            "meta": _jsonb({
-                "parent": "Vedanta Limited",
-                "promoter_stake_pct_2026_03": 60.71,
-                "goi_stake_pct": 27.92,
-                "icmm_member": True,
-                "icmm_join_date": HZL_ICMM_JOIN_DATE,
-                "first_indian_icmm_member": True,
-                "stock_exchanges": ["NSE", "BSE"],
-                "renewable_energy_target_2027": ">70% RE share",
-                "serentica_re_mw": 530,
-                "captive_wind_mw": 273.5,
-            }),
+            "meta": _jsonb(
+                {
+                    "parent": "Vedanta Limited",
+                    "promoter_stake_pct_2026_03": 60.71,
+                    "goi_stake_pct": 27.92,
+                    "icmm_member": True,
+                    "icmm_join_date": HZL_ICMM_JOIN_DATE,
+                    "first_indian_icmm_member": True,
+                    "stock_exchanges": ["NSE", "BSE"],
+                    "renewable_energy_target_2027": ">70% RE share",
+                    "serentica_re_mw": 530,
+                    "captive_wind_mw": 273.5,
+                }
+            ),
         },
     )
 
     # ── Identifiers ──────────────────────────────────────────────────────
     for ident in LE_IDENTIFIERS:
-        bind.exec_driver_sql(
+        _exec(
+            bind,
             """
             INSERT INTO legal_entity_identifiers
                 (tenant_id, bpnl, category, type, value, issuing_country, issuing_body, metadata)
@@ -471,7 +562,8 @@ def upgrade() -> None:
     for site in SITES:
         # Address (each producing site has a dedicated BPNA, depot addresses
         # are sparse but still BPN-keyed).
-        bind.exec_driver_sql(
+        _exec(
+            bind,
             """
             INSERT INTO addresses
                 (tenant_id, bpna, owner_bpnl, name, address_type,
@@ -507,7 +599,8 @@ def upgrade() -> None:
         )
 
         # Site
-        bind.exec_driver_sql(
+        _exec(
+            bind,
             """
             INSERT INTO sites
                 (tenant_id, bpns, owner_bpnl, name, function,
@@ -539,12 +632,13 @@ def upgrade() -> None:
 
 def downgrade() -> None:
     bind = op.get_bind()
-    bind.exec_driver_sql(
+    _exec(
+        bind,
         "DELETE FROM legal_entity_identifiers WHERE bpnl = :bpnl",
         {"bpnl": bpn.HZL_BPNL},
     )
-    bind.exec_driver_sql("DELETE FROM sites WHERE owner_bpnl = :bpnl", {"bpnl": bpn.HZL_BPNL})
-    bind.exec_driver_sql("DELETE FROM legal_entities WHERE bpnl = :bpnl", {"bpnl": bpn.HZL_BPNL})
-    bind.exec_driver_sql("DELETE FROM addresses WHERE owner_bpnl = :bpnl", {"bpnl": bpn.HZL_BPNL})
+    _exec(bind, "DELETE FROM sites WHERE owner_bpnl = :bpnl", {"bpnl": bpn.HZL_BPNL})
+    _exec(bind, "DELETE FROM legal_entities WHERE bpnl = :bpnl", {"bpnl": bpn.HZL_BPNL})
+    _exec(bind, "DELETE FROM addresses WHERE owner_bpnl = :bpnl", {"bpnl": bpn.HZL_BPNL})
     # Revert tenant 1 — best-effort, leaves slug/legal_name in HZL state if user
     # has no record of original EGA values; that's fine for a destructive downgrade.

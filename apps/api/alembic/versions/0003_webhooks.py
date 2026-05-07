@@ -7,16 +7,16 @@ Create Date: 2026-05-04
 
 from __future__ import annotations
 
-from typing import Sequence, Union
+from collections.abc import Sequence
 
 import sqlalchemy as sa
 from alembic import op
 from sqlalchemy.dialects import postgresql
 
 revision: str = "0003_webhooks"
-down_revision: Union[str, None] = "0002_reference_data"
-branch_labels: Union[str, Sequence[str], None] = None
-depends_on: Union[str, Sequence[str], None] = None
+down_revision: str | None = "0002_reference_data"
+branch_labels: str | Sequence[str] | None = None
+depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
@@ -43,9 +43,7 @@ def upgrade() -> None:
             nullable=False,
             server_default=sa.text("now()"),
         ),
-        sa.CheckConstraint(
-            "state IN ('active','paused','deleted')", name="ck_webhooks_state"
-        ),
+        sa.CheckConstraint("state IN ('active','paused','deleted')", name="ck_webhooks_state"),
     )
     op.create_index(
         "ix_webhooks_tenant_customer", "webhook_subscriptions", ["tenant_id", "customer_org"]

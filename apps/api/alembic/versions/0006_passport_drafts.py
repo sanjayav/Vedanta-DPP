@@ -80,11 +80,12 @@ def upgrade() -> None:
             sa.ForeignKey("dpp_records.id", ondelete="SET NULL"),
             nullable=True,
         ),
-        sa.Column(
-            "published_at", sa.DateTime(timezone=True), nullable=True
-        ),
+        sa.Column("published_at", sa.DateTime(timezone=True), nullable=True),
         sa.UniqueConstraint(
-            "tenant_id", "product_id", "dpp_version", "cast_number",
+            "tenant_id",
+            "product_id",
+            "dpp_version",
+            "cast_number",
             name="uq_dpp_drafts_tenant_product_version_cast",
         ),
         sa.CheckConstraint(
@@ -92,9 +93,7 @@ def upgrade() -> None:
             name="ck_dpp_drafts_state",
         ),
     )
-    op.create_index(
-        "ix_dpp_drafts_tenant_state", "dpp_drafts", ["tenant_id", "state"]
-    )
+    op.create_index("ix_dpp_drafts_tenant_state", "dpp_drafts", ["tenant_id", "state"])
 
     # ── dpp_attribute_values ──────────────────────────────────────────────
     op.create_table(
@@ -140,9 +139,7 @@ def upgrade() -> None:
             server_default="empty",
         ),  # empty | pending | complete
         sa.Column("entered_by", sa.String(256), nullable=True),
-        sa.Column(
-            "entered_at", sa.DateTime(timezone=True), nullable=True
-        ),
+        sa.Column("entered_at", sa.DateTime(timezone=True), nullable=True),
         sa.Column(
             "created_at",
             sa.DateTime(timezone=True),
@@ -156,7 +153,8 @@ def upgrade() -> None:
             nullable=False,
         ),
         sa.UniqueConstraint(
-            "draft_id", "manifest_attr_id",
+            "draft_id",
+            "manifest_attr_id",
             name="uq_attribute_values_draft_attr",
         ),
         sa.CheckConstraint(
@@ -214,11 +212,10 @@ def upgrade() -> None:
             server_default=sa.func.now(),
             nullable=False,
         ),
-        sa.Column(
-            "submitted_at", sa.DateTime(timezone=True), nullable=True
-        ),
+        sa.Column("submitted_at", sa.DateTime(timezone=True), nullable=True),
         sa.UniqueConstraint(
-            "draft_id", "manifest_attr_id",
+            "draft_id",
+            "manifest_attr_id",
             name="uq_assignments_draft_attr",
         ),
         sa.CheckConstraint(
@@ -276,18 +273,14 @@ def upgrade() -> None:
             nullable=False,
             server_default="connected",
         ),  # connected | disconnected | error
-        sa.Column(
-            "last_sync_at", sa.DateTime(timezone=True), nullable=True
-        ),
+        sa.Column("last_sync_at", sa.DateTime(timezone=True), nullable=True),
         sa.Column(
             "created_at",
             sa.DateTime(timezone=True),
             server_default=sa.func.now(),
             nullable=False,
         ),
-        sa.UniqueConstraint(
-            "tenant_id", "name", name="uq_iot_connections_tenant_name"
-        ),
+        sa.UniqueConstraint("tenant_id", "name", name="uq_iot_connections_tenant_name"),
         sa.CheckConstraint(
             "status IN ('connected','disconnected','error')",
             name="ck_iot_connections_status",
@@ -331,7 +324,9 @@ def upgrade() -> None:
             nullable=False,
         ),
         sa.UniqueConstraint(
-            "draft_id", "attribute_path", "audience",
+            "draft_id",
+            "attribute_path",
+            "audience",
             name="uq_disclosures_draft_attr_audience",
         ),
         sa.CheckConstraint(
