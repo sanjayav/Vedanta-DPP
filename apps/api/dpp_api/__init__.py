@@ -1,4 +1,4 @@
-"""EGA DPP Platform — backend.
+"""Vedanta · Hindustan Zinc Limited (HZL) DPP Platform — backend.
 
 Layered per SDD §3:
     Layer 1  source capture (sources/)

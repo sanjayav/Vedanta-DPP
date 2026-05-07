@@ -7,9 +7,10 @@ Create Date: 2026-05-04
 This is the configuration plane that lives BEFORE data ingestion. The
 six-level setup workflow described in SDD §11 lands on these tables:
 
-  1. `products`              — tenant's product portfolio (CelestiAL, Standard …)
+  1. `products`              — tenant's product portfolio (EcoZen, CGG Jumbo, Refined Lead …)
   2. `process_steps`         — canonical reference list of process steps
-                               (Mining → Refining → Smelting → Casting → Semis → Customer)
+                               (Mining → Concentration → Roasting → Smelting (RLE) →
+                               Alloying → Casting → Lab QC → Packaging → Verification → Customer)
   3. `product_process_chains`— per-product ordered list of steps that apply
   4. `dpp_manifest_attrs`    — for each (process_step, dpp_version), the
                                attribute roster expected at that combination

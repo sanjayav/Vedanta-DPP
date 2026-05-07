@@ -72,11 +72,11 @@ export default async function OnboardingPage({ searchParams }: { searchParams?: 
       <header className="mb-7 flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1 className="text-[28px] font-semibold leading-tight text-[var(--fg-default)]">
-            Aluminium Product Setup
+            Zinc & Lead Product Setup
           </h1>
           <p className="mt-1 max-w-3xl text-[14px] leading-6 text-[var(--fg-muted)]">
-            Curate EGA's alloy portfolio, value-chain evidence, source ownership, permissions, and
-            data collection readiness for aluminium DPP go-live.
+            Curate HZL's zinc/lead portfolio, value-chain evidence, source ownership, permissions,
+            and data collection readiness for DPP go-live.
           </p>
         </div>
         <form action={seedAction}>
@@ -88,7 +88,7 @@ export default async function OnboardingPage({ searchParams }: { searchParams?: 
         <EmptyPortfolio />
       ) : (
         <div className="space-y-10">
-          <AluminiumReadinessStrip
+          <ZincLeadReadinessStrip
             portfolio={portfolio}
             detail={detail}
             manifest={manifest}
@@ -214,7 +214,7 @@ function Shell({ children }: { children: React.ReactNode }) {
   return <div className="px-8 py-8">{children}</div>
 }
 
-function AluminiumReadinessStrip({
+function ZincLeadReadinessStrip({
   portfolio,
   detail,
   manifest,
@@ -235,9 +235,9 @@ function AluminiumReadinessStrip({
   return (
     <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
       <PortalMetric
-        label="Aluminium products"
+        label="Zinc & lead products"
         value={portfolio.products.length}
-        context="CelestiAL, recycled, standard and foundry lines"
+        context="EcoZen SHG, CGG Jumbo, Refined Lead 99.99 and casting alloys"
       />
       <PortalMetric
         label="Value-chain steps"
@@ -252,7 +252,7 @@ function AluminiumReadinessStrip({
       <PortalMetric
         label="Go-live gate"
         value={readiness?.ready ? 'Ready' : 'Open'}
-        context="ESPR, CBAM, ASI and CFP evidence"
+        context="ESPR, CBAM, IZA Zinc Mark and CFP evidence"
         tone={readiness?.ready ? 'success' : 'warning'}
       />
     </section>
@@ -300,7 +300,7 @@ function LevelOne({
     <section>
       <LevelHeader
         level="Level 1"
-        title="Aluminium portfolio map"
+        title="Zinc & lead portfolio map"
         icon={Package}
         aside={`${portfolio.products.length} products · ${portfolio.canonicalChain.length} process steps`}
       />
@@ -318,7 +318,7 @@ function LevelOne({
         </div>
         <div className="rounded-[var(--radius-md)] border border-[var(--surface-border)] bg-[var(--surface-recessed)] p-5">
           <p className="font-mono text-[10px] uppercase tracking-[0.15em] text-[var(--fg-subtle)]">
-            Aluminium value chain
+            Zinc & lead value chain
           </p>
           <ol className="mt-4 space-y-3">
             {portfolio.canonicalChain.map((step) => (
@@ -484,7 +484,7 @@ function LevelThree({
             <Stat
               label="Mandatory"
               value={mandatoryAttrs}
-              context="ESPR/CBAM/ASI evidence fields"
+              context="ESPR/CBAM/IZA evidence fields"
             />
             <Stat
               label="Manifest state"
@@ -501,7 +501,7 @@ function LevelThree({
             <div className="flex items-center justify-between gap-4 border-b border-[var(--surface-border)] bg-[var(--surface-recessed)] px-5 py-3">
               <div>
                 <p className="font-mono text-[10px] uppercase tracking-[0.15em] text-[var(--fg-subtle)]">
-                  Aluminium DPP attribute roster
+                  Zinc & lead DPP attribute roster
                 </p>
                 <p className="mt-1 text-[12px] text-[var(--fg-muted)]">
                   {product.name} · DPP {version}
@@ -624,7 +624,7 @@ function LevelFive({
         {detail.chain.map((step) => (
           <input key={step.stepId} type="hidden" name={`step:${step.stepId}`} value={step.slug} />
         ))}
-        <ActionButton icon={Plug}>Apply aluminium source map</ActionButton>
+        <ActionButton icon={Plug}>Apply zinc/lead source map</ActionButton>
       </form>
       <div className="mt-4 overflow-hidden rounded-[var(--radius-md)] border border-[var(--surface-border)]">
         <div className="grid grid-cols-[1fr_140px_190px_170px_170px_110px] bg-[var(--surface-recessed)] px-5 py-3 font-mono text-[10px] uppercase tracking-[0.15em] text-[var(--fg-subtle)]">
@@ -922,10 +922,10 @@ function EmptyPortfolio() {
     <section className="rounded-[var(--radius-md)] border border-dashed border-[var(--surface-border)] bg-[var(--surface-recessed)] p-8 text-center">
       <Package className="mx-auto h-8 w-8 text-[var(--fg-subtle)]" />
       <h2 className="mt-3 text-[16px] font-semibold text-[var(--fg-default)]">
-        No aluminium products seeded
+        No zinc/lead products seeded
       </h2>
       <p className="mt-1 text-[13px] text-[var(--fg-muted)]">
-        Seed the EGA portfolio before starting alloy, manifest, and source setup.
+        Seed the HZL portfolio before starting grade, manifest, and source setup.
       </p>
       <form action={seedAction} className="mt-5">
         <ActionButton icon={RefreshCw}>Seed portfolio</ActionButton>
@@ -939,7 +939,7 @@ function UnavailablePanel() {
     <section className="rounded-[var(--radius-md)] border border-dashed border-[var(--surface-border)] bg-[var(--surface-recessed)] p-8 text-center">
       <Database className="mx-auto h-8 w-8 text-[var(--fg-subtle)]" />
       <h1 className="mt-3 text-[18px] font-semibold text-[var(--fg-default)]">
-        Aluminium configuration API unavailable
+        Zinc & lead configuration API unavailable
       </h1>
       <p className="mt-1 text-[13px] text-[var(--fg-muted)]">
         Start the API and use a tenant-admin session to access product setup.
@@ -1031,43 +1031,45 @@ function defaultSourceForStep(slug: string): Omit<DataSourceInput, 'process_step
   switch (slug) {
     case 'mining':
       return {
-        origin: 'third_party',
-        supplier_name: 'Guinea Alumina Corporation',
-        supplier_did: 'did:web:gac-mining.example',
+        origin: 'internal',
+        supplier_name: 'Rampura Agucha Mine',
+        supplier_did: 'did:web:passport.hzlindia.com:BPNSHZSRAM00019F',
         connector_kind: 'http_pull',
-        connector_config: { dataset: 'bauxite-origin-and-mine-ufi' },
+        connector_config: { dataset: 'concentrate-origin-and-mine-ufi' },
       }
+    case 'beneficiation':
     case 'refining':
       return {
         origin: 'internal',
-        supplier_name: 'EGA Al Taweelah Alumina',
-        supplier_did: 'did:web:dpp.ega.local',
+        supplier_name: 'HZL Beneficiation & Concentrator',
+        supplier_did: 'did:web:passport.hzlindia.com:BPNLHZL0000001QX',
         connector_kind: 'api_push',
-        connector_config: { dataset: 'alumina-refining-energy-and-cfp' },
+        connector_config: { dataset: 'concentrator-energy-and-recovery' },
       }
+    case 'roasting':
     case 'anode_production':
       return {
         origin: 'internal',
-        supplier_name: 'EGA Carbon Plant',
-        supplier_did: 'did:web:dpp.ega.local',
+        supplier_name: 'HZL Roaster Plant',
+        supplier_did: 'did:web:passport.hzlindia.com:BPNSHZSCHA00012N',
         connector_kind: 'api_push',
-        connector_config: { dataset: 'anode-consumption-and-bake-furnace' },
+        connector_config: { dataset: 'roaster-so2-and-thermal-balance' },
       }
     case 'smelting':
       return {
         origin: 'internal',
-        supplier_name: 'EGA Smelter Operations',
-        supplier_did: 'did:web:dpp.ega.local',
+        supplier_name: 'Chanderiya Lead-Zinc Smelter',
+        supplier_did: 'did:web:passport.hzlindia.com:BPNSHZSCHA00012N',
         connector_kind: 'api_push',
-        connector_config: { dataset: 'electrolysis-energy-pfc-and-cbam' },
+        connector_config: { dataset: 'electrowinning-energy-and-cbam' },
       }
     case 'casting':
       return {
         origin: 'internal',
-        supplier_name: 'EGA Casthouse',
-        supplier_did: 'did:web:dpp.ega.local',
+        supplier_name: 'HZL Casthouse',
+        supplier_did: 'did:web:passport.hzlindia.com:BPNSHZSCHA00012N',
         connector_kind: 'api_push',
-        connector_config: { dataset: 'cast-chemistry-weight-and-alloy' },
+        connector_config: { dataset: 'cast-chemistry-weight-and-grade' },
       }
     case 'verification':
       return {
@@ -1080,23 +1082,23 @@ function defaultSourceForStep(slug: string): Omit<DataSourceInput, 'process_step
     case 'semis':
       return {
         origin: 'third_party',
-        supplier_name: 'Semi-fabrication partner',
+        supplier_name: 'Galvanising / die-casting partner',
         connector_kind: 'api_push',
         connector_config: { dataset: 'semis-fabrication' },
       }
     case 'customer':
       return {
         origin: 'internal',
-        supplier_name: 'EGA Commercial Operations',
-        supplier_did: 'did:web:dpp.ega.local',
+        supplier_name: 'HZL Commercial Operations',
+        supplier_did: 'did:web:passport.hzlindia.com:BPNLHZL0000001QX',
         connector_kind: 'api_push',
         connector_config: { dataset: 'customer-delivery-and-gs1-digital-link' },
       }
     default:
       return {
         origin: 'internal',
-        supplier_name: 'Emirates Global Aluminium',
-        supplier_did: 'did:web:dpp.ega.local',
+        supplier_name: 'Hindustan Zinc Limited',
+        supplier_did: 'did:web:passport.hzlindia.com:BPNLHZL0000001QX',
         connector_kind: 'api_push',
         connector_config: { dataset: slug },
       }

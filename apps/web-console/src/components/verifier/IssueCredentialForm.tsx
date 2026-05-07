@@ -20,7 +20,13 @@ interface IssueResult {
   affectedDppCount: number
 }
 
-const BRANDS = ['CelestiAL', 'CelestiAL-R', 'Standard', 'High-Purity', 'Foundry Alloy']
+const BRANDS = [
+  'EcoZen SHG 99.995',
+  'CGG Jumbo',
+  'Refined Lead 99.99',
+  'High-Purity Zinc',
+  'Zinc Die-Cast Alloy',
+]
 
 export function IssueCredentialForm({ defaults }: { defaults: FormDefaults }) {
   const router = useRouter()

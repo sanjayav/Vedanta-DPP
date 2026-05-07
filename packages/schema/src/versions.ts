@@ -1,8 +1,8 @@
 /**
- * Version manifests — see EGA_DPP_Version_Manifests.xlsx
+ * Version manifests — Vedanta · Hindustan Zinc DPP roadmap
  *
- * Each version is a fixed roster of attributes drawn from the 229-attribute
- * standards-anchored matrix. Tenants choose a version during onboarding
+ * Each version is a fixed roster of attributes drawn from the Chem-X v1.0 +
+ * ESPR-anchored matrix. Tenants choose a version during onboarding
  * (Section 11). The platform team owns the manifests; tenants cannot extend
  * them, only de-scope conditional/voluntary attributes within the chosen ceiling.
  */
@@ -27,7 +27,7 @@ export const VERSION_MANIFESTS: Record<DppVersion, VersionManifest> = {
     newAtThisVersion: 106,
     regulatoryAnchor: 'ESPR Annex III + JRC §7 (mandatory subset)',
     typicalAdoption: 'Q3-Q4 2026',
-    schemaUrl: 'https://schemas.dpp.ega.ae/dpp/v1.0.0.json',
+    schemaUrl: 'https://schemas.passport.hzlindia.com/dpp/v1.0.0.json',
   },
   '1.5': {
     version: '1.5',
@@ -36,16 +36,16 @@ export const VERSION_MANIFESTS: Record<DppVersion, VersionManifest> = {
     newAtThisVersion: 47,
     regulatoryAnchor: 'Adds ESPR Art 5(1)(h)(i) coverage',
     typicalAdoption: 'Q1-Q2 2027',
-    schemaUrl: 'https://schemas.dpp.ega.ae/dpp/v1.5.0.json',
+    schemaUrl: 'https://schemas.passport.hzlindia.com/dpp/v1.5.0.json',
   },
   '2': {
     version: '2',
-    positioning: 'Delegated Act alignment — site-specific CFP, CBAM cross-link',
+    positioning: 'ESPR Annex III alignment — site-specific CFP, CBAM cross-link',
     cumulativeAttributes: 219,
     newAtThisVersion: 66,
-    regulatoryAnchor: 'Aligns with EU Aluminium Delegated Act (expected 2027)',
+    regulatoryAnchor: 'Aligns with ESPR Annex III + CBAM definitive period (expected 2027)',
     typicalAdoption: 'Q3-Q4 2027',
-    schemaUrl: 'https://schemas.dpp.ega.ae/dpp/v2.0.0.json',
+    schemaUrl: 'https://schemas.passport.hzlindia.com/dpp/v2.0.0.json',
   },
   '3': {
     version: '3',
@@ -54,7 +54,7 @@ export const VERSION_MANIFESTS: Record<DppVersion, VersionManifest> = {
     newAtThisVersion: 10,
     regulatoryAnchor: 'Full ESPR Art 5(1)(k)(l)(m)(n) coverage',
     typicalAdoption: 'Q1-Q2 2028',
-    schemaUrl: 'https://schemas.dpp.ega.ae/dpp/v3.0.0.json',
+    schemaUrl: 'https://schemas.passport.hzlindia.com/dpp/v3.0.0.json',
   },
   '4': {
     version: '4',
@@ -63,7 +63,7 @@ export const VERSION_MANIFESTS: Record<DppVersion, VersionManifest> = {
     newAtThisVersion: 0,
     regulatoryAnchor: 'Complete ESPR Annex I + Annex III + JTC 24',
     typicalAdoption: 'Q3 2028 onward',
-    schemaUrl: 'https://schemas.dpp.ega.ae/dpp/v4.0.0.json',
+    schemaUrl: 'https://schemas.passport.hzlindia.com/dpp/v4.0.0.json',
   },
 }
 

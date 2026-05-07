@@ -172,7 +172,7 @@ export default async function PlantMonitorPage() {
               {targets.length} signals waiting for sensor commissioning
             </p>
             <p className="mt-1 max-w-3xl text-[12px] text-[var(--fg-muted)]">
-              These are the operating bands EGA will monitor once the SCADA, MES, and ledger
+              These are the operating bands HZL will monitor once the SCADA, MES, and ledger
               feeds are wired in. Each tile shows the target band and the planned data
               lineage. Open one to see the spec.
             </p>
@@ -226,9 +226,9 @@ function Hero({
           {snap.plantName}
         </h1>
         <p className="mt-1 max-w-3xl text-[13px] text-[var(--fg-muted)]">
-          The aluminium analogue of a battery management system. {liveCount} of {totalCount}{' '}
-          process signals are wired to live DPP-derived data today; the rest are reference
-          targets the platform will read once the field instrumentation lands.
+          The smelter / refinery analogue of a battery management system. {liveCount} of{' '}
+          {totalCount} process signals are wired to live DPP-derived data today; the rest are
+          reference targets the platform will read once the field instrumentation lands.
         </p>
       </div>
       <div className="pm-hero-right">

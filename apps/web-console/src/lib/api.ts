@@ -27,17 +27,46 @@ async function authedFetch(url: string, init: RequestInit = {}): Promise<Respons
   }).catch(() => null)
 }
 
+/**
+ * A row in the DPP listing API. v1.0 / Chem-X shape — HZL zinc/lead/silver.
+ *
+ * Legacy aluminium fields (`brand`, `alloy`, `cfpKgCo2ePerTonne`,
+ * `weightKg`) are kept as transitional aliases so the migration of
+ * deeper console pages can land in tranches without breaking the build.
+ * Each tranche replaces a page's reads with the canonical names below;
+ * once the last consumer is migrated, the legacy fields will be dropped.
+ */
 export interface DppRow {
   upi: string
-  brand: string
-  alloy: string
+  /** zinc | lead | silver */
+  metal: string
+  /** HZL grade code · EcoZen-SHG / CGG / PB-9999 / SHG / HG / PW / HZDA3 / Silver-9999 / … */
+  gradeCode: string
+  /** Optional commercial/trade name · "EcoZen", "Vedanta 99.99", null for generic grades. */
+  tradeName: string | null
+  /** Form · ingot_25kg / jumbo_1t / bar_30kg / etc. */
   form: string
-  weightKg: number
-  cfpKgCo2ePerTonne: number
+  /** Unit mass (kg) of an ingot / bar / jumbo. */
+  unitMassKg: number
+  /** Cradle-to-gate Product Carbon Footprint, kg CO2e/kg. */
+  pcfKgCo2ePerKg: number
+  /** Recycled content, weighted percent (0 for primary metal). */
   recycledContentPct: number
   state: string
   issuedAt: string | null
+  /** GS1 Digital Link URL · resolves to /dpp/<bpnl>/<uuid>. */
   digitalLinkUrl: string | null
+  /** Producing site BPNS (Chanderiya / Dariba / Debari / Pantnagar). */
+  siteBpns: string | null
+  // ── Legacy aluminium fields · transitional aliases (drop after sweep) ──
+  /** @deprecated use `tradeName` */
+  brand: string
+  /** @deprecated use `gradeCode` */
+  alloy: string
+  /** @deprecated use `unitMassKg` */
+  weightKg: number
+  /** @deprecated use `pcfKgCo2ePerKg * 1000` */
+  cfpKgCo2ePerTonne: number
 }
 
 export interface DppListResult {
@@ -47,15 +76,63 @@ export interface DppListResult {
   offset: number
 }
 
+/** Compact preset row returned by GET /api/v1/presets/. */
 export interface PresetSummary {
   id: string
   label: string
   summary: string
-  brand: string
+  metal: string
+  gradeCode: string
+  tradeName: string | null
   form: string
+  /** Cradle-to-gate PCF in kg CO2e/kg. */
+  pcfKgCo2ePerKg: number
+  /** IZA / ILA / IPA industry average for the same metal+form. */
+  industryAverageKgCo2ePerKg: number
+  /** Optional EPD registration number. */
+  epdRegistrationNumber: string | null
+  // ── Legacy aluminium fields ────────────────────────────────────────────
+  /** @deprecated use `tradeName` */
+  brand: string
+  /** @deprecated use `gradeCode` */
   alloyEn: string
+  /** @deprecated use `{ pcfKgCo2ePerKg, industryAverageKgCo2ePerKg }` */
   carbon: { valueKgCo2ePerTonne: number; industryAverageKgCo2ePerTonne: number }
+  /** @deprecated zinc/lead presets are 0% recycled; field retained for legacy renderers */
   recycledContent: { totalPercent: number }
+}
+
+/** Detailed preset shape used by the wizard (subset of the JSON preset). */
+export interface PresetDetail {
+  id: string
+  label: string
+  summary: string
+  metal: 'zinc' | 'lead' | 'silver'
+  gradeCode: string
+  tradeName?: string
+  purityPercent: number
+  form:
+    | 'ingot_25kg'
+    | 'ingot_9kg'
+    | 'jumbo_1t'
+    | 'bar_30kg'
+    | 'bar_1kg'
+    | 'powder'
+    | 'dust'
+    | 'oxide'
+  applicableStandards: string[]
+  physical: {
+    unitMassKg: number
+    bundleMassKg?: number
+    unitsPerBundle?: number
+    dimensions?: { lengthMm: number; widthMm: number; heightMm: number; tolerance?: string }
+  }
+  sustainability: {
+    pcf: { value: number; unit: string; industryAverage?: { value: number; unit: string; source?: string } }
+    renewableElectricityPercent?: number
+    epd?: { registrationNumber: string; programOperator?: string; validUntil?: string; url?: string }
+  }
+  producingSiteTag?: string
 }
 
 export interface AuditEntry {
@@ -95,22 +172,40 @@ async function safeJson<T>(res: Response): Promise<T | null> {
   return (await res.json()) as T
 }
 
+/**
+ * A line in the verifier registry — one row per attested PCF statement.
+ *
+ * Legacy aluminium fields (`brand`, `facilityUfi`, `valueKgCo2ePerTonne`)
+ * are retained as transitional aliases until the verifier surfaces are
+ * migrated.
+ */
 export interface VerifierBrandLine {
   id: number
-  brand: string
-  facilityUfi: string | null
+  /** HZL grade code or trade name the statement covers. */
+  gradeCode: string
+  /** BPNS of the producing site the statement applies to. */
+  siteBpns: string | null
   periodFrom: string
   periodTo: string
-  valueKgCo2ePerTonne: number
+  pcfKgCo2ePerKg: number
   statementRef: string
   assuranceLevel: string
   state: 'active' | 'superseded' | 'revoked'
   createdAt: string
+  // ── Legacy aluminium fields ────────────────────────────────────────────
+  /** @deprecated use `gradeCode` */
+  brand: string
+  /** @deprecated use `siteBpns` */
+  facilityUfi: string | null
+  /** @deprecated use `pcfKgCo2ePerKg * 1000` */
+  valueKgCo2ePerTonne: number
 }
 
 export interface VerifierRegistryEntry {
   verifierDid: string
   verifierName: string
+  lines: VerifierBrandLine[]
+  /** @deprecated transitional alias for `lines` */
   brands: VerifierBrandLine[]
   stateCounts: { active: number; superseded: number; revoked: number }
   latestStatementRef: string | null
@@ -147,11 +242,12 @@ export async function listAuditEntries(filters: AuditFilters = {}): Promise<Audi
 }
 
 export async function listDpps(
-  opts: { limit?: number; brand?: string; state?: string; offset?: number } = {},
+  opts: { limit?: number; metal?: string; gradeCode?: string; state?: string; offset?: number } = {},
 ): Promise<DppListResult> {
   const params = new URLSearchParams()
   if (opts.limit) params.set('limit', String(opts.limit))
-  if (opts.brand) params.set('brand', opts.brand)
+  if (opts.metal) params.set('metal', opts.metal)
+  if (opts.gradeCode) params.set('grade_code', opts.gradeCode)
   if (opts.state) params.set('state', opts.state)
   if (opts.offset) params.set('offset', String(opts.offset))
   const res = await authedFetch(`${API_BASE}/api/v1/dpps/?${params}`)
@@ -189,19 +285,21 @@ export async function fetchDppFull(upi: string): Promise<FullDppView | null> {
 }
 
 export async function listPresets(): Promise<PresetSummary[]> {
-  // Presets are tenant-config and authenticated; non-authed boots get empty.
   const res = await authedFetch(`${API_BASE}/api/v1/presets/`)
   if (!res) return []
   const body = await safeJson<{ items: PresetSummary[] }>(res)
   return body?.items ?? []
 }
 
+export async function fetchPreset(id: string): Promise<PresetDetail | null> {
+  const res = await authedFetch(`${API_BASE}/api/v1/presets/${encodeURIComponent(id)}`)
+  if (!res || !res.ok) return null
+  return (await res.json().catch(() => null)) as PresetDetail | null
+}
+
 export async function firePreset(
   presetId: string,
 ): Promise<{ ok: boolean; upi?: string; detail?: string }> {
-  // For v1.0 we POST a synthesized cast event built from the preset.
-  // The simulator package owns the canonical builder; we duplicate the minimum
-  // here so the console works without depending on @dpp/sim's CLI.
   const trackingId = crypto.randomUUID()
   const event = {
     schemaVersion: '1.0.0',
@@ -228,23 +326,39 @@ export async function firePreset(
 async function _castFromPreset(presetId: string) {
   const res = await authedFetch(`${API_BASE}/api/v1/presets/${presetId}`)
   if (!res || !res.ok) throw new Error(`preset ${presetId} not found`)
-  const p = (await res.json()) as Record<string, any>
+  const p = (await res.json()) as Record<string, unknown>
   const today = new Date().toISOString().slice(0, 10).replace(/-/g, '')
   const castNumber = `C-${today}-${Math.floor(Math.random() * 90000 + 10000)}`
-  return {
+  const physical = (p.physical ?? {}) as Record<string, unknown>
+  const dimensions = (physical.dimensions ?? {}) as Record<string, number>
+  const siteBpns = pickSiteBpns(p.producingSiteTag as string | undefined)
+  const cast: Record<string, unknown> = {
     castNumber,
-    alloyEn: p.alloyEn,
-    alloyAa: p.alloyAa,
-    brand: p.brand,
+    metal: p.metal,
+    gradeCode: p.gradeCode,
     form: p.form,
-    temper: p.temper,
-    weightKg: p.weightKg,
-    ...(p.dimensions?.diameterMm !== undefined && { diameterMm: p.dimensions.diameterMm }),
-    ...(p.dimensions?.lengthMm !== undefined && { lengthMm: p.dimensions.lengthMm }),
-    ...(p.dimensions?.widthMm !== undefined && { widthMm: p.dimensions.widthMm }),
-    ...(p.dimensions?.thicknessMm !== undefined && { thicknessMm: p.dimensions.thicknessMm }),
-    casthouseUfi: p.casthouseUfi,
-    smelterUfi: p.smelterUfi,
-    purityGrade: p.purityGrade,
+    unitMassKg: physical.unitMassKg ?? 25,
+    siteBpns,
+  }
+  if (typeof physical.bundleMassKg === 'number') cast.bundleMassKg = physical.bundleMassKg
+  if (typeof dimensions.lengthMm === 'number') cast.lengthMm = dimensions.lengthMm
+  if (typeof dimensions.widthMm === 'number') cast.widthMm = dimensions.widthMm
+  if (typeof dimensions.heightMm === 'number') cast.heightMm = dimensions.heightMm
+  return cast
+}
+
+/** Producing site → BPNS lookup for the simulator. Per the HZL site map. */
+function pickSiteBpns(tag: string | undefined): string {
+  switch (tag) {
+    case 'CHA':
+      return 'BPNSHZSCHA00012N'
+    case 'DAR':
+      return 'BPNSHZSDAR00027L'
+    case 'DEB':
+      return 'BPNSHZSDEB00033K'
+    case 'PNT':
+      return 'BPNSHZSPNT00041J'
+    default:
+      return 'BPNSHZSCHA00012N'
   }
 }

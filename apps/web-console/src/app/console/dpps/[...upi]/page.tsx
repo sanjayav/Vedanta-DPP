@@ -175,7 +175,7 @@ export default async function DppDetailPage({ params }: PageProps) {
 
         {/* Brand identity hint at the very bottom */}
         <p className="mt-6 text-center font-mono text-[10px] uppercase tracking-[0.2em] text-[var(--fg-subtle)]">
-          Operator view · {(ident.brand as string) ?? 'EGA'} · DPP{' '}
+          Operator view · {(ident.brand as string) ?? 'HZL'} · DPP{' '}
           {(body.dppVersion as string) ?? '1.0'}
         </p>
       </div>

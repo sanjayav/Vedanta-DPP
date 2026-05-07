@@ -1,4 +1,4 @@
-# EGA DPP — Kubernetes baseline
+# C6 Trail · Vedanta · Hindustan Zinc DPP — Kubernetes baseline
 
 Kustomize-organised manifests for the three workloads (`api`, `web-console`,
 `web-public`). The `base/` overlay produces a runnable cluster footprint; real

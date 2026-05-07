@@ -40,7 +40,7 @@ def _utcnow() -> datetime:
 
 
 class Tenant(Base):
-    """A platform tenant. EGA is tenant_id=1."""
+    """A platform tenant. Hindustan Zinc Limited (HZL) is tenant_id=1."""
 
     __tablename__ = "tenants"
 
@@ -246,7 +246,7 @@ class ReferenceCfp(Base):
 
 
 class ReferenceCompliance(Base):
-    """Compliance certificate registry — ASI, ISO, REACH, RoHS, etc."""
+    """Compliance certificate registry — IZA Zinc Mark, ILA, ISO, REACH, RoHS, BIS, etc."""
 
     __tablename__ = "reference_compliance"
 
@@ -397,7 +397,7 @@ class ProcessStep(Base):
 
 
 class Product(Base):
-    """A product in the tenant's portfolio (CelestiAL, Standard, …)."""
+    """A product in the tenant's portfolio (EcoZen, CGG Jumbo, Refined Lead, …)."""
 
     __tablename__ = "products"
 

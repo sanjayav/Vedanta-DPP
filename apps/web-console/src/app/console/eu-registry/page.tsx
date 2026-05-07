@@ -21,7 +21,7 @@ export default async function EuRegistryPage() {
     .map((dpp, idx) => ({
       registryId: `REG-${(idx + 1).toString().padStart(4, '0')}`,
       upi: dpp.upi,
-      reoId: 'EORI-AE-EGA-001',
+      reoId: 'EORI-IN-HZL-001',
       liveUrl: `/dpp/${dpp.upi}`,
       registeredAt: dpp.issuedAt?.slice(0, 10) ?? '—',
       status: 'active' as const,

@@ -54,8 +54,8 @@ export default async function PortalLanding() {
     {
       href: '/portal/carbon',
       title: 'Carbon Footprint Tracker',
-      primary: lowestCfp ? `${Math.round(lowestCfp).toLocaleString()}` : '—',
-      secondary: `kg CO₂e/t · best-in-class verified by DNV`,
+      primary: lowestCfp ? `${(lowestCfp / 1000).toFixed(2)}` : '—',
+      secondary: `kg CO₂e/kg · best-in-class verified by DNV`,
       icon: BarChart3,
     },
     {
@@ -75,8 +75,8 @@ export default async function PortalLanding() {
     {
       href: '/portal/chemistry',
       title: 'Chemistry & MTC',
-      primary: 'EN 573-3',
-      secondary: 'IMDS-ready · per-batch chemistry',
+      primary: 'IS 209',
+      secondary: 'IMDS-ready · per-batch zinc/lead chemistry',
       icon: Beaker,
     },
   ]
@@ -92,7 +92,7 @@ export default async function PortalLanding() {
             Welcome back, {user.displayName.split(' ')[0]}.
           </h1>
           <p className="mt-2 max-w-xl text-[15px] text-[var(--fg-muted)]">
-            Every aluminium passport you receive · verified, signed, exportable. Five zones, one
+            Every zinc & lead passport you receive · verified, signed, exportable. Five zones, one
             source of truth for ESG reporting and Tier 1 audit.
           </p>
         </div>

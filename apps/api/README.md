@@ -1,8 +1,9 @@
 # dpp-api
 
-Backend services for the EGA Aluminium Digital Product Passport platform —
-ingestion, generator, signer, resolver, audit. See repo-root `README.md` and
-`CLAUDE.md` for the full picture.
+Backend services for the Vedanta · Hindustan Zinc Limited (HZL) Digital
+Product Passport platform — ingestion, generator, signer, resolver, audit.
+Aligned to Chem-X v1.0 (Sustainability + Business Identity / CX-0010 BPDM +
+Material ID). See repo-root `README.md` and `CLAUDE.md` for the full picture.
 
 ## Local dev
 

@@ -25,7 +25,7 @@ export default async function AssignmentPage({ params }: { params: Promise<{ tok
             className="mt-3 text-[32px] font-semibold leading-tight text-[#1B1B1B]"
             style={{ fontFamily: 'Fraunces, serif' }}
           >
-            {draft.productBrand ?? 'EGA'} needs one piece of data from you.
+            {draft.productBrand ?? 'HZL'} needs one piece of data from you.
           </h1>
           <p className="mt-3 text-[15px] leading-7 text-[#4A4A4A]">
             For their digital product passport on cast <strong>{draft.castNumber}</strong> (

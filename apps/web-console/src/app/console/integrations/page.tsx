@@ -80,14 +80,14 @@ export default async function IntegrationsPage({ searchParams }: PageProps) {
             <div className="min-w-0">
               <h1 className="int-page__title">Integrations</h1>
               <p className="int-page__subtitle">
-                Connect external systems to your aluminium passport workflow · ERP, telemetry,
+                Connect external systems to your zinc & lead passport workflow · ERP, telemetry,
                 regulatory registries, supply-chain dataspaces, and sustainability schemes.
               </p>
             </div>
           </div>
           <div className="int-page__header-actions">
             <a
-              href="https://help.altrail.ega.ae/connectors"
+              href="https://help.passport.hzlindia.com/connectors"
               target="_blank"
               rel="noreferrer"
               className="int-page__btn int-page__btn--ghost"
@@ -107,7 +107,7 @@ export default async function IntegrationsPage({ searchParams }: PageProps) {
           </span>
           <p>
             <strong>Connector provisioning follows your tenant profile.</strong> Deployment model:
-            shared AL trail cloud · Integration mode: standard. Defaults are derived from this
+            shared C6 Trail cloud · Integration mode: standard. Defaults are derived from this
             profile and can be overridden per connector.
           </p>
         </div>
@@ -181,7 +181,7 @@ export default async function IntegrationsPage({ searchParams }: PageProps) {
         {/* Data flow diagram */}
         <section className="int-page__flow">
           <p className="int-page__eyebrow">Data flow architecture</p>
-          <h2 className="int-page__h2">How AL trail wires it all together</h2>
+          <h2 className="int-page__h2">How C6 Trail wires it all together</h2>
           <p className="int-page__lede">
             Every connector either feeds the passport pipeline or consumes from it. This is the full
             ingest → publish → distribute path.
@@ -199,12 +199,12 @@ export default async function IntegrationsPage({ searchParams }: PageProps) {
                 },
                 {
                   label: 'Telemetry · MES / IoT',
-                  sub: 'Cell amperage · Temp · AE freq',
+                  sub: 'Roaster temp · EW current · Cathode cycle',
                   icon: <Factory className="h-3.5 w-3.5" />,
                 },
                 {
-                  label: 'Sustainability · ASI',
-                  sub: 'CoC · CFP statement',
+                  label: 'Sustainability · IZA Zinc Mark',
+                  sub: 'EPD · CFP statement',
                   icon: <Recycle className="h-3.5 w-3.5" />,
                 },
               ]}
@@ -215,7 +215,7 @@ export default async function IntegrationsPage({ searchParams }: PageProps) {
               tone="accent-strong"
               lanes={[
                 {
-                  label: 'AL trail authoring',
+                  label: 'C6 Trail authoring',
                   sub: 'Drafts · attribute fill · disclosure',
                   icon: <Sparkles className="h-3.5 w-3.5" />,
                 },

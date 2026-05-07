@@ -2,7 +2,7 @@
   "name": "@dpp/sim",
   "version": "0.1.0",
   "private": true,
-  "description": "DPP simulator — emit canonical cast events from EGA-anchored presets. CLI + library.",
+  "description": "DPP simulator — emit canonical cast events from HZL-anchored presets (zinc / lead / silver). CLI + library.",
   "type": "module",
   "main": "./src/index.ts",
   "types": "./src/index.ts",

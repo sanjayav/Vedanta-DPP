@@ -167,15 +167,15 @@ export function ConsoleShell({
       {/* ── Sidebar ──────────────────────────────────────────────── */}
       <aside className="al-sidebar">
         {/* Brand */}
-        <Link href="/console/dpps" className="al-brand" aria-label="AL trail home">
+        <Link href="/console/dpps" className="al-brand" aria-label="C6 Trail home">
           <span className="al-brand-mark" aria-hidden>
             <BrandMark />
           </span>
           <span className="al-brand-text">
             <span className="al-brand-name">
-              AL <span className="al-brand-name-accent">trail</span>
+              C6 <span className="al-brand-name-accent">Trail</span>
             </span>
-            <span className="al-brand-by">by Aeiforo</span>
+            <span className="al-brand-by">Vedanta · Hindustan Zinc</span>
           </span>
           <span className="al-brand-glow" aria-hidden />
         </Link>
@@ -282,12 +282,12 @@ export function ConsoleShell({
 }
 
 function tenantLabel(user: SessionUser): string {
-  if (user.tenantId === 0) return 'AL trail · platform'
-  return `${user.tenantSlug?.toUpperCase() || 'EGA'} · Manufacturer Portal`
+  if (user.tenantId === 0) return 'C6 Trail · platform'
+  return `${user.tenantSlug?.toUpperCase() || 'HZL'} · Manufacturer Portal`
 }
 
-/** Custom mark · stylised aluminium ingot profile with a trailing footprint
- *  dot. Reads as "AL · trail" without leaning on a specific glyph. */
+/** Custom mark · stylised zinc/lead ingot profile with a trailing footprint
+ *  dot. Reads as "C6 · Trail" without leaning on a specific glyph. */
 function BrandMark() {
   return (
     <svg viewBox="0 0 32 32" fill="none" aria-hidden>
@@ -301,7 +301,7 @@ function BrandMark() {
           <stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
         </linearGradient>
       </defs>
-      {/* Hexagonal mark · references aluminium's atomic packing */}
+      {/* Hexagonal mark · references the carbon-6 ring (C6 Trail) and zinc's HCP atomic packing */}
       <path
         d="M16 3.5 L26.5 9.5 L26.5 22.5 L16 28.5 L5.5 22.5 L5.5 9.5 Z"
         fill="url(#al-mark-fill)"

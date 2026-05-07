@@ -144,7 +144,7 @@ endpoints (DPP resolver, DMP resolver, BPDM pool).
 ## 7. Out-of-scope for this rebuild (queued for next PR)
 
 - `apps/web-public` viewer routing rewrite (`/dpp/[...upi]` → `/dpp/[bpnl]/[uuid]`).
-- `apps/web-console` copy refresh (EGA → Vedanta HZL).
+- `apps/web-console` copy refresh (legacy → Vedanta HZL).
 - `packages/sim` simulator presets — internal, low-impact.
 - BIS / NABL / ISO certificate numbers — flagged "verify" in presets, awaiting
   HZL data drop. The schema fields are present and ready.

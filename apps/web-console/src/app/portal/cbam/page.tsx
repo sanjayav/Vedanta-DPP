@@ -7,17 +7,18 @@ import { listCustomerDpps } from '@/lib/customer-api'
 
 export const dynamic = 'force-dynamic'
 
-// Simplified mapping of aluminium product forms to CBAM CN codes
-// (Annex I of Regulation 2023/956). The transitional period scope covers
-// Chapter 76 · these are the 8-digit CN codes that match our preset forms.
+// Simplified mapping of zinc/lead product forms to CBAM CN codes
+// (Annex I of Regulation 2023/956). HZL exports primarily fall under Chapters
+// 79 (zinc) and 78 (lead) · these are the 8-digit CN codes that match our
+// preset forms.
 const FORM_TO_CN: Record<string, { code: string; name: string }> = {
-  primary_ingot: { code: '76011000', name: 'Aluminium, not alloyed, unwrought' },
-  sow_ingot: { code: '76012000', name: 'Aluminium alloys, unwrought' },
-  extrusion_billet: { code: '76012040', name: 'Aluminium alloys, unwrought, billets' },
-  rolling_slab: { code: '76012080', name: 'Aluminium alloys, unwrought, slabs' },
-  sheet_ingot: { code: '76061100', name: 'Aluminium plates/sheets/strip > 0.2mm' },
-  foundry_alloy: { code: '76012080', name: 'Aluminium alloys, unwrought, slabs' },
-  wire_rod: { code: '76042100', name: 'Aluminium alloy bars/rods/profiles' },
+  primary_ingot: { code: '79011200', name: 'Zinc, not alloyed, unwrought (>=99.99%)' },
+  sow_ingot: { code: '79011100', name: 'Zinc, not alloyed, unwrought (>=99.995% SHG)' },
+  extrusion_billet: { code: '79012000', name: 'Zinc alloys, unwrought' },
+  rolling_slab: { code: '79012000', name: 'Zinc alloys, unwrought' },
+  sheet_ingot: { code: '78011000', name: 'Refined lead, unwrought' },
+  foundry_alloy: { code: '79012000', name: 'Zinc alloys, unwrought' },
+  wire_rod: { code: '79040000', name: 'Zinc bars, rods, profiles and wire' },
 }
 
 interface PageProps {
@@ -59,22 +60,22 @@ export default async function CbamPage({ searchParams }: PageProps) {
 
   for (const d of inWindow) {
     const cn = FORM_TO_CN[d.form] ?? {
-      code: '76999999',
+      code: '79999999',
       name: d.form.replace(/_/g, ' '),
     }
     const massTonnes = d.weightKg / 1000
     // Per Annex IV: split into direct + indirect (electricity).
     // We approximate from the carbon decomposition; production-grade pulls
     // it from `dpp.carbon.decomposition` of the full passport.
-    const directShare = 0.65 // typical for primary aluminium pre-electricity
-    const indirectShare = 0.35
+    const directShare = 0.45 // typical for hydro/RE-led RLE zinc smelting
+    const indirectShare = 0.55
     const totalCo2 = (d.cfpKgCo2ePerTonne / 1000) * massTonnes // tonnes CO₂e
 
     const key = `${cn.code}|${d.brand}`
     const cur = byCnCode[key] ?? {
       cnCode: cn.code,
       cnName: cn.name,
-      countryOfOrigin: 'AE', // EGA · Abu Dhabi, UAE
+      countryOfOrigin: 'IN', // HZL · Udaipur, Rajasthan, India
       mass: 0,
       directEmissions: 0,
       indirectEmissions: 0,
@@ -185,7 +186,7 @@ export default async function CbamPage({ searchParams }: PageProps) {
         <Headline
           label="Total mass declared"
           value={`${totalMass.toFixed(1)}`}
-          unit="t Al"
+          unit="t Zn/Pb"
           context="net mass in window"
         />
         <Headline
@@ -204,7 +205,7 @@ export default async function CbamPage({ searchParams }: PageProps) {
           label="Embedded emissions intensity"
           value={`${(intensity * 1000).toFixed(0)}`}
           unit="kg CO₂e/t"
-          context={`vs default 8.6 t/t (primary)`}
+          context={`vs default 3.5 t/t (primary zinc, RLE)`}
         />
       </section>
 
@@ -303,9 +304,10 @@ export default async function CbamPage({ searchParams }: PageProps) {
       {/* Caveat */}
       <section className="border-[var(--color-amber,#d97706)]/30 rounded-[var(--radius-md)] border bg-[#FEF3C7] p-4">
         <p className="text-[12px] text-[#78350F]">
-          <strong>Methodology note:</strong> direct vs indirect split is approximated 65/35 from the
-          DPP's carbon decomposition. For the definitive submission, request the full Annex
-          IV-aligned breakdown from EGA (the verifier statement carries it via{' '}
+          <strong>Methodology note:</strong> direct vs indirect split is approximated 45/55 from the
+          DPP's carbon decomposition (RLE-led zinc smelting is electricity-heavy). For the
+          definitive submission, request the full Annex IV-aligned breakdown from HZL (the verifier
+          statement carries it via{' '}
           <code className="font-mono">carbon.decomposition.electricity</code>). The mass-balance
           method, methodology version, and verifier attestation are all included in each DPP's
           signed envelope.
@@ -383,12 +385,12 @@ function generateCbamSubmission(input: {
       countryOfOrigin: d.countryOfOrigin,
       installations: [
         {
-          name: 'Emirates Global Aluminium PJSC',
-          locationCountry: 'AE',
+          name: 'Hindustan Zinc Limited',
+          locationCountry: 'IN',
           netMassTonnes: round(d.mass, 3),
           directEmbeddedEmissions_tCO2e: round(d.directEmissions, 3),
           indirectEmbeddedEmissions_tCO2e: round(d.indirectEmissions, 3),
-          methodologyApplied: 'ISO 14067:2018 + IAI v2.0 + PCR 2022:08 v1.0',
+          methodologyApplied: 'ISO 14067:2018 + Chem-X v1.0 + TfS PCF v3.0',
           verifier: d.verifierName ?? null,
           sourceDpps: d.dppCount,
         },

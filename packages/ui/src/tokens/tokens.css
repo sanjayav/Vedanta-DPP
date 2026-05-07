@@ -10,8 +10,8 @@
                                           Fraunces display, trail-amber accent.
 
    Legacy themes (kept for reference, do not extend):
-     [data-theme='enterprise'] — original EGA aluminium dashboards.
-     [data-theme='editorial']  — original EGA aluminium public viewer.
+     [data-theme='enterprise'] — pre-rebrand authenticated dashboards.
+     [data-theme='editorial']  — pre-rebrand public viewer.
 
    Switch themes via <html data-theme="c6trail-enterprise"> at the document root.
    --------------------------------------------------------------------------
@@ -109,7 +109,7 @@
               Stripe Annual Letter, NYT "Snow Fall" scroll-driven journalism.
    ────────────────────────────────────────────────────────────────────────── */
 [data-theme='editorial'] {
-  /* Palette — warm cream + ink + desert-sun gold accent (§10.3) */
+  /* Palette — warm cream + ink + amber accent (§10.3) */
   --color-ink: #0a0908;
   --color-ink-soft: #1f1b16;
   --color-graphite: #6b6055;

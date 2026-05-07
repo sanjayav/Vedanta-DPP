@@ -176,7 +176,7 @@ export function InitiateTransferDialog({ passports, myEmail }: Props) {
                   type="text"
                   name="toOrg"
                   required
-                  placeholder="BMW AG · Dingolfing Plant"
+                  placeholder="Tata Steel · Jamshedpur Galvanising"
                   className="ot-dlg__input"
                 />
               </label>
@@ -186,7 +186,7 @@ export function InitiateTransferDialog({ passports, myEmail }: Props) {
                   type="text"
                   name="toDid"
                   required
-                  placeholder="did:web:bmw.de:procurement"
+                  placeholder="did:web:tatasteel.com:procurement"
                   className="ot-dlg__input"
                 />
               </label>
@@ -198,7 +198,7 @@ export function InitiateTransferDialog({ passports, myEmail }: Props) {
                 <input
                   type="text"
                   name="reference"
-                  placeholder="PO-BMW-2026-0418"
+                  placeholder="PO-TATA-2026-0418"
                   className="ot-dlg__input"
                 />
               </label>
@@ -207,7 +207,7 @@ export function InitiateTransferDialog({ passports, myEmail }: Props) {
                 <input
                   type="text"
                   name="fromOrg"
-                  defaultValue="EGA Commercial Operations"
+                  defaultValue="HZL Commercial Operations"
                   className="ot-dlg__input"
                 />
               </label>
@@ -218,7 +218,7 @@ export function InitiateTransferDialog({ passports, myEmail }: Props) {
               <textarea
                 name="note"
                 rows={2}
-                placeholder="Q2 contract delivery #4 · 24t to Dingolfing."
+                placeholder="Q2 contract delivery #4 · 24t to Jamshedpur."
                 className="ot-dlg__input ot-dlg__textarea"
               />
             </label>

@@ -526,8 +526,9 @@ function formatValue(v: unknown): string {
 // ── Draft-level AI auto-fill ──────────────────────────────────────────
 
 // Demo-grade synthesizer for attributes the library preset does not cover.
-// Anchored to CelestiAL/CelestiAL-R reference values so the resulting passport
-// passes schema validation and reads believably in the public viewer.
+// Anchored to HZL EcoZen / CGG Jumbo / Refined Lead 99.99 reference values so
+// the resulting passport passes schema validation and reads believably in the
+// public viewer.
 function synthesizeAttrValue(attr: DraftAttribute): unknown {
   const path = attr.attributePath.toLowerCase()
   const label = attr.label.toLowerCase()
@@ -535,73 +536,76 @@ function synthesizeAttrValue(attr: DraftAttribute): unknown {
   // Identifiers
   if (path.endsWith('.castnumber'))
     return `C-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-AUTO`
-  if (path.endsWith('.itemserial')) return 'EB-AUTO-001'
-  if (path.endsWith('.gtin')) return '07640100040030'
+  if (path.endsWith('.itemserial')) return 'HZL-AUTO-001'
+  if (path.endsWith('.gtin')) return '08901234500017'
   if (path.endsWith('.digitallinkurl'))
-    return 'https://id.ega.example/01/07640100040030/21/EB-AUTO-001'
+    return 'https://passport.hzlindia.com/01/08901234500017/21/HZL-AUTO-001'
   if (path.endsWith('.lotnumber')) return 'LOT-AUTO-2026-001'
-  if (path.endsWith('.hscode')) return '7601.10'
-  if (path.endsWith('.tariccode')) return '7601100000'
-  if (path.endsWith('.esprproductcategory')) return 'aluminium_semis'
-  if (path.includes('upi')) return 'EGA-AUTO-2026-0001'
-  if (path === 'identification.alloyen' || path.endsWith('.alloyen')) return '6063'
-  if (path === 'identification.alloyaa' || path.endsWith('.alloyaa')) return '6063A'
-  if (path.includes('brand')) return 'CelestiAL'
-  if (path.endsWith('.product') || path.endsWith('.productname')) return 'Extrusion billet'
-  if (path.endsWith('.form')) return 'extrusion_billet'
+  if (path.endsWith('.hscode')) return '7901.11'
+  if (path.endsWith('.tariccode')) return '7901110000'
+  if (path.endsWith('.esprproductcategory')) return 'non_ferrous_metal_ingots'
+  if (path.includes('upi')) return 'HZL-AUTO-2026-0001'
+  if (path === 'identification.gradecode' || path.endsWith('.gradecode')) return 'SHG 99.995'
+  if (path === 'identification.metal' || path.endsWith('.metal')) return 'zinc'
+  if (path.includes('brand')) return 'EcoZen'
+  if (path.endsWith('.product') || path.endsWith('.productname')) return 'EcoZen SHG 99.995 ingot'
+  if (path.endsWith('.form')) return 'ingot'
 
-  // Chemistry · typical 6063 spec midpoints
+  // Chemistry · typical SHG 99.995 zinc spec midpoints (IS 209:1992 Zn1)
   if (path.startsWith('chemistry.')) {
-    if (path.endsWith('.al') || path.endsWith('.aluminium') || path.endsWith('.aluminum'))
-      return 99.0
-    if (path.endsWith('.si')) return 0.5
-    if (path.endsWith('.fe')) return 0.2
-    if (path.endsWith('.mg')) return 0.55
-    if (path.endsWith('.cu')) return 0.05
-    if (path.endsWith('.mn')) return 0.05
-    if (path.endsWith('.zn')) return 0.05
-    if (path.endsWith('.ti')) return 0.02
-    if (path.endsWith('.cr')) return 0.02
-    return 0.05
+    if (path.endsWith('.zn') || path.endsWith('.zinc')) return 99.995
+    if (path.endsWith('.pb') || path.endsWith('.lead')) return 0.003
+    if (path.endsWith('.cd')) return 0.003
+    if (path.endsWith('.fe')) return 0.002
+    if (path.endsWith('.sn')) return 0.001
+    if (path.endsWith('.cu')) return 0.001
+    if (path.endsWith('.al')) return 0.001
+    return 0.001
   }
 
-  // Carbon / footprint
+  // Carbon / footprint · HZL EcoZen SHG 99.995 (kg CO₂e/kg Zn)
   if (path.includes('cfp') || path.includes('carbonfootprint') || path.includes('co2')) {
-    if (path.includes('alumina')) return 1530
-    if (path.includes('electrolysis')) return 1531
-    if (path.includes('electricity')) return 290
-    if (path.includes('casthouse') || path.includes('casting')) return 220
-    return 4273
+    if (path.includes('mining') || path.includes('concentrate')) return 0.21
+    if (path.includes('roast') || path.includes('roasting')) return 0.18
+    if (path.includes('leach') || path.includes('leaching')) return 0.12
+    if (path.includes('electrowinning') || path.includes('electrolysis')) return 0.32
+    if (path.includes('electricity')) return 0.28
+    if (path.includes('casthouse') || path.includes('casting') || path.includes('melting'))
+      return 0.12
+    return 0.95
   }
 
-  // Energy
-  if (path.includes('kwhperkg') || path.includes('specificenergy')) return 12.8
-  if (path.includes('kwh')) return 13000
+  // Energy · HZL Chanderiya RLE specific energy ~3.6 MWh/t Zn = 3.6 kWh/kg
+  if (path.includes('kwhperkg') || path.includes('specificenergy')) return 3.6
+  if (path.includes('kwh')) return 3600
 
-  // Smelting
-  if (path.includes('amperage') || path.endsWith('.amperageka')) return 465
-  if (path.includes('currentefficiency')) return 95.2
-  if (path.includes('aefrequency') || path.includes('anodeeffect')) return 0.05
-  if (path.includes('temperature')) return 960
+  // Electrowinning (zinc)
+  if (path.includes('amperage') || path.endsWith('.amperageka')) return 25
+  if (path.includes('currentefficiency')) return 92.0
+  if (path.includes('temperature')) return 38
 
-  // Physical dimensions
-  if (path.endsWith('.weightkg') || path.includes('weight')) return 1380
-  if (path.endsWith('.lengthmm') || path.includes('length')) return 7000
-  if (path.endsWith('.diametermm') || path.includes('diameter')) return 178
-  if (path.includes('lengthbow') || path.includes('bowtolerance')) return 1.5
-  if (path.includes('squareness')) return 0.5
+  // Physical dimensions · HZL standard ingot 25 kg, jumbo 950 kg, bundle 1000 kg
+  if (path.endsWith('.weightkg') || path.includes('weight')) return 25
+  if (path.endsWith('.lengthmm') || path.includes('length')) return 700
+  if (path.endsWith('.widthmm') || path.includes('width')) return 100
+  if (path.endsWith('.heightmm') || path.includes('height')) return 60
+  if (path.endsWith('.diametermm') || path.includes('diameter')) return 0
   if (path.includes('tolerance')) return 0.5
 
-  // Recycled / circularity
+  // Recycled / circularity · HZL primary metal · 0% recycled, mass_balance custody
   if (path.includes('recycled') || path.includes('postconsumer') || path.includes('preconsumer')) {
-    return path.includes('postconsumer') ? 20 : path.includes('preconsumer') ? 60 : 80
+    return 0
   }
+  if (path.includes('chainofcustody') || path.includes('custodymodel')) return 'mass_balance'
 
-  // ASI / certs / refs
-  if (path.includes('asicoc') || path.includes('coccertificate')) return 'ASI-CoC-#428'
-  if (path.includes('asiperformance')) return 'ASI-PS-V3-2024'
-  if (path.includes('iso14067')) return 'DNV-2024-ASR-C730945'
-  if (path.includes('iso17025')) return 'EGA-LAB-17025-2024'
+  // Certifications / certs / refs
+  if (path.includes('izazinc') || path.includes('zincmark')) return 'IZA-Zinc-Mark-CLZS-2026'
+  if (path.includes('icmm')) return 'ICMM-2025-08-13'
+  if (path.includes('iso14067')) return 'DNV-2026-ASR-EcoZen-001'
+  if (path.includes('iso17025')) return 'HZL-LAB-17025-2024'
+  if (path.includes('iso50001')) return 'HZL-ISO50001-2025'
+  if (path.includes('epd') || path.includes('environmentalproductdeclaration'))
+    return 'EPD-IES-0006472:001'
   if (path.includes('certificate') || path.includes('certificateref')) return 'AUTO-CERT-2026-001'
 
   // Dates / timestamps
@@ -619,10 +623,11 @@ function synthesizeAttrValue(attr: DraftAttribute): unknown {
     return true
   }
 
-  // Site / origin
-  if (path.includes('site') || path.includes('plant')) return 'Al Taweelah'
-  if (path.includes('country') || path.includes('origin')) return 'AE'
-  if (path.includes('supplier')) return 'Guinea Alumina Corp'
+  // Site / origin · HZL Chanderiya is the EcoZen smelter; concentrate sourced
+  // from Rampura Agucha and Sindesar Khurd captive mines.
+  if (path.includes('site') || path.includes('plant')) return 'Chanderiya Lead-Zinc Smelter'
+  if (path.includes('country') || path.includes('origin')) return 'IN'
+  if (path.includes('supplier')) return 'Rampura Agucha Mine (HZL captive)'
 
   // Generic numerics by label
   if (label.includes('percent') || label.includes('%')) return 0
@@ -937,7 +942,7 @@ function IotPicker({
 
       {showNew && (
         <div className="mt-3 space-y-3 border-t border-[var(--surface-border)] pt-3">
-          <Input label="Name" value={name} onChange={setName} placeholder="EGA Casthouse SCADA" />
+          <Input label="Name" value={name} onChange={setName} placeholder="HZL Smelter SCADA" />
           <Select
             label="Kind"
             value={kind}
@@ -954,7 +959,7 @@ function IotPicker({
             label="Endpoint (optional)"
             value={endpoint}
             onChange={setEndpoint}
-            placeholder="https://mes.ega.local/api/casts"
+            placeholder="https://historian.hzlindia.local/api/casts"
           />
           <div>
             <label className="mb-1 block font-mono text-[10px] uppercase tracking-[0.1em] text-[var(--fg-subtle)]">
@@ -1051,7 +1056,7 @@ function AttributeDrawer({
       tag: 'IOT',
       icon: Plug,
       value: attribute.source === 'iot' ? formatValue(attribute.value) : '—',
-      hint: insight.iotChannel ?? 'Connect a DPC / iPOTS / iRPMS source on the casthouse stage.',
+      hint: insight.iotChannel ?? 'Connect the HZL Plant Historian / SCADA source on the smelter stage.',
     },
     {
       key: 'library',
@@ -1059,7 +1064,7 @@ function AttributeDrawer({
       tag: 'LIBRARY',
       icon: Library,
       value: attribute.source === 'library' ? formatValue(attribute.value) : '—',
-      hint: insight.libraryHint ?? 'Pull a typical value from the EGA-anchored simulator presets.',
+      hint: insight.libraryHint ?? 'Pull a typical value from the HZL-anchored simulator presets.',
     },
     {
       key: 'history',
@@ -1070,17 +1075,17 @@ function AttributeDrawer({
     },
     {
       key: 'benchmark',
-      label: 'EGA average',
+      label: 'HZL fleet average',
       tag: 'BENCHMARK',
-      value: insight.egaAverage ?? '—',
-      hint: insight.egaAverageRef ?? 'Aggregated EGA fleet average.',
+      value: insight.hzlAverage ?? '—',
+      hint: insight.hzlAverageRef ?? 'Aggregated HZL fleet average.',
     },
     {
       key: 'peer',
       label: 'Industry baseline',
       tag: 'PEER',
       value: insight.industryBaseline ?? '—',
-      hint: insight.industryBaselineRef ?? 'IAI 2.0 / IEA peer baseline.',
+      hint: insight.industryBaselineRef ?? 'IZA / worldsteel peer baseline.',
     },
   ]
 
@@ -1428,9 +1433,9 @@ function Sparkline({ points }: { points: number[] }) {
   )
 }
 
-// Hardcoded insights anchored to the EGA Product / Technology booklets so we
-// can ship without an LLM dependency. Replace with /api/v1/insights once
-// real provenance + history queries are wired.
+// Hardcoded insights anchored to the HZL Product Brochure 2025 + Chem-X
+// guidelines so we can ship without an LLM dependency. Replace with
+// /api/v1/insights once real provenance + history queries are wired.
 interface AttributeInsight {
   unit: string | null
   definition: string
@@ -1439,8 +1444,8 @@ interface AttributeInsight {
   libraryHint: string | null
   lastFiled: string | null
   lastFiledRef: string | null
-  egaAverage: string | null
-  egaAverageRef: string | null
+  hzlAverage: string | null
+  hzlAverageRef: string | null
   industryBaseline: string | null
   industryBaselineRef: string | null
   history: { year: string; label: string; value: number }[]
@@ -1459,8 +1464,8 @@ function attributeInsight(attribute: DraftAttribute, _stage: DraftStage): Attrib
     libraryHint: null,
     lastFiled: null,
     lastFiledRef: null,
-    egaAverage: null,
-    egaAverageRef: null,
+    hzlAverage: null,
+    hzlAverageRef: null,
     industryBaseline: null,
     industryBaselineRef: null,
     history: [],
@@ -1468,102 +1473,109 @@ function attributeInsight(attribute: DraftAttribute, _stage: DraftStage): Attrib
       'No automated insight available for this attribute yet. Refer to the regulatory anchor for the canonical specification.',
   }
 
-  if (path === 'carbon.decomposition.electrolysis' || path === 'carbon.decomposition.electricity') {
+  if (
+    path === 'carbon.decomposition.electrowinning' ||
+    path === 'carbon.decomposition.electrolysis' ||
+    path === 'carbon.decomposition.electricity'
+  ) {
     return {
       ...empty,
-      unit: 'kg CO₂e/t Al',
+      unit: 'kg CO₂e/kg Zn',
       definition:
-        'Carbon footprint contribution from the electrolysis stage. Reported per ISO 14067:2018 with a cradle-to-gate boundary; verified by an accredited third party (DNV).',
+        'Carbon footprint contribution from the zinc electrowinning + roast/leach stages. Reported per ISO 14067:2018 with a cradle-to-gate boundary; verified by an accredited third party and anchored to the EPD-IES-0006472:001 EcoZen declaration.',
       calcMethod:
-        'Hall-Héroult Scope 1 (anode oxidation, PFCs) + Scope 2 (grid emission factor × kWh/kg Al). EGA DX+ Ultra: 12.8 kWh/kg × site EF.',
-      iotChannel: 'egadx.electrolysis.cell.specific_energy_kwh_per_kg → iPOTS',
-      libraryHint: 'CelestiAL preset: 1531 (electrolysis) + 290 (electricity) kg CO₂e/t.',
-      lastFiled: '4,273',
-      lastFiledRef: 'DNV-2024-ASR-C730945-CelestiAL · ISO 14067:2018',
-      egaAverage: '5,890',
-      egaAverageRef: 'EGA fleet average 2023',
-      industryBaseline: '14,600',
-      industryBaselineRef: 'IAI 2.0 global average',
+        'RLE Scope 1 (roaster + acid plant) + Scope 2 (grid emission factor × kWh/kg Zn). HZL Chanderiya RLE: ~3.6 MWh/t Zn × site EF (with 70% RE share via the Serentica round-the-clock PDA).',
+      iotChannel: 'hzl.chanderiya.electrowinning.cellhouse.specific_energy_kwh_per_kg → Historian',
+      libraryHint: 'EcoZen preset: 0.32 (electrowinning) + 0.28 (electricity) kg CO₂e/kg.',
+      lastFiled: '0.95',
+      lastFiledRef: 'EPD-IES-0006472:001 · ISO 14067:2018 · International EPD System',
+      hzlAverage: '1.85',
+      hzlAverageRef: 'HZL fleet average 2024 (Chem-X PCF)',
+      industryBaseline: '3.7',
+      industryBaselineRef: 'IZA global average',
       history: [
-        { year: '2020', label: 'Pre-PPA', value: 11.2 },
-        { year: '2021', label: 'Solar PPA Q3', value: 8.8 },
-        { year: '2022', label: 'Full year solar', value: 5.4 },
-        { year: '2023', label: 'CelestiAL verified', value: 4.3 },
+        { year: '2021', label: 'Pre-RE PDA', value: 2.4 },
+        { year: '2022', label: 'Partial RE share', value: 1.8 },
+        { year: '2023', label: 'EcoZen EPD verified', value: 1.05 },
+        { year: '2024', label: 'EcoZen post-RE ramp', value: 0.95 },
       ],
       aiInsight:
-        'CelestiAL benefits from the DEWA MBR Solar Park PPA (100% renewable) · that drives the electrolysis CFP to ~30% of the IAI baseline. If the cast number falls outside Solar PPA hours (<10% of EGA load), use the grid-mix value from the Library card instead.',
+        'EcoZen benefits from the Serentica round-the-clock RE PDA (530 MW · ~70% RE share at the Chanderiya gate), which drives the RLE CFP to ~26% of the IZA global baseline. If the cast falls outside the RE delivery window, use the grid-mix value from the Library card instead.',
     }
   }
 
-  if (path === 'smelting.amperageKa') {
+  if (path === 'smelting.amperageKa' || path === 'electrowinning.amperageKa') {
     return {
       ...empty,
       unit: 'kA',
       definition:
-        'Operating amperage of the reduction cell. Higher amperage means higher productivity but also higher specific energy unless cell design compensates.',
-      calcMethod: 'Live read from the DPC pot controller; daily mean over the cast window.',
-      iotChannel: 'egadx.electrolysis.cell.amperage_kA → DPC',
-      libraryHint: 'Set by cell technology · see Library presets.',
-      lastFiled: '465',
-      lastFiledRef: 'DX+ Ultra Al Taweelah PL3',
-      egaAverage: '472',
-      egaAverageRef: 'DX+ Ultra fleet, Sep 2020 – Feb 2021',
-      industryBaseline: '350',
-      industryBaselineRef: 'Industry P50 (IAI)',
+        'Operating amperage of the zinc electrowinning cellhouse. Cellhouse current density and amperage drive deposition rate and cathode quality at Chanderiya.',
+      calcMethod: 'Live read from the cellhouse rectifier SCADA; daily mean over the cast window.',
+      iotChannel: 'hzl.chanderiya.electrowinning.rectifier.amperage_kA → Historian',
+      libraryHint: 'Set by cellhouse circuit configuration · see Library presets.',
+      lastFiled: '25',
+      lastFiledRef: 'Chanderiya CLZS Cellhouse 2024',
+      hzlAverage: '24.5',
+      hzlAverageRef: 'HZL Chanderiya cellhouse, FY24',
+      industryBaseline: '20',
+      industryBaselineRef: 'Industry P50 (IZA)',
       history: [
-        { year: '2018', label: 'DX+ commissioning', value: 410 },
-        { year: '2019', label: 'DX+ Ultra ALBA', value: 465 },
-        { year: '2021', label: 'PL3 ramp', value: 472 },
+        { year: '2021', label: 'Cellhouse upgrade', value: 22 },
+        { year: '2023', label: 'Post-rectifier rebuild', value: 24 },
+        { year: '2024', label: 'Steady-state', value: 25 },
       ],
       aiInsight:
-        'EGA DX+ Ultra runs at the industry-leading 465 kA. If your value is significantly below the EGA average, check whether a partial line-stop or amperage limitation event was active during the cast window.',
+        'HZL Chanderiya runs the cellhouse at ~25 kA. If your value is significantly below the HZL fleet average, check whether a partial cellhouse trip or rectifier de-rating event was active during the cast window.',
     }
   }
 
-  if (path === 'smelting.currentEfficiencyPct') {
+  if (
+    path === 'smelting.currentEfficiencyPct' ||
+    path === 'electrowinning.currentEfficiencyPct'
+  ) {
     return {
       ...empty,
       unit: '%',
       definition:
-        'Faradaic current efficiency of the cell · fraction of charge actually used to deposit aluminium vs lost to back-reactions.',
+        'Cathode current efficiency · fraction of electrolysis current depositing zinc on the cathode vs lost to side reactions (mainly hydrogen evolution and impurity co-deposition).',
       calcMethod:
-        '(Mass of Al produced / Theoretical mass at applied charge) × 100. Theoretical = I × t / 2.98 g per A·h.',
-      iotChannel: 'egadx.electrolysis.cell.current_efficiency_pct → DPC',
-      libraryHint: 'CelestiAL preset: 95.2%; benchmark: 93%',
-      lastFiled: '95.2',
-      lastFiledRef: 'DX+ Ultra ALBA Sep 2020 – Feb 2021',
-      egaAverage: '94.8',
-      egaAverageRef: 'EGA fleet 2023',
-      industryBaseline: '93.0',
-      industryBaselineRef: 'IAI v2.0 global',
+        '(Mass of Zn deposited / Theoretical mass at applied charge) × 100. Theoretical = I × t / 1.22 g per A·h for Zn²⁺.',
+      iotChannel: 'hzl.chanderiya.electrowinning.cellhouse.current_efficiency_pct → Historian',
+      libraryHint: 'EcoZen preset: 92.0%; benchmark: 90%.',
+      lastFiled: '92.0',
+      lastFiledRef: 'Chanderiya CLZS Cellhouse 2024',
+      hzlAverage: '91.5',
+      hzlAverageRef: 'HZL fleet 2024',
+      industryBaseline: '90.0',
+      industryBaselineRef: 'IZA global',
       history: [
-        { year: '2015', label: 'D18+', value: 95.0 },
-        { year: '2018', label: 'D20+', value: 93.05 },
-        { year: '2019', label: 'DX+ Ultra', value: 95.2 },
+        { year: '2021', label: 'Cellhouse upgrade', value: 90.5 },
+        { year: '2023', label: 'Electrolyte purity', value: 91.5 },
+        { year: '2024', label: 'Steady-state', value: 92.0 },
       ],
       aiInsight:
-        'Values < 93% suggest excess metal turbulence or pad-roll noise · check the AE frequency attribute. Above 96% is rarely sustained without anode quality variance.',
+        'Values < 90% suggest electrolyte impurity (Co, Ni, Sb, Ge) ingress or rising acid concentration. Above 93% is rarely sustained without electrolyte purification cycles holding very tight.',
     }
   }
 
   if (
     path.startsWith('chemistry.') ||
-    path === 'identification.alloyEn' ||
-    path === 'identification.alloyAa'
+    path === 'identification.gradeCode' ||
+    path === 'identification.metal'
   ) {
     return {
       ...empty,
       unit: path.includes('Pct') ? '%' : null,
-      definition: `${attribute.label}. Spectrometric chemistry value from the casthouse lab; governs downstream alloy designation per EN 573-3 / Aluminum Association.`,
+      definition: `${attribute.label}. Analytical chemistry value from the HZL NABL-accredited lab; governs downstream grade designation per IS 209:1992 (zinc) / IS 27:2023 (lead) / ASTM B6-18 / ASTM B852-13.`,
       calcMethod:
-        'Optical Emission Spectrometry on the cast tap sample, per ISO/IEC 17025-accredited lab method. EGA: ARL iSpark or Thermo ARL 4460.',
-      iotChannel: 'egadx.casthouse.spectro.{element}_pct → iRPMS',
-      libraryHint: 'EGA standard chemistry windows by alloy family.',
-      industryBaseline: 'Per EN 573-3 specification window',
-      industryBaselineRef: 'EN 573-3 Annex A',
+        'Inductively Coupled Plasma Optical Emission Spectroscopy (ICP-OES) on the cast tap sample, per ISO/IEC 17025-accredited lab method (HZL-LAB-17025-2024).',
+      iotChannel: 'hzl.chanderiya.lab.icpoes.{element}_pct → Historian',
+      libraryHint: 'HZL standard chemistry windows by grade family.',
+      industryBaseline: 'Per IS 209 / ASTM B6 specification window',
+      industryBaselineRef: 'IS 209:1992 (Zn1) / ASTM B6-18',
       history: [],
       aiInsight:
-        'Spectrometer values must fall inside the EN 573-3 designation window for the alloy. Outside-window samples auto-flag for re-test before tap-out.',
+        'ICP-OES values must fall inside the IS 209:1992 / ASTM B6-18 designation window for the grade. Outside-window samples auto-flag for re-test before tap-out.',
     }
   }
 
@@ -1572,21 +1584,21 @@ function attributeInsight(attribute: DraftAttribute, _stage: DraftStage): Attrib
       ...empty,
       unit: '%',
       definition:
-        'Verified recycled content (post-consumer + pre-consumer) by mass-balance under the chosen chain-of-custody model.',
-      calcMethod: 'GRS / RCS mass balance verified under ASI Chain-of-Custody V2.1.',
-      iotChannel: 'egadx.scrap.input_kg → iRPMS',
-      libraryHint: 'CelestiAL-R preset: 80% via mass-balance.',
-      lastFiled: '80',
-      lastFiledRef: 'ASI CoC #428',
-      industryBaseline: '0–25',
-      industryBaselineRef: 'EU Aluminium 2023 average',
+        'Verified recycled content by mass-balance under the chosen chain-of-custody model. HZL EcoZen, CGG Jumbo and Refined Lead 99.99 are all primary metal from captive mine concentrate · physical recycled content is 0%.',
+      calcMethod: 'Chem-X mass-balance accounting · chain-of-custody set to mass_balance.',
+      iotChannel: 'hzl.chanderiya.feed.concentrate_input_kg → Historian',
+      libraryHint: 'EcoZen / CGG Jumbo / Refined Lead 99.99: 0% recycled (primary metal).',
+      lastFiled: '0',
+      lastFiledRef: 'Chem-X mass_balance custody model',
+      industryBaseline: '0–10',
+      industryBaselineRef: 'IZA global zinc primary metal 2023',
       history: [
-        { year: '2021', label: 'Launch', value: 60 },
-        { year: '2022', label: 'Scaled scrap input', value: 75 },
-        { year: '2023', label: 'CelestiAL-R verified', value: 80 },
+        { year: '2022', label: 'Primary metal', value: 0 },
+        { year: '2023', label: 'Primary metal', value: 0 },
+        { year: '2024', label: 'Primary metal', value: 0 },
       ],
       aiInsight:
-        'For CelestiAL-R, mass-balance accounting allows 100% allocation to a single passport even if physical scrap content is lower across the line · the certificate ref must accompany the value.',
+        'HZL primary zinc and lead products carry 0% recycled content. The chain-of-custody field is set to mass_balance per Chem-X. Where downstream customers require recycled-content claims, route them via HZL DRI-grade fines processing rather than this passport.',
     }
   }
 
@@ -1595,13 +1607,13 @@ function attributeInsight(attribute: DraftAttribute, _stage: DraftStage): Attrib
       ...empty,
       definition:
         'Unique identifier for the cast · typically site-prefixed and date-coded. Anchors all attribute values, audit log entries, and the public viewer URL.',
-      calcMethod: 'Issued at tap-out from the casthouse MES (iRPMS).',
-      iotChannel: 'egadx.casthouse.cast.cast_number → iRPMS',
-      lastFiled: 'C-20240511-AT-A',
+      calcMethod: 'Issued at tap-out from the HZL Plant Historian.',
+      iotChannel: 'hzl.chanderiya.casthouse.cast.cast_number → Historian',
+      lastFiled: 'C-20260511-CHA-A',
       industryBaseline: null,
       history: [],
       aiInsight:
-        'Cast number must match the iRPMS production reporting record exactly. If you fire a passport with a cast number that does not exist in iRPMS, the verifier will reject the linkage at audit time.',
+        'Cast number must match the HZL Plant Historian production reporting record exactly. If you fire a passport with a cast number that does not exist in the Historian, the verifier will reject the linkage at audit time.',
     }
   }
 
@@ -1609,14 +1621,14 @@ function attributeInsight(attribute: DraftAttribute, _stage: DraftStage): Attrib
     return {
       ...empty,
       unit: 'kg',
-      definition: 'Net weight of the product unit (single ingot / billet / sow).',
+      definition: 'Net weight of the product unit (single ingot / jumbo / bundle).',
       calcMethod: 'Casthouse load cell at tap-out, calibrated weekly per ISO/IEC 17025.',
-      iotChannel: 'egadx.casthouse.scale.weight_kg → iRPMS',
-      libraryHint: 'CelestiAL billet: 1380 kg; standard sow: 680 kg.',
+      iotChannel: 'hzl.chanderiya.casthouse.scale.weight_kg → Historian',
+      libraryHint: 'EcoZen ingot: 25 kg; CGG jumbo: 950 kg; bundle: 1000 kg.',
       industryBaseline: null,
       history: [],
       aiInsight:
-        'Weight outside the form-factor range (e.g. extrusion billet < 1000 kg or > 1600 kg) usually indicates a length-cut variance · check the lengthMm attribute.',
+        'Weight outside the form-factor range (e.g. SHG ingot < 24 kg or > 26 kg, jumbo < 925 kg or > 975 kg) usually indicates a mould-fill variance · check the cast tap parameters and mould temperature attribute.',
     }
   }
 
@@ -1857,7 +1869,7 @@ function ExternalEntry({
         label="Assignee email"
         value={email}
         onChange={setEmail}
-        placeholder="ops@guinea-alumina.com"
+        placeholder="ops@hzlindia.com"
       />
       <Input
         label="Name (optional)"
@@ -1869,7 +1881,7 @@ function ExternalEntry({
         label="Org (optional)"
         value={org}
         onChange={setOrg}
-        placeholder="Guinea Alumina Corp"
+        placeholder="Rampura Agucha Mine"
       />
       <Input
         label="Note (optional)"

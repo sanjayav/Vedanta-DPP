@@ -33,7 +33,7 @@ export async function initiateTransferAction(
 
   const passportUpi = String(formData.get('passportUpi') ?? '').trim()
   const productLabel = String(formData.get('productLabel') ?? '').trim() || passportUpi
-  const fromOrg = String(formData.get('fromOrg') ?? '').trim() || 'EGA Commercial Operations'
+  const fromOrg = String(formData.get('fromOrg') ?? '').trim() || 'HZL Commercial Operations'
   const toOrg = String(formData.get('toOrg') ?? '').trim()
   const toDid = String(formData.get('toDid') ?? '').trim()
   const kindRaw = String(formData.get('kind') ?? 'ownership') as TransferKind
@@ -50,7 +50,7 @@ export async function initiateTransferAction(
     passportUpi,
     productLabel,
     fromOrg,
-    fromDid: 'did:web:dpp.ega.local',
+    fromDid: 'did:web:passport.hzlindia.com:BPNLHZL0000001QX',
     toOrg,
     toDid,
     kind,

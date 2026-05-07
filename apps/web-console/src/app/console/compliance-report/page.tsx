@@ -20,7 +20,7 @@ import { fetchPlantStatus, type Signal } from '@/lib/plant-monitor-api'
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
 
-// Regulatory deadline calendar — sourced from EGA's compliance roadmap. The
+// Regulatory deadline calendar — sourced from HZL's compliance roadmap. The
 // page shows whichever deadlines are still ahead, sorted by urgency.
 const DEADLINES: { name: string; date: string; reference: string }[] = [
   {
@@ -29,9 +29,9 @@ const DEADLINES: { name: string; date: string; reference: string }[] = [
     reference: 'EU 2023/956 · Q4 2025 declaration',
   },
   {
-    name: 'EU ESPR · Aluminium DPP mandate',
+    name: 'EU ESPR · zinc/lead DPP scope review',
     date: '2027-02-18',
-    reference: 'EU 2024/1781 · DPP for EU-marketed aluminium',
+    reference: 'EU 2024/1781 · ESPR Annex III base-metals delegated act',
   },
   {
     name: 'EU CBAM · definitive period start',
@@ -39,9 +39,9 @@ const DEADLINES: { name: string; date: string; reference: string }[] = [
     reference: 'EU 2023/956 · paid-permit purchases begin',
   },
   {
-    name: 'EU Aluminium Delegated Act · final',
-    date: '2026-12-31',
-    reference: 'EU 2025/486 (draft) · expected final adoption',
+    name: 'EU Battery Regulation · supply-chain DD',
+    date: '2026-08-18',
+    reference: 'EU 2023/1542 · Article 49 due diligence (lead-acid scope)',
   },
 ]
 
@@ -52,9 +52,9 @@ const REGULATIONS: { name: string; reference: string; documentId: string }[] = [
   { name: 'RoHS 2', reference: '2011/65/EU', documentId: 'doc-reg-rohs' },
   { name: 'PFAS · REACH Annex XVII', reference: 'EU 2024/879', documentId: 'doc-reg-pfas' },
   {
-    name: 'EU Aluminium Delegated Act',
-    reference: 'EU 2025/486 (draft)',
-    documentId: 'doc-reg-alu-da',
+    name: 'EU Battery Regulation',
+    reference: 'EU 2023/1542',
+    documentId: 'doc-reg-batt',
   },
   { name: 'Conflict Minerals (3TG)', reference: 'EU 2017/821', documentId: 'doc-reg-3tg' },
 ]

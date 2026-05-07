@@ -108,7 +108,7 @@ async def export_bundle(
     files.append(("audit-log.json", audit_bytes))
 
     cover = {
-        "@context": "https://schemas.dpp.ega.ae/contexts/bundle/v1.jsonld",
+        "@context": "https://passport.hzlindia.com/contexts/bundle/v1.jsonld",
         "type": "DppExportBundle",
         "receiptId": receipt_id,
         "label": label or f"Export {now.date().isoformat()}",
@@ -121,7 +121,8 @@ async def export_bundle(
         "standards": [
             "ESPR (EU) 2024/1781",
             "ISO 14067:2018",
-            "ASI Performance V3.1 / CoC V2.1",
+            "ISO 22095:2020 (Chain of Custody)",
+            "Chem-X v1.0 (Sustainability + Business Identity / CX-0010)",
             "W3C Verifiable Credentials 2.0",
         ],
     }
@@ -132,7 +133,7 @@ async def export_bundle(
     receipt_envelope = sign_dpp_envelope(
         {
             "upi": {"digitalLinkUrl": f"{settings.dpp_resolver_base_url}/exports/{receipt_id}"},
-            "producer": {"name": "EGA DPP Platform"},
+            "producer": {"name": "Vedanta · Hindustan Zinc Passport Platform"},
             "meta": {"expiresAt": (now.replace(year=now.year + 10)).isoformat()},
             "_bundle": cover,  # signed-over so tampering invalidates the receipt
         }

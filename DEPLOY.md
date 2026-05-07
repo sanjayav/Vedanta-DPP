@@ -1,4 +1,4 @@
-# Deploying the EGA DPP platform
+# Deploying the C6 Trail · Vedanta · Hindustan Zinc DPP platform
 
 The platform is three services: two Next.js apps and one FastAPI backend. The
 recommended cloud split is:
@@ -90,7 +90,7 @@ same GitHub repo.
 ### web-public
 
 1. <https://vercel.com/new> → **Import Git Repository** → pick this repo.
-2. **Project Name**: `ega-dpp-web-public` (or whatever you like).
+2. **Project Name**: `c6trail-web-public` (or whatever you like).
 3. **Root Directory**: `apps/web-public` ← critical, click *Edit*.
 4. **Framework Preset**: Vercel autodetects Next.js. Leave it.
 5. **Build / Install commands**: leave **blank** — the `vercel.json` in
@@ -139,7 +139,7 @@ extra env vars (the console signs JWTs locally for dev / pre-OIDC tenants):
 | `DPP_ISSUER_KEY_PATH`        | Bake the Ed25519 PEM as a base64 secret + decode at boot, OR mount via the platform's secret-files feature. |
 | `DPP_RESOLVER_BASE_URL`      | `https://your-public.vercel.app/dpp` (the public viewer's base)                      |
 | `DPP_DEFAULT_TENANT_ID`      | `1`                                                                                  |
-| `DPP_DEFAULT_TENANT_SLUG`    | `ega`                                                                                |
+| `DPP_DEFAULT_TENANT_SLUG`    | `hzl`                                                                                |
 | `CORS_ORIGINS`               | `https://your-public.vercel.app,https://your-console.vercel.app`                     |
 
 ---
@@ -149,7 +149,7 @@ extra env vars (the console signs JWTs locally for dev / pre-OIDC tenants):
 1. Deploy the API (it'll fail to start until the DB is reachable; Neon is
    reachable as soon as you set the URL).
 2. The dev bootstrap (`apps/api/dpp_api/services/bootstrap.py`) runs on
-   first lifespan and seeds the EGA tenant + canonical product/manifest
+   first lifespan and seeds the HZL tenant + canonical product/manifest
    data. **Disable it for production** by setting `DPP_ENV=production` —
    the lifespan only fires the seed when `not settings.is_production`.
    That means in prod you have to run the seed by hand:

@@ -88,7 +88,7 @@ export default async function BatchImportPage() {
         <div className="rounded-[var(--radius-md)] border border-dashed border-[var(--surface-border)] bg-[var(--surface-recessed)] px-8 py-12 text-center">
           <p className="text-[14px] text-[var(--fg-default)]">No imports yet</p>
           <p className="mt-1 text-[12px] text-[var(--fg-muted)]">
-            Upload a file above to begin batch-importing aluminium passport data.
+            Upload a file above to begin batch-importing zinc & lead passport data.
           </p>
         </div>
       </section>
@@ -100,28 +100,28 @@ const FIELDS = [
   {
     column: 'product_identifier',
     type: 'string',
-    example: 'CELESTIAL-EB-6063-001',
+    example: 'ECOZEN-SHG-99995-001',
     required: true,
   },
-  { column: 'brand', type: 'string', example: 'CelestiAL', required: true },
-  { column: 'alloy', type: 'EN alloy code', example: 'EN AW-6063', required: true },
-  { column: 'form', type: 'enum', example: 'extrusion_billet', required: true },
+  { column: 'brand', type: 'string', example: 'EcoZen SHG 99.995', required: true },
+  { column: 'alloy', type: 'IS / ASTM grade', example: 'IS 209:1992 — Zn99.995', required: true },
+  { column: 'form', type: 'enum', example: 'sow_ingot', required: true },
   { column: 'weight_kg', type: 'number', example: '850', required: true },
-  { column: 'cfp_kg_co2e_per_tonne', type: 'number', example: '4273', required: true },
-  { column: 'recycled_content_pct', type: 'number (0-100)', example: '30.5', required: true },
+  { column: 'cfp_kg_co2e_per_tonne', type: 'number', example: '950', required: true },
+  { column: 'recycled_content_pct', type: 'number (0-100)', example: '5.0', required: true },
   {
     column: 'manufacturer_name',
     type: 'string',
-    example: 'Emirates Global Aluminium',
+    example: 'Hindustan Zinc Limited',
     required: true,
   },
   { column: 'manufacturing_date', type: 'ISO date', example: '2026-05-01', required: true },
   {
     column: 'manufacturing_facility',
     type: 'string',
-    example: 'Jebel Ali Smelter',
+    example: 'Chanderiya Lead-Zinc Smelter',
     required: false,
   },
-  { column: 'energy_source', type: 'string', example: 'Solar PPA', required: false },
-  { column: 'certification', type: 'string', example: 'ASI Performance #27', required: false },
+  { column: 'energy_source', type: 'string', example: 'Serentica RE PDA (530 MW)', required: false },
+  { column: 'certification', type: 'string', example: 'IZA Zinc Mark', required: false },
 ]

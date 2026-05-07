@@ -30,9 +30,9 @@ export default async function CreatePassportLandingPage() {
             Create Passport
           </h1>
           <p className="mt-1 max-w-2xl text-[14px] leading-6 text-[var(--fg-muted)]">
-            Author a digital product passport for one cast of an EGA product. Each passport flows
-            through five steps: pick the product, confirm the production chain, choose the DPP
-            version, review the parameter roster, and identify the cast.
+            Author a digital product passport for one cast of a Hindustan Zinc product. Each
+            passport flows through five steps: pick the product, confirm the production chain,
+            choose the DPP version, review the parameter roster, and identify the cast.
           </p>
         </div>
         <Link
@@ -48,7 +48,7 @@ export default async function CreatePassportLandingPage() {
         <div className="mb-4 flex items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <Layers className="h-4 w-4 text-[var(--color-accent)]" />
-            <h2 className="text-[15px] font-semibold text-[var(--fg-default)]">EGA portfolio</h2>
+            <h2 className="text-[15px] font-semibold text-[var(--fg-default)]">HZL portfolio</h2>
           </div>
           <span className="font-mono text-[10px] uppercase tracking-wider text-[var(--fg-subtle)]">
             {lockedCount}/{featured.length} ready
@@ -78,11 +78,13 @@ export default async function CreatePassportLandingPage() {
                   <span
                     className={[
                       'inline-flex h-6 items-center rounded-[var(--radius-pill)] px-2 text-[9px] font-semibold uppercase tracking-wider',
-                      p.brand === 'CelestiAL'
-                        ? 'bg-[#FEF3C7] text-[#92400E]'
-                        : p.brand === 'CelestiAL-R'
-                          ? 'bg-[#DCFCE7] text-[#166534]'
-                          : 'bg-white text-[var(--fg-default)]',
+                      p.brand === 'EcoZen'
+                        ? 'bg-[#DCFCE7] text-[#166534]'
+                        : p.brand === 'CGG' || p.brand === 'CGG Jumbo'
+                          ? 'bg-[#FEF3C7] text-[#92400E]'
+                          : p.brand === 'Vedanta 99.99'
+                            ? 'bg-[#E0E7FF] text-[#3730A3]'
+                            : 'bg-white text-[var(--fg-default)]',
                     ].join(' ')}
                   >
                     {p.brand}

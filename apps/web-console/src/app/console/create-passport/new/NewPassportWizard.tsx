@@ -64,23 +64,23 @@ const ALL_DPP_VERSIONS: {
     tagline: 'Trust-building manifest · 106 attributes',
     status: 'available',
   },
-  { id: '1.5', label: 'DPP 1.5', tagline: 'Cell telemetry + supplier sourcing', status: 'planned' },
+  { id: '1.5', label: 'DPP 1.5', tagline: 'MES telemetry + supplier sourcing', status: 'planned' },
   {
     id: '2',
     label: 'DPP 2.0',
-    tagline: 'CBAM Registry + Aluminium Delegated Act',
+    tagline: 'CBAM Registry + EU Battery Regulation hooks',
     status: 'planned',
   },
   {
     id: '3',
     label: 'DPP 3.0',
-    tagline: 'Recycled-content mass-balance, end-of-life',
+    tagline: 'Recycled-content mass-balance + end-of-life routing',
     status: 'planned',
   },
   {
     id: '4',
     label: 'DPP 4.0',
-    tagline: 'Full PEF (16 categories) + biodiversity',
+    tagline: 'Full PEF (16 categories) + biodiversity + tailings',
     status: 'planned',
   },
 ]
@@ -88,7 +88,7 @@ const ALL_DPP_VERSIONS: {
 type StepId = 'product' | 'process' | 'version' | 'parameters' | 'cast'
 
 const STEPS: { id: StepId; label: string; subtitle: string; icon: typeof Sparkles }[] = [
-  { id: 'product', label: 'Product', subtitle: 'Pick the EGA product', icon: Sparkles },
+  { id: 'product', label: 'Product', subtitle: 'Pick the HZL product', icon: Sparkles },
   { id: 'process', label: 'Process', subtitle: 'Confirm the production chain', icon: Workflow },
   { id: 'version', label: 'DPP version', subtitle: 'Choose schema version', icon: Layers },
   {
@@ -359,10 +359,11 @@ function ProductStep({
   return (
     <section>
       <h2 className="text-[18px] font-semibold text-[var(--fg-default)]">
-        Which EGA product is this passport for?
+        Which Hindustan Zinc product is this passport for?
       </h2>
       <p className="mt-1 text-[13px] text-[var(--fg-muted)]">
-        Each product has its own production chain, alloy family, and locked DPP attribute roster.
+        Each product has its own production chain, grade specification, and locked Chem-X attribute
+        roster across the six EF&nbsp;3.1 sustainability categories.
       </p>
 
       <ul className="mt-6 grid grid-cols-1 gap-3 md:grid-cols-3">
@@ -375,12 +376,12 @@ function ProductStep({
           const site = typeof details.site === 'string' ? details.site : null
 
           const imageSrc =
-            p.slug === 'celestial'
-              ? '/products/celestial.jpg'
-              : p.slug === 'celestial_r'
-                ? '/products/celestial-r.jpg'
-                : p.slug === 'standard'
-                  ? '/products/standard.jpg'
+            p.slug === 'zinc-ecozen' || p.slug === 'ecozen'
+              ? '/products/ecozen.jpg'
+              : p.slug === 'zinc-cgg' || p.slug === 'cgg-jumbo'
+                ? '/products/zinc-cgg.jpg'
+                : p.slug === 'lead' || p.slug === 'lead-pure-99-99'
+                  ? '/products/lead.jpg'
                   : null
 
           return (
@@ -409,11 +410,13 @@ function ProductStep({
                     <span
                       className={[
                         'mb-3 inline-flex h-7 items-center gap-1.5 rounded-[var(--radius-pill)] px-2.5 text-[10px] font-semibold uppercase tracking-wider',
-                        p.brand === 'CelestiAL'
-                          ? 'bg-[#FEF3C7] text-[#92400E]'
-                          : p.brand === 'CelestiAL-R'
-                            ? 'bg-[#DCFCE7] text-[#166534]'
-                            : 'bg-[var(--surface-hover)] text-[var(--fg-default)]',
+                        p.brand === 'EcoZen'
+                          ? 'bg-[#DCFCE7] text-[#166534]'
+                          : p.brand === 'CGG' || p.brand === 'CGG Jumbo'
+                            ? 'bg-[#FEF3C7] text-[#92400E]'
+                            : p.brand === 'Vedanta 99.99'
+                              ? 'bg-[#E0E7FF] text-[#3730A3]'
+                              : 'bg-[var(--surface-hover)] text-[var(--fg-default)]',
                       ].join(' ')}
                     >
                       {p.brand}
@@ -541,16 +544,16 @@ function ProcessStepView({
 
   const slug = bundle.product.slug
   const heroSrc =
-    slug === 'celestial'
-      ? '/products/celestial.jpg'
-      : slug === 'celestial_r'
-        ? '/products/celestial-r.jpg'
-        : slug === 'standard'
-          ? '/products/standard.jpg'
+    slug === 'zinc-ecozen' || slug === 'ecozen'
+      ? '/products/ecozen.jpg'
+      : slug === 'zinc-cgg' || slug === 'cgg-jumbo'
+        ? '/products/zinc-cgg.jpg'
+        : slug === 'lead' || slug === 'lead-pure-99-99'
+          ? '/products/lead.jpg'
           : null
 
   // Default-focus the first production-tier stage so the canvas opens with a
-  // visually anchored focal point rather than the bauxite bar at the start.
+  // visually anchored focal point rather than the head of the chain (mining).
   const defaultFocus =
     chain.find((c) => c.tier === 'production')?.stepId ?? chain[0]?.stepId ?? null
   const [focusedId, setFocusedId] = useState<number | null>(defaultFocus)
@@ -1624,7 +1627,7 @@ function CastStep({
         <Summary label="Product" value={bundle.product.name} />
         <Summary label="Brand" value={bundle.product.brand} />
         <Summary label="Form" value={bundle.product.form.replace(/_/g, ' ')} />
-        <Summary label="Alloy family" value={bundle.product.alloyFamily} />
+        <Summary label="Grade family" value={bundle.product.alloyFamily} />
         <Summary label="DPP version" value={`v${version}`} />
         <Summary label="Stages" value={`${bundle.detail?.chain.length ?? 0}`} />
       </dl>

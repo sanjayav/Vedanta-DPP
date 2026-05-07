@@ -11,7 +11,7 @@ import { fetchMetrics, fetchTimeseries } from '@/lib/pipeline-api'
 
 export const dynamic = 'force-dynamic'
 
-const INDUSTRY_AVG_CFP = 14600 // kg CO₂e/tonne · IAI v2.0 global average
+const INDUSTRY_AVG_CFP = 3500 // kg CO₂e/tonne · IZA global average for primary zinc (RLE)
 
 export default async function OverviewPage() {
   const [list, metrics, ts30, registry] = await Promise.all([
@@ -69,7 +69,7 @@ export default async function OverviewPage() {
             Overview
           </h1>
           <p className="mt-1 text-[14px] text-[var(--fg-muted)]">
-            Live programme posture for Emirates Global Aluminium.
+            Live programme posture for Hindustan Zinc Limited.
           </p>
         </div>
         <span className="font-mono text-[11px] uppercase tracking-[0.15em] text-[var(--fg-subtle)]">
@@ -97,7 +97,7 @@ export default async function OverviewPage() {
           label="CO₂e avoided"
           value={Math.round(co2eSaved).toLocaleString()}
           unit="t"
-          context={`vs IAI ${INDUSTRY_AVG_CFP.toLocaleString()} kg/t`}
+          context={`vs IZA ${INDUSTRY_AVG_CFP.toLocaleString()} kg/t`}
         />
         <Stat
           label="Active verifiers"
@@ -112,7 +112,7 @@ export default async function OverviewPage() {
           title="Average CFP · last 30 days"
           subtitle="Daily mean of issued passports vs. industry baseline"
           legend={[
-            { color: 'var(--color-accent, #0F4C81)', label: 'EGA average' },
+            { color: 'var(--color-accent, #0F4C81)', label: 'HZL average' },
             {
               color: 'var(--fg-subtle)',
               label: `Industry (${INDUSTRY_AVG_CFP.toLocaleString()})`,
@@ -124,7 +124,7 @@ export default async function OverviewPage() {
             labels={dailyLabels}
             series={[
               {
-                label: 'EGA',
+                label: 'HZL',
                 values: cfpSeries,
                 color: 'var(--color-accent, #0F4C81)',
                 unit: 'kg CO₂e/t',
@@ -221,13 +221,13 @@ export default async function OverviewPage() {
           icon={Leaf}
           tone="success"
           headline={`${(((INDUSTRY_AVG_CFP - avgCfp) / INDUSTRY_AVG_CFP) * 100).toFixed(0)}% below industry`}
-          subhead="On the strength of UAE solar PPA + 80% recycled content in CelestiAL R lines."
+          subhead="On the strength of the Serentica 530 MW renewable PDA and EPD-published EcoZen process."
         />
         <SignalCard
           icon={Recycle}
           tone="info"
           headline={`${recycledPct.toFixed(1)}% recycled content`}
-          subhead={`${Math.round(recycledTonnes).toLocaleString()} tonnes of secondary aluminium across the portfolio.`}
+          subhead={`${Math.round(recycledTonnes).toLocaleString()} tonnes of secondary zinc/lead across the portfolio.`}
         />
         <SignalCard
           icon={ShieldCheck}

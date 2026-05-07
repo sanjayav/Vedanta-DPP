@@ -1,14 +1,15 @@
-"""Aluminium plant-monitor catalogue.
+"""HZL zinc / lead plant-monitor catalogue.
 
 The battery world has a Battery Management System (BMS) that watches state-of-
 charge, state-of-health, cell-balance, thermals — operational signals that
 *must* stay in band or the cell goes off-warranty.
 
-Aluminium production has a parallel set of signals — different physics, same
-governance posture: if any of these drift outside their target band, the DPP
-the operator just issued is suspect and the regulator will eventually catch
-it. This module is the single source of truth for which signals matter, what
-their bands are, and — critically — *how* the platform sources each one.
+HZL's RLE zinc plus pyro Pb-Zn route has a parallel set of signals — different
+physics, same governance posture: if any of these drift outside their target
+band, the DPP the operator just issued is suspect and the regulator will
+eventually catch it. This module is the single source of truth for which
+signals matter, what their bands are, and — critically — *how* the platform
+sources each one.
 
 Each signal carries a `Provenance` block describing the path from raw
 instrument to displayed value: which sensor or system, the read frequency,
@@ -16,9 +17,9 @@ the pipeline hops, and the typical end-to-end latency. That metadata feeds
 the operator-facing "How we get this" panel, so engineers can see the data
 lineage without spelunking through architecture diagrams.
 
-Reading bands cite EGA's published reports (DX+ 12.8 kWh/kg, CelestiAL solar
-share, IAI v2.0 sector benchmarks) and ESPR / EU Aluminium Delegated Act
-boundary thresholds where they exist.
+Reading bands cite HZL's published reports (Chanderiya RLE specifics, Serentica
+RE PDA share, IZA / ILA sector benchmarks) and ESPR / CBAM boundary thresholds
+where they exist.
 """
 
 from __future__ import annotations
@@ -157,8 +158,8 @@ _SCADA_PIPELINE = [
 ]
 
 _EMS_PIPELINE = [
-    PipelineStop(name="PPA / grid meters", kind="device", note="1-min interval"),
-    PipelineStop(name="EGA Energy Management System", kind="system"),
+    PipelineStop(name="PDA / grid meters", kind="device", note="1-min interval"),
+    PipelineStop(name="HZL Energy Management System", kind="system"),
     PipelineStop(name="DPP Ingest API", kind="api"),
     PipelineStop(name="TimescaleDB hypertable", kind="store"),
     PipelineStop(name="Plant Monitor", kind="dashboard"),
@@ -167,7 +168,7 @@ _EMS_PIPELINE = [
 _WEIGHBRIDGE_PIPELINE = [
     PipelineStop(name="Truck-arrival weighbridge", kind="device", note="per-truck"),
     PipelineStop(name="Scrap-yard MES", kind="system"),
-    PipelineStop(name="Mass-balance allocator", kind="aggregator", note="ASI CoC ledger"),
+    PipelineStop(name="Mass-balance allocator", kind="aggregator", note="ISO 22095 CoC ledger"),
     PipelineStop(name="DPP API", kind="api"),
     PipelineStop(name="Plant Monitor", kind="dashboard"),
 ]
@@ -181,7 +182,7 @@ _DPP_AGGREGATE_PIPELINE = [
 ]
 
 _VERIFIER_PIPELINE = [
-    PipelineStop(name="Verifier portal upload (DNV / ASI)", kind="api"),
+    PipelineStop(name="Verifier portal upload (DNV / IZA / ILA)", kind="api"),
     PipelineStop(name="reference_compliance + reference_cfp", kind="store"),
     PipelineStop(name="Validity-window scanner", kind="aggregator"),
     PipelineStop(name="Plant Monitor", kind="dashboard"),
@@ -203,113 +204,113 @@ _CATALOGUE: list[SignalDef] = [
     SignalDef(
         key="electrolysis.dc_efficiency_pct",
         group="electrolysis",
-        label="Pot DC current efficiency",
+        label="EW cell DC current efficiency",
         unit="%",
-        target_min=93.0,
-        target_max=96.5,
-        regulatory_anchor="EGA DX+ design envelope",
+        target_min=88.0,
+        target_max=93.0,
+        regulatory_anchor="HZL RLE design envelope",
         description=(
-            "Faraday efficiency of the Hall–Héroult cell line. Drift below 93% "
-            "means spec power climbs and CFP follows."
+            "Faraday efficiency of the zinc electrowinning cell house. Drift below "
+            "88% means specific power climbs and PCF follows."
         ),
         owner_step="smelting",
         provenance=Provenance(
             source_kind="sensor",
-            source_label="Pot bus-bar shunt sensors (660 pots × DX+ Ultra)",
+            source_label="Cell bus-bar shunt sensors (Chanderiya RLE cell house)",
             frequency_seconds=1,
             latency_seconds_p50=12,
             pipeline=_SCADA_PIPELINE,
-            data_quality="Mass-balance reconciled daily against alumina input.",
+            data_quality="Mass-balance reconciled daily against zinc cathode harvest.",
         ),
     ),
     SignalDef(
         key="electrolysis.energy_intensity_kwh_per_kg",
         group="electrolysis",
         label="DC energy intensity",
-        unit="kWh/kg Al",
-        target_min=12.5,
-        target_max=13.2,
-        regulatory_anchor="EGA DX+ Ultra · 12.8 kWh/kg target",
+        unit="kWh/kg Zn",
+        target_min=3.1,
+        target_max=3.6,
+        regulatory_anchor="HZL Chanderiya RLE · ~3.3 kWh/kg target",
         description=(
-            "Specific DC consumption per kg molten aluminium. Tracks within ±0.4 "
-            "of the 12.8 kWh/kg DX+ Ultra target."
+            "Specific DC consumption per kg of cathode zinc. Tracks within "
+            "the ~3.3 kWh/kg Chanderiya RLE benchmark."
         ),
         owner_step="smelting",
         provenance=Provenance(
             source_kind="sensor",
-            source_label="Rectifier bank energy meters · 6 pot lines",
+            source_label="Rectifier bank energy meters · cell house lines",
             frequency_seconds=60,
             latency_seconds_p50=30,
             pipeline=_SCADA_PIPELINE,
         ),
     ),
     SignalDef(
-        key="electrolysis.anode_effect_minutes_per_pot_day",
+        key="electrolysis.short_circuit_minutes_per_cell_day",
         group="electrolysis",
-        label="Anode-effect minutes / pot-day",
-        unit="min/pot·d",
+        label="Cell short-circuit minutes / cell-day",
+        unit="min/cell·d",
         target_min=0.0,
-        target_max=0.05,
-        regulatory_anchor="IAI PFC Reduction Programme",
+        target_max=0.30,
+        regulatory_anchor="HZL EW housekeeping SOP",
         description=(
-            "Anode-effect events drive CF₄/C₂F₆ release directly. EGA target is "
-            "≤0.05 min/pot-day (IAI top-decile)."
+            "Cathode-anode shorting events that increase specific power and "
+            "embodied PCF. HZL operating target ≤0.30 min/cell-day."
         ),
         owner_step="smelting",
         provenance=Provenance(
             source_kind="sensor",
-            source_label="Pot voltage spike detector (≥8V threshold)",
+            source_label="Cell voltage trip detector",
             frequency_seconds=1,
             latency_seconds_p50=8,
             pipeline=_SCADA_PIPELINE,
-            data_quality="Reconciled with FTIR PFC measurements monthly.",
+            data_quality="Reconciled with shift housekeeping log monthly.",
         ),
     ),
     SignalDef(
-        key="electrolysis.pfc_emission_g_per_t",
+        key="electrolysis.zn_dust_emission_g_per_t",
         group="electrolysis",
-        label="PFC emissions",
-        unit="g CO₂e/t Al",
+        label="Zinc-fume emissions (cell house off-gas)",
+        unit="g/t Zn",
         target_min=None,
-        target_max=110.0,
-        regulatory_anchor="EU CBAM · perfluorocarbon factor",
+        target_max=15.0,
+        regulatory_anchor="BAT-AEL non-ferrous metals",
         description=(
-            "PFC contribution to embodied CFP. CBAM declaration treats this as "
-            "a non-substitutable line item."
+            "Particulate zinc carry-over to off-gas — captured by the bag-house. "
+            "Above 15 g/t triggers a filter integrity check."
         ),
         owner_step="smelting",
         provenance=Provenance(
             source_kind="derived",
-            source_label="Anode-effect rate × IPCC tier-3 emission factor",
+            source_label="Stack flow × dust loading sample",
             frequency_seconds=300,
             latency_seconds_p50=300,
             pipeline=[
-                PipelineStop(name="Anode-effect signal", kind="aggregator"),
-                PipelineStop(name="IPCC factor library", kind="store"),
-                PipelineStop(name="PFC calculator", kind="aggregator"),
+                PipelineStop(name="CEMS dust sensor", kind="device"),
+                PipelineStop(name="Stack-flow integrator", kind="aggregator"),
                 PipelineStop(name="Plant Monitor", kind="dashboard"),
             ],
         ),
     ),
     SignalDef(
-        key="electrolysis.bath_ratio",
+        key="electrolysis.electrolyte_ph",
         group="electrolysis",
-        label="Bath ratio (NaF/AlF₃)",
-        unit="ratio",
-        target_min=1.10,
-        target_max=1.18,
-        regulatory_anchor="DX+ operating window",
+        label="Electrolyte free-acid concentration",
+        unit="g/L H2SO4",
+        target_min=140.0,
+        target_max=180.0,
+        regulatory_anchor="HZL EW operating window",
         description=(
-            "Cryolite chemistry. Outside band → liquidus shift, alumina-feed inefficiency."
+            "Spent electrolyte free-acid level. Outside band → cathode quality drift "
+            "and Zn-dust loss."
         ),
         owner_step="smelting",
         provenance=Provenance(
             source_kind="spectrometer",
-            source_label="Bath-sample XRD analyser",
+            source_label="Electrolyte titration analyser",
             frequency_seconds=4 * 3600,
             latency_seconds_p50=2 * 3600,
             pipeline=_SPECTROMETER_PIPELINE,
-            data_quality="Sampled per shift (4 samples/24h per pot line).",
+            data_quality="Sampled per shift (4 samples/24h per cell line).",
         ),
     ),
     # ── Power ────────────────────────────────────────────────────────────
@@ -318,43 +319,44 @@ _CATALOGUE: list[SignalDef] = [
         group="power",
         label="Renewable electricity share",
         unit="%",
-        target_min=90.0,
+        target_min=60.0,
         target_max=100.0,
-        regulatory_anchor="CelestiAL claim · ISO 14067",
+        regulatory_anchor="EcoZen claim · ISO 14067",
         description=(
-            "Solar share consumed at the smelter. Underpins CelestiAL's "
-            "<4 t CO₂e/t Al headline number."
+            "Renewable share consumed at the smelter. Underpins EcoZen's "
+            "<1 kg CO2e/kg Zn headline number."
         ),
         owner_step="power_generation",
         provenance=Provenance(
             source_kind="ems",
-            source_label="Mohammed bin Rashid Solar Park PPA meters",
+            source_label="Serentica RE PDA · 530 MW round-the-clock RE",
             frequency_seconds=60,
             latency_seconds_p50=120,
             pipeline=_EMS_PIPELINE,
-            data_quality="Reconciled hourly with DEWA grid imports.",
+            data_quality="Reconciled hourly with state grid imports (CEA factor).",
         ),
     ),
     SignalDef(
         key="power.hourly_matched_pct",
         group="power",
-        label="Hourly-matched solar coverage",
+        label="Hourly-matched RE coverage",
         unit="%",
         target_min=70.0,
         target_max=100.0,
         regulatory_anchor="EU Delegated Act (Hydrogen) · §3 anal.",
         description=(
-            "Share of consumption matched within the same hour. Stricter than "
-            "annual matching; aligns with forthcoming EU green-electricity rules."
+            "Share of consumption matched within the same hour by the Serentica "
+            "RTC RE PDA. Stricter than annual matching; aligns with forthcoming "
+            "EU green-electricity rules."
         ),
         owner_step="power_generation",
         provenance=Provenance(
             source_kind="derived",
-            source_label="Hourly-matching engine over PPA + smelter draw",
+            source_label="Hourly-matching engine over PDA + smelter draw",
             frequency_seconds=3600,
             latency_seconds_p50=180,
             pipeline=[
-                PipelineStop(name="Solar generation feed", kind="device"),
+                PipelineStop(name="RE generation feed", kind="device"),
                 PipelineStop(name="Smelter draw feed", kind="device"),
                 PipelineStop(name="Hourly-matching engine", kind="aggregator"),
                 PipelineStop(name="Plant Monitor", kind="dashboard"),
@@ -364,16 +366,18 @@ _CATALOGUE: list[SignalDef] = [
     SignalDef(
         key="power.grid_co2_intensity_g_per_kwh",
         group="power",
-        label="Grid CO₂ intensity",
-        unit="g CO₂e/kWh",
+        label="Grid CO2 intensity",
+        unit="g CO2e/kWh",
         target_min=None,
-        target_max=80.0,
-        regulatory_anchor="IEA grid factors",
-        description=("Average intensity of imported grid electricity when solar is unavailable."),
+        target_max=720.0,
+        regulatory_anchor="CEA / IEA grid factors",
+        description=(
+            "Average intensity of imported state-grid electricity when RE is unavailable."
+        ),
         owner_step="power_generation",
         provenance=Provenance(
             source_kind="external_feed",
-            source_label="DEWA hourly grid mix · electricityMaps API",
+            source_label="CEA hourly grid mix · electricityMaps API",
             frequency_seconds=3600,
             latency_seconds_p50=900,
             pipeline=[
@@ -386,13 +390,13 @@ _CATALOGUE: list[SignalDef] = [
     SignalDef(
         key="power.ppa_days_remaining",
         group="power",
-        label="PPA contract runway",
+        label="PDA contract runway",
         unit="days",
         target_min=180.0,
         target_max=None,
         regulatory_anchor="Internal supply assurance",
         description=(
-            "Days remaining on the active solar PPA. Renewals must close "
+            "Days remaining on the active Serentica RE PDA. Renewals must close "
             ">180 days before expiry to keep the renewable claim audit-clean."
         ),
         owner_step="power_generation",
@@ -434,11 +438,11 @@ _CATALOGUE: list[SignalDef] = [
     SignalDef(
         key="casthouse.alloy_composition_deviation_ppm",
         group="casthouse",
-        label="Alloy composition deviation",
+        label="Grade composition deviation",
         unit="ppm",
         target_min=None,
         target_max=300.0,
-        regulatory_anchor="EN 573-3 spec window",
+        regulatory_anchor="IS 209 / IS 27 / ASTM B852 spec window",
         description=(
             "Max element deviation from grade nominal. Beyond 300 ppm → re-grade or re-melt."
         ),
@@ -459,7 +463,7 @@ _CATALOGUE: list[SignalDef] = [
         unit="°C",
         target_min=680.0,
         target_max=720.0,
-        regulatory_anchor="DC casting envelope",
+        regulatory_anchor="HZL casting envelope",
         description=("Mould-side metal temperature. Outside band → grain-structure defects."),
         owner_step="casthouse",
         provenance=Provenance(
@@ -495,20 +499,20 @@ _CATALOGUE: list[SignalDef] = [
     SignalDef(
         key="carbon.cfp_rolling_kg_per_t",
         group="carbon",
-        label="Cradle-to-gate CFP (rolling 24h)",
-        unit="kg CO₂e/t Al",
+        label="Cradle-to-gate PCF (rolling 24h)",
+        unit="kg CO2e/t",
         target_min=None,
-        target_max=7000.0,
-        regulatory_anchor="ISO 14067 · DNV verified",
+        target_max=4000.0,
+        regulatory_anchor="ISO 14067 · independent verifier",
         description=(
             "Cradle-to-gate carbon footprint averaged over the last 24h of "
-            "issuance. CelestiAL anchor is ~3-4 t/t; standard product up to "
-            "~13 t/t."
+            "issuance. EcoZen anchor is ~0.95 kg/kg (~950 kg/t); CGG up to "
+            "~3.4 kg/kg; refined lead ~1.6 kg/kg."
         ),
         owner_step="smelting",
         provenance=Provenance(
             source_kind="derived",
-            source_label="Per-DPP CFP × 24h rolling average",
+            source_label="Per-DPP PCF × 24h rolling average",
             frequency_seconds=300,
             latency_seconds_p50=60,
             pipeline=_DPP_AGGREGATE_PIPELINE,
@@ -518,24 +522,24 @@ _CATALOGUE: list[SignalDef] = [
     SignalDef(
         key="carbon.industry_avg_delta_pct",
         group="carbon",
-        label="Δ vs IAI sector average",
+        label="Δ vs IZA / ILA sector average",
         unit="%",
         target_min=None,
         target_max=-50.0,
-        regulatory_anchor="IAI v2.0 global benchmark",
+        regulatory_anchor="IZA SHG (3.7 kg/kg) · ILA refined lead",
         description=(
-            "How much lower this batch is vs. IAI sector primary average "
-            "(14.6 t/t). More negative is better."
+            "How much lower this batch is vs. IZA / ILA sector average for the "
+            "metal in question. More negative is better."
         ),
         owner_step="smelting",
         provenance=Provenance(
             source_kind="derived",
-            source_label="(rolling CFP − 14.6 t) / 14.6 t",
+            source_label="(rolling PCF − benchmark) / benchmark",
             frequency_seconds=300,
             latency_seconds_p50=60,
             pipeline=[
-                PipelineStop(name="Rolling CFP signal", kind="aggregator"),
-                PipelineStop(name="IAI benchmark constant", kind="store"),
+                PipelineStop(name="Rolling PCF signal", kind="aggregator"),
+                PipelineStop(name="IZA / ILA benchmark constants", kind="store"),
                 PipelineStop(name="Delta calculator", kind="aggregator"),
                 PipelineStop(name="Plant Monitor", kind="dashboard"),
             ],
@@ -545,14 +549,14 @@ _CATALOGUE: list[SignalDef] = [
     SignalDef(
         key="carbon.scope1_share_pct",
         group="carbon",
-        label="Scope 1 share of CFP",
+        label="Scope 1 share of PCF",
         unit="%",
         target_min=None,
-        target_max=25.0,
+        target_max=35.0,
         regulatory_anchor="GHG Protocol",
         description=(
-            "Direct emissions (anode oxidation, PFC, fuels) as a share of "
-            "cradle-to-gate CFP. Above 25% → hidden combustion source."
+            "Direct emissions (roaster, captive coal CPP, vehicles) as a share of "
+            "cradle-to-gate PCF. Above 35% → hidden combustion source."
         ),
         owner_step="smelting",
         provenance=Provenance(
@@ -573,25 +577,25 @@ _CATALOGUE: list[SignalDef] = [
         target_max=100.0,
         regulatory_anchor="ESPR Art 5(1)(j)",
         description=(
-            "Mass-balance allocated recycled aluminium share across all DPPs "
-            "issued in the last 24h. CelestiAL-R targets ≥75%; Standard product "
-            "is allowed any value ≥0%. Drift downward triggers an ASI Chain-of-"
-            "Custody review."
+            "Mass-balance allocated recycled-zinc / recycled-lead share across "
+            "all DPPs issued in the last 24h. EcoZen / CGG production is mostly "
+            "primary; recycled fraction reflects internal scrap loops. Drift "
+            "downward triggers an ISO 22095 chain-of-custody review."
         ),
-        owner_step="molten_metal_alloying",
+        owner_step="alloying",
         provenance=Provenance(
             source_kind="ledger",
-            source_label="Mass-balance allocator · ASI CoC ledger v3",
+            source_label="Mass-balance allocator · ISO 22095 CoC ledger",
             frequency_seconds=3600,
             latency_seconds_p50=300,
             pipeline=[
                 PipelineStop(name="Truck weighbridge (per arrival)", kind="device"),
-                PipelineStop(name="OES spectrometer (composition)", kind="device"),
+                PipelineStop(name="ICP-OES spectrometer (composition)", kind="device"),
                 PipelineStop(name="Scrap-yard MES", kind="system"),
                 PipelineStop(
                     name="Mass-balance allocator",
                     kind="aggregator",
-                    note="ASI Chain-of-Custody v3 rules · pre/post-consumer split",
+                    note="ISO 22095 chain-of-custody · pre/post-consumer split",
                 ),
                 PipelineStop(
                     name="DPP issuance · recycledContent.totalPercent",
@@ -621,7 +625,7 @@ _CATALOGUE: list[SignalDef] = [
             "Of the recycled fraction, share that is post-consumer scrap (more "
             "valuable in regulatory terms than pre-consumer drop)."
         ),
-        owner_step="molten_metal_alloying",
+        owner_step="alloying",
         provenance=Provenance(
             source_kind="ledger",
             source_label="Scrap-yard intake classification",
@@ -631,7 +635,7 @@ _CATALOGUE: list[SignalDef] = [
             data_quality=(
                 "Each truck arrival is classified pre- vs post-consumer at the "
                 "weighbridge by the scrap dealer's certified declaration; "
-                "audited by ASI quarterly."
+                "audited by IZA / ILA stewardship reviewers annually."
             ),
         ),
     ),
@@ -640,15 +644,15 @@ _CATALOGUE: list[SignalDef] = [
         group="circularity",
         label="Scrap intake rate",
         unit="t/h",
-        target_min=12.0,
-        target_max=28.0,
-        regulatory_anchor="Internal · CelestiAL-R supply plan",
+        target_min=2.0,
+        target_max=18.0,
+        regulatory_anchor="Internal · alloying supply plan",
         description=(
-            "Tonnes of scrap arriving at the molten-metal alloying line per "
-            "hour. Drops below 12 t/h → CelestiAL-R production constrained; "
-            "above 28 t/h → yard buffer at risk of overflow."
+            "Tonnes of scrap arriving at the alloying line per hour. Below 2 t/h → "
+            "recycled-content claims constrained; above 18 t/h → yard buffer at "
+            "risk of overflow."
         ),
-        owner_step="molten_metal_alloying",
+        owner_step="alloying",
         provenance=Provenance(
             source_kind="weighbridge",
             source_label="Truck-arrival weighbridge · 3-axle calibrated scale",
@@ -665,14 +669,14 @@ _CATALOGUE: list[SignalDef] = [
         unit="%",
         target_min=-0.5,
         target_max=0.5,
-        regulatory_anchor="ASI CoC v3 · §6.4 reconciliation",
+        regulatory_anchor="ISO 22095 · §6.4 reconciliation",
         description=(
             "Difference between recycled tonnes claimed by issued DPPs and "
             "tonnes received at the scrap-yard weighbridge over the same 24h "
-            "window. Anything outside ±0.5% breaches ASI CoC and freezes "
+            "window. Anything outside ±0.5% breaches ISO 22095 CoC and freezes "
             "claim-eligible issuance."
         ),
-        owner_step="molten_metal_alloying",
+        owner_step="alloying",
         provenance=Provenance(
             source_kind="derived",
             source_label="Allocator reconciliation engine",
@@ -682,25 +686,25 @@ _CATALOGUE: list[SignalDef] = [
                 PipelineStop(name="Weighbridge intake (24h)", kind="aggregator"),
                 PipelineStop(name="DPP recycled-claim sum", kind="aggregator"),
                 PipelineStop(name="Variance calculator", kind="aggregator"),
-                PipelineStop(name="ASI CoC ledger entry", kind="store"),
+                PipelineStop(name="ISO 22095 ledger entry", kind="store"),
                 PipelineStop(name="Plant Monitor", kind="dashboard"),
             ],
             data_quality=(
-                "Daily ledger snapshot is hash-chained into the audit log; ASI "
-                "auditors verify the chain quarterly."
+                "Daily ledger snapshot is hash-chained into the audit log; "
+                "stewardship auditors verify the chain quarterly."
             ),
         ),
     ),
     SignalDef(
         key="circularity.dross_recovery_pct",
         group="circularity",
-        label="Dross recovery",
+        label="Dross / residue recovery",
         unit="%",
         target_min=85.0,
         target_max=100.0,
-        regulatory_anchor="Internal · ASI Performance",
-        description="Aluminium recovered from dross via the recycling line.",
-        owner_step="molten_metal_alloying",
+        regulatory_anchor="Internal · IZA / ILA stewardship",
+        description="Metal recovered from dross / residues via the recycling line.",
+        owner_step="alloying",
         provenance=Provenance(
             source_kind="mes",
             source_label="Dross-press station · per-batch yield log",
@@ -712,24 +716,24 @@ _CATALOGUE: list[SignalDef] = [
     SignalDef(
         key="circularity.asi_coc_compliance_pct",
         group="circularity",
-        label="ASI Chain-of-Custody compliance (30d)",
+        label="ISO 22095 Chain-of-Custody compliance (30d)",
         unit="%",
         target_min=99.5,
         target_max=100.0,
-        regulatory_anchor="ASI CoC Standard v3",
+        regulatory_anchor="ISO 22095:2020",
         description=(
             "Share of issued DPPs in the last 30 days whose recycled-content "
-            "claim is fully traceable through the ASI CoC ledger. Anything "
+            "claim is fully traceable through the ISO 22095 CoC ledger. Anything "
             "below 100% triggers a CoC investigation."
         ),
-        owner_step="molten_metal_alloying",
+        owner_step="alloying",
         provenance=Provenance(
             source_kind="derived",
-            source_label="ASI ledger · DPP recycled-claim audit",
+            source_label="CoC ledger · DPP recycled-claim audit",
             frequency_seconds=3600,
             latency_seconds_p50=600,
             pipeline=[
-                PipelineStop(name="ASI CoC ledger", kind="store"),
+                PipelineStop(name="ISO 22095 CoC ledger", kind="store"),
                 PipelineStop(name="DPP recycled-claim scanner", kind="aggregator"),
                 PipelineStop(name="Plant Monitor", kind="dashboard"),
             ],
@@ -739,19 +743,19 @@ _CATALOGUE: list[SignalDef] = [
     SignalDef(
         key="verification.dnv_cfp_statement_days_remaining",
         group="verification",
-        label="DNV CFP statement validity",
+        label="PCF verification statement validity",
         unit="days",
         target_min=90.0,
         target_max=None,
         regulatory_anchor="ISO 14067 verification statement",
         description=(
-            "Days remaining on the active DNV verification statement. Triggers "
+            "Days remaining on the active PCF verification statement. Triggers "
             "re-verify below 90 days."
         ),
-        owner_step="third_party_verification",
+        owner_step="verification",
         provenance=Provenance(
             source_kind="manual",
-            source_label="DNV-uploaded verification statement (PDF + DID-signed)",
+            source_label="Verifier-uploaded statement (PDF + DID-signed)",
             frequency_seconds=86400,
             latency_seconds_p50=86400,
             pipeline=_VERIFIER_PIPELINE,
@@ -760,16 +764,16 @@ _CATALOGUE: list[SignalDef] = [
     SignalDef(
         key="verification.asi_certificate_days_remaining",
         group="verification",
-        label="ASI Performance certificate validity",
+        label="IZA Zinc Mark certificate validity",
         unit="days",
         target_min=180.0,
         target_max=None,
-        regulatory_anchor="ASI Performance Standard v3",
-        description="Aluminium Stewardship Initiative certificate runway.",
-        owner_step="third_party_verification",
+        regulatory_anchor="IZA Zinc Mark · International Zinc Association",
+        description="IZA Zinc Mark / ILA Lead Stewardship certificate runway.",
+        owner_step="verification",
         provenance=Provenance(
             source_kind="manual",
-            source_label="ASI-uploaded certificate metadata",
+            source_label="IZA / ILA-uploaded certificate metadata",
             frequency_seconds=86400,
             latency_seconds_p50=86400,
             pipeline=_VERIFIER_PIPELINE,
@@ -784,7 +788,7 @@ _CATALOGUE: list[SignalDef] = [
         target_max=100.0,
         regulatory_anchor="SDD §8.5 DoD",
         description=("Share of issued DPPs (last 24h) carrying the full DoD attribute set."),
-        owner_step="third_party_verification",
+        owner_step="verification",
         provenance=Provenance(
             source_kind="derived",
             source_label="DoD scanner · 200-DPP rolling window",
@@ -803,7 +807,7 @@ _CATALOGUE: list[SignalDef] = [
         target_max=100.0,
         regulatory_anchor="EU Reg 2023/956 (CBAM)",
         description=("Embodied-emissions declaration completeness for in-flight EU shipments."),
-        owner_step="third_party_verification",
+        owner_step="verification",
         provenance=Provenance(
             source_kind="derived",
             source_label="CBAM scanner · EU-bound DPP window",
@@ -995,7 +999,7 @@ async def _real_recycled_recent_dpps(
 
 
 _GROUP_LABELS: dict[SignalGroup, str] = {
-    "electrolysis": "Electrolysis cell line",
+    "electrolysis": "Electrowinning / RLE cell house",
     "power": "Power & energy mix",
     "casthouse": "Casthouse & QC",
     "carbon": "Carbon footprint",
@@ -1006,10 +1010,14 @@ _GROUP_LABELS: dict[SignalGroup, str] = {
 
 async def _resolve_real_overrides(session: AsyncSession, tenant_id: int) -> dict[str, float | None]:
     cfp = await _real_carbon_rolling(session, tenant_id)
+    # IZA global SHG zinc benchmark · 3.7 kg CO2e/kg → 3700 kg CO2e/t.
+    iza_benchmark_kg_per_t = 3700.0
     overrides: dict[str, float | None] = {
         "carbon.cfp_rolling_kg_per_t": cfp,
         "carbon.industry_avg_delta_pct": (
-            round(((cfp - 14600.0) / 14600.0) * 100.0, 1) if cfp is not None else None
+            round(((cfp - iza_benchmark_kg_per_t) / iza_benchmark_kg_per_t) * 100.0, 1)
+            if cfp is not None
+            else None
         ),
         "circularity.recycled_content_pct": await _real_recycled_rolling(session, tenant_id),
         "verification.dod_coverage_pct": await _real_dod_coverage(session, tenant_id),
@@ -1099,8 +1107,8 @@ async def compute_plant_status(session: AsyncSession, *, tenant_id: int) -> Plan
 
     return PlantStatus(
         generated_at=datetime.now(UTC),
-        plant_name="EGA Jebel Ali · DX+ Ultra cell line",
-        line_count=6,
+        plant_name="HZL Chanderiya Lead-Zinc Smelter · RLE cell house",
+        line_count=4,
         signals=signals,
         groups=list(groups.values()),
         breaches=breaches,

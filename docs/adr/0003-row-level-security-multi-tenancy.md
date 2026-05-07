@@ -4,13 +4,14 @@
 
 ## Context
 
-The platform ships to EGA as the first tenant but is engineered to serve
-multiple aluminium and metals producers. We need tenant isolation that:
+The platform ships to Hindustan Zinc Limited (HZL) as the first tenant but is
+engineered to serve multiple non-ferrous metals producers. We need tenant
+isolation that:
 
 - Survives careless application code (a developer who forgets to add
   `WHERE tenant_id = ?` must not leak data).
 - Doesn't multiply infrastructure cost per tenant.
-- Lets EGA opt into a dedicated database later without code changes.
+- Lets HZL opt into a dedicated database later without code changes.
 
 ## Decision
 
@@ -28,7 +29,8 @@ The RLS policy reads that GUC and filters automatically. If the GUC is unset,
 the policy denies all rows (fail-closed for background jobs that forget to scope
 themselves).
 
-Tier-2 tenants (the future Hydro / Speira / Novelis) can opt into:
+Tier-2 tenants (the future sister Vedanta entities or downstream converter
+customers) can opt into:
 
 - **schema-per-tenant** — same connection, separate Postgres schemas; useful for
   regulatory isolation requirements.

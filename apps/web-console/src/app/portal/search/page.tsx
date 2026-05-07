@@ -37,7 +37,7 @@ export default async function SearchPage({ searchParams }: SearchProps) {
         <input
           name="q"
           defaultValue={params.q}
-          placeholder="UPI, brand, alloy…"
+          placeholder="UPI, brand, grade…"
           className="flex-1 rounded-[var(--radius-md)] border border-[var(--surface-border)] bg-[var(--surface-page)] px-4 py-3 text-[15px] outline-none focus:border-[var(--color-accent)]"
         />
         <select
@@ -46,9 +46,9 @@ export default async function SearchPage({ searchParams }: SearchProps) {
           className="rounded-[var(--radius-md)] border border-[var(--surface-border)] bg-[var(--surface-page)] px-3 py-3 text-[14px]"
         >
           <option value="">All brands</option>
-          <option value="CelestiAL">CelestiAL</option>
-          <option value="CelestiAL-R">CelestiAL-R</option>
-          <option value="Standard">Standard</option>
+          <option value="EcoZen">EcoZen SHG 99.995</option>
+          <option value="CGG Jumbo">CGG Jumbo</option>
+          <option value="Vedanta 99.99">Refined Lead 99.99</option>
         </select>
         <button
           type="submit"
@@ -80,7 +80,7 @@ export default async function SearchPage({ searchParams }: SearchProps) {
               </p>
             </div>
             <span className="tabular font-mono text-[12px] text-[var(--fg-muted)]">
-              {Math.round(r.cfpKgCo2ePerTonne).toLocaleString()} kg/t
+              {(r.cfpKgCo2ePerTonne / 1000).toFixed(2)} kg/kg
             </span>
             <span className="font-mono text-[11px] text-[var(--fg-subtle)]">
               {r.issuedAt?.slice(0, 10) ?? '—'}

@@ -1,7 +1,7 @@
 [project]
 name = "dpp-api"
 version = "0.1.0"
-description = "EGA DPP Platform — backend services (ingestion, generator, signer, resolver, audit)."
+description = "Vedanta · HZL Passport Platform — backend services (ingestion, generator, signer, resolver, audit)."
 requires-python = ">=3.12"
 license = { text = "Proprietary" }
 authors = [{ name = "DPP Service Provider" }]

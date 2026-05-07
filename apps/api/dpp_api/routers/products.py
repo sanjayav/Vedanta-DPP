@@ -64,7 +64,7 @@ async def seed_endpoint(
     principal: Principal = Depends(require_tenant_admin),
     session: AsyncSession = Depends(get_tenant_session),
 ) -> dict[str, object]:
-    """Idempotent seed of canonical chain + manifests + EGA portfolio."""
+    """Idempotent seed of canonical chain + manifests + HZL portfolio."""
     counts = await seed_canonical_data(session, tenant_id=principal.tenant_id)
     return {"seeded": counts}
 

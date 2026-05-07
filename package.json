@@ -2,7 +2,7 @@
   "name": "ega-dpp-platform",
   "version": "0.1.0",
   "private": true,
-  "description": "EGA Aluminium Digital Product Passport platform — production-foundation, ESPR-aligned, multi-tenant.",
+  "description": "C6 Trail · Vedanta · Hindustan Zinc Digital Product Passport platform — Chem-X v1.0 aligned, multi-tenant, ESPR / CBAM ready.",
   "license": "UNLICENSED",
   "engines": {
     "node": ">=20.11.0",

@@ -29,27 +29,27 @@ WEB_CONSOLE = ROOT / "apps" / "web-console" / "public" / "dpp-assets" / "docs" /
 # (doc_id, title, kind, issuer, reference, validity)
 DOCS: list[tuple[str, str, str, str, str, str]] = [
     # Certifications
-    ("doc-asi-perf",    "ASI Performance Standard V3 · Certificate",          "Certification", "Aluminium Stewardship Initiative",    "ASI Performance #27 · Al Taweelah May 2019; Jebel Ali 2021", "Valid until 2027-05-01"),
-    ("doc-asi-coc",     "ASI Chain of Custody V2.1 · Certificate",            "Certification", "Aluminium Stewardship Initiative",    "ASI CoC #428",                                              "Valid until 2027-05-01"),
+    ("doc-asi-perf",    "IZA Zinc Mark · Performance Certificate",            "Certification", "International Zinc Association",      "IZA Zinc Mark #HZL-2025-01 · Chanderiya, Dariba, Debari, Pantnagar", "Valid until 2027-05-01"),
+    ("doc-asi-coc",     "ISO 22095 Chain of Custody · Certificate",           "Certification", "TÜV Rheinland",                       "ISO 22095 CoC #HZL-428",                                    "Valid until 2027-05-01"),
     ("doc-iso-9001",    "ISO 9001:2015 Quality Management",                   "Certification", "BSI Management Systems",              "BSI FS 612893",                                             "Valid until 2026-09-15"),
     ("doc-iso-14001",   "ISO 14001:2015 Environmental Management",            "Certification", "BSI Management Systems",              "BSI EMS 591222",                                            "Valid until 2026-09-15"),
     ("doc-iso-45001",   "ISO 45001:2018 Occupational Health & Safety",        "Certification", "BSI Management Systems",              "BSI OHS 615001",                                            "Valid until 2026-09-15"),
     ("doc-iso-50001",   "ISO 50001:2018 Energy Management",                   "Certification", "BSI Management Systems",              "BSI ENMS 614720",                                           "Valid until 2026-09-15"),
-    ("doc-iso-17025",   "ISO/IEC 17025:2017 Lab Accreditation",               "Certification", "Emirates International Accreditation", "EIAC LAB 0029",                                            "Valid until 2027-03-30"),
+    ("doc-iso-17025",   "ISO/IEC 17025:2017 Lab Accreditation",               "Certification", "NABL India",                          "NABL TC-0029",                                              "Valid until 2027-03-30"),
     # Regulations
-    ("doc-reg-cbam",    "EU CBAM · Embedded-Emissions Declaration",            "Regulation",    "EGA Compliance",                      "Regulation (EU) 2023/956 · CBAM-EGA-2026-Q1",                "Q1 2026 reporting period"),
-    ("doc-reg-espr",    "EU ESPR · DPP Conformity Statement",                  "Regulation",    "EGA Compliance",                      "Regulation (EU) 2024/1781 · ESPR-DPP-EGA-001",               "Issued 2026-04-12"),
-    ("doc-reg-reach",   "REACH · Article 33(1) Declaration",                   "Regulation",    "EGA Compliance",                      "Regulation (EC) 1907/2006 · REACH-EGA-2025",                 "Reviewed 2025-12-31"),
-    ("doc-reg-rohs",    "RoHS 2 · Directive 2011/65/EU Declaration",          "Regulation",    "EGA Compliance",                      "Directive 2011/65/EU · RoHS-EGA-2025",                       "Reviewed 2025-12-31"),
-    ("doc-reg-tsca",    "US TSCA · Section 8(b) Declaration",                  "Regulation",    "EGA Compliance",                      "US TSCA · TSCA-EGA-2025",                                    "Reviewed 2025-12-31"),
-    ("doc-reg-3tg",     "Conflict Minerals · 3TG Due-Diligence Statement",     "Regulation",    "EGA Compliance",                      "Regulation (EU) 2017/821 · 3TG-EGA-2025",                    "Reviewed 2025-12-31"),
-    ("doc-reg-pfas",    "PFAS · REACH Annex XVII Statement",                   "Regulation",    "EGA Compliance",                      "Regulation (EU) 2024/879 · PFAS-EGA-2025",                   "Reviewed 2025-12-31"),
-    ("doc-reg-alu-da",  "EU Aluminium Delegated Act · Readiness Assessment",   "Regulation",    "EGA Compliance",                      "Regulation (EU) 2025/486 (draft) · ALU-DA-EGA-2025",          "Reviewed 2026-03-31"),
-    # Bonus: CFP statement (already exists as a real EGA PDF, also keep a placeholder version)
-    ("doc-cfp",         "Carbon Footprint Verification Statement (ISO 14067:2018)", "Verification statement", "DNV AS – Abu Dhabi Branch", "DNV-2024-ASR-C730946-CelestiAL · ISO 14067:2018",         "Issued Aug 2025"),
-    ("doc-lca-full",    "EGA Primary Aluminium · Life-Cycle Assessment",       "LCA report",    "EGA Sustainability",                  "ISO 14040:2006 + ISO 14044:2006 · cradle-to-gate",          "Reporting period 2023"),
-    ("doc-product-booklet", "EGA Product Booklet",                              "Product info",  "Emirates Global Aluminium PJSC",      "April 2026 edition",                                        "—"),
-    ("doc-tech-booklet",    "EGA Technology Booklet · DX+ Ultra cell line",   "Technology",    "Emirates Global Aluminium PJSC",      "December 2021 edition",                                     "—"),
+    ("doc-reg-cbam",    "EU CBAM · Embedded-Emissions Declaration",            "Regulation",    "HZL Compliance",                      "Regulation (EU) 2023/956 · CBAM-HZL-2026-Q1",                "Q1 2026 reporting period"),
+    ("doc-reg-espr",    "EU ESPR · DPP Conformity Statement",                  "Regulation",    "HZL Compliance",                      "Regulation (EU) 2024/1781 · ESPR-DPP-HZL-001",               "Issued 2026-04-12"),
+    ("doc-reg-reach",   "REACH · Article 33(1) Declaration",                   "Regulation",    "HZL Compliance",                      "Regulation (EC) 1907/2006 · REACH-HZL-2025",                 "Reviewed 2025-12-31"),
+    ("doc-reg-rohs",    "RoHS 2 · Directive 2011/65/EU Declaration",          "Regulation",    "HZL Compliance",                      "Directive 2011/65/EU · RoHS-HZL-2025",                       "Reviewed 2025-12-31"),
+    ("doc-reg-tsca",    "US TSCA · Section 8(b) Declaration",                  "Regulation",    "HZL Compliance",                      "US TSCA · TSCA-HZL-2025",                                    "Reviewed 2025-12-31"),
+    ("doc-reg-3tg",     "Responsible Minerals · Due-Diligence Statement",      "Regulation",    "HZL Compliance",                      "OECD DDG · RM-HZL-2025",                                     "Reviewed 2025-12-31"),
+    ("doc-reg-pfas",    "PFAS · REACH Annex XVII Statement",                   "Regulation",    "HZL Compliance",                      "Regulation (EU) 2024/879 · PFAS-HZL-2025",                   "Reviewed 2025-12-31"),
+    ("doc-reg-alu-da",  "ESPR Annex III · Readiness Assessment",               "Regulation",    "HZL Compliance",                      "Regulation (EU) 2024/1781 · ESPR-ANX3-HZL-2025",             "Reviewed 2026-03-31"),
+    # Bonus: PCF / EPD verification statement
+    ("doc-cfp",         "Carbon Footprint Verification Statement (ISO 14067:2018)", "Verification statement", "International EPD System", "EPD-IES-0006472:001 · EcoZen SHG 99.995 · ISO 14067:2018", "Valid 2023-01-16 → 2028-01-15"),
+    ("doc-lca-full",    "HZL Primary Zinc · Life-Cycle Assessment",            "LCA report",    "HZL Sustainability",                  "ISO 14040:2006 + ISO 14044:2006 · cradle-to-gate",          "Reporting period 2023"),
+    ("doc-product-booklet", "HZL Product Brochure 2025",                       "Product info",  "Hindustan Zinc Limited",              "2025 edition",                                              "—"),
+    ("doc-tech-booklet",    "HZL Technology Brochure · RLE smelter line",      "Technology",    "Hindustan Zinc Limited",              "2025 edition",                                              "—"),
 ]
 
 INK = HexColor("#1c1917")
@@ -68,7 +68,7 @@ def draw_certificate(c: canvas.Canvas, *, doc_id: str, title: str, kind: str, is
     c.rect(0, height - 22 * mm, width, 22 * mm, stroke=0, fill=1)
     c.setFillColor(PAPER)
     c.setFont("Helvetica-Bold", 13)
-    c.drawString(20 * mm, height - 14 * mm, "AL TRAIL · Aeiforo")
+    c.drawString(20 * mm, height - 14 * mm, "C6 TRAIL · Vedanta · Hindustan Zinc")
     c.setFont("Helvetica", 9)
     c.drawString(20 * mm, height - 19 * mm, "Digital Product Passport · evidence document")
 
@@ -96,8 +96,8 @@ def draw_certificate(c: canvas.Canvas, *, doc_id: str, title: str, kind: str, is
         ("Issued by", issuer),
         ("Reference", reference),
         ("Validity", validity),
-        ("Subject", "Emirates Global Aluminium PJSC · Al Taweelah, UAE"),
-        ("Issued for", "Aluminium DPP evidence (Public · Customer · Verifier · Authority)"),
+        ("Subject", "Hindustan Zinc Limited · Udaipur, Rajasthan, India"),
+        ("Issued for", "Zinc / Lead DPP evidence (Public · Customer · Verifier · Authority)"),
         ("Document id", doc_id),
         ("Generated", date.today().isoformat()),
     ]
@@ -147,7 +147,7 @@ def draw_certificate(c: canvas.Canvas, *, doc_id: str, title: str, kind: str, is
     c.setFont("Helvetica", 8)
     c.drawString(46 * mm, 18 * mm, "· Production deployments replace this with the verifier-uploaded signed PDF.")
     c.setFillColor(MUTED)
-    c.drawString(20 * mm, 12 * mm, f"AL Trail · {doc_id} · generated for the Aeiforo / EGA DPP platform")
+    c.drawString(20 * mm, 12 * mm, f"C6 Trail · {doc_id} · generated for the Vedanta · Hindustan Zinc DPP platform")
 
 
 def _wrap(text: str, max_chars: int) -> list[str]:

@@ -23,12 +23,12 @@ export default function IssuePage() {
 
       <IssueCredentialForm
         defaults={{
-          brand: 'CelestiAL',
+          brand: 'EcoZen SHG 99.995',
           periodFrom: yearStart.toISOString().slice(0, 10),
           periodTo: yearEnd.toISOString().slice(0, 10),
-          valueKgCo2ePerTonne: 4150,
-          statementRef: `DNV-${today.getUTCFullYear()}-ASR-CelestiAL`,
-          verifierName: 'DNV AS · Abu Dhabi Branch',
+          valueKgCo2ePerTonne: 950,
+          statementRef: `DNV-${today.getUTCFullYear()}-ASR-EcoZen`,
+          verifierName: 'DNV Business Assurance India',
         }}
       />
     </div>

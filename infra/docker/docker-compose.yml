@@ -1,5 +1,5 @@
 # ──────────────────────────────────────────────────────────────────────────────
-# EGA DPP Platform — local development stack
+# C6 Trail · Vedanta · Hindustan Zinc DPP Platform — local development stack
 # ──────────────────────────────────────────────────────────────────────────────
 # `pnpm infra:up`     starts everything detached
 # `pnpm infra:logs`   tails logs
@@ -9,7 +9,7 @@
 # Production deploys do NOT use this file. See infra/k8s for Helm/Kustomize.
 # ──────────────────────────────────────────────────────────────────────────────
 
-name: ega-dpp-dev
+name: c6trail-dpp-dev
 
 services:
   postgres:
@@ -68,7 +68,7 @@ services:
       ]
 
   # MinIO — S3-compatible object storage for evidence PDFs, exports, signed bundles.
-  # In EGA private cloud this is replaced by MinIO; in cloud-native deploys, S3.
+  # In HZL private cloud this is replaced by MinIO; in cloud-native deploys, S3.
   minio:
     image: minio/minio:latest
     container_name: dpp-minio

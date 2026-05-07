@@ -146,9 +146,9 @@ def downgrade() -> None:
 def _seed_from_presets() -> None:
     """Insert one CFP row per preset and the HZL-aligned minimum compliance set.
 
-    The new (zinc/lead/silver) preset shape carries six EF 3.1 LCIA categories
+    The HZL (zinc/lead/silver) preset shape carries six EF 3.1 LCIA categories
     inside `sustainability.pcf` and a producing-site tag instead of the
-    aluminium-era `brand` + `casthouseUfi`. We seed `reference_cfp` from
+    legacy v0 `brand` + `casthouseUfi` columns. We seed `reference_cfp` from
     `sustainability.pcf` so the existing CFP override path keeps working
     while the generator transitions to consuming the preset directly.
     """
@@ -229,7 +229,7 @@ def _seed_from_presets() -> None:
             cfp_rows,
         )
 
-    # HZL-aligned minimum compliance set (replaces ASI/aluminium defaults).
+    # HZL-aligned minimum compliance set (IZA / ILA / BIS / ICMM / EPD).
     compliance_rows = [
         ("REACH", "EC 1907/2006", "regulation", "ECHA", None),
         ("RoHS 2 / ELV", "2011/65/EU", "regulation", "EU", None),

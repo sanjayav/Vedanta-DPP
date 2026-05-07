@@ -175,20 +175,20 @@ function BrandBar({
   max: number
 }) {
   const widthPct = (item.avgCfpKgCo2ePerTonne / max) * 100
-  // Tone selection · CelestiAL gets the gold accent, CelestiAL-R gets green,
-  // Standard / others stay neutral. This is deliberately not data-driven so the
-  // brand identity reads consistently with the public viewer.
+  // Tone selection · EcoZen gets the gold accent, CGG Jumbo gets green,
+  // Refined Lead / others stay neutral. This is deliberately not data-driven
+  // so the brand identity reads consistently with the public viewer.
   const colour =
-    item.brand === 'CelestiAL'
+    item.brand === 'EcoZen' || item.brand === 'EcoZen SHG 99.995'
       ? '#D4A574'
-      : item.brand === 'CelestiAL-R'
+      : item.brand === 'CGG Jumbo'
         ? 'var(--color-green)'
         : 'var(--color-accent)'
   return (
     <div>
       <div className="flex items-baseline justify-between text-[14px]">
         <span className="font-medium text-[var(--fg-default)]">
-          EGA {item.brand}{' '}
+          HZL {item.brand}{' '}
           <span className="font-mono text-[11px] text-[var(--fg-subtle)]">
             · {item.count} {item.count === 1 ? 'DPP' : 'DPPs'}
           </span>

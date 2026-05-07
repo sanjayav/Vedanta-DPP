@@ -18,8 +18,9 @@
 import type { DemoAudience } from '@dpp/ui'
 
 // Public sees the spec-sheet view a buyer would see on a phone scan: chemistry
-// per EN 573-3, CFP headline, certificates, EoL guidance. Truly internal items
-// (audit chain, raw telemetry, exhaustive PEF) stay tier-gated.
+// per IS 209 / IS 27 / ASTM B852, CFP headline, certificates, EoL guidance.
+// Truly internal items (audit chain, raw telemetry, exhaustive PEF) stay
+// tier-gated.
 const PUBLIC_HIDDEN_PATHS = new Set<string>([
   'chemistry.fullElementalBreakdown',
   'audit.events',
@@ -82,7 +83,7 @@ export function audienceLabel(a: DemoAudience): string {
   return a === 'public'
     ? 'Public viewer'
     : a === 'customer'
-      ? 'Customer (BMW-tier)'
+      ? 'Customer (Tata Steel-tier)'
       : a === 'verifier'
         ? 'Verifier (DNV-tier)'
         : 'Authority (EU regulator)'
@@ -90,7 +91,7 @@ export function audienceLabel(a: DemoAudience): string {
 
 export function audienceTagline(a: DemoAudience): string {
   return a === 'public'
-    ? 'Story-tier · what the buyer of an EGA product sees on a phone scan.'
+    ? 'Story-tier · what the buyer of an HZL product sees on a phone scan.'
     : a === 'customer'
       ? 'Commercial tier · adds chemistry, mill test, supply chain map.'
       : a === 'verifier'

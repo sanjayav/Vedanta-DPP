@@ -10,14 +10,14 @@ import { fetchCarbonAggregate, fetchRecycledAggregate, listCustomerDpps } from '
 
 export const revalidate = 30
 
-const INDUSTRY_AVG_CFP = 14600
+const INDUSTRY_AVG_CFP = 3500 // kg CO₂e/t · IZA global zinc average (RLE)
 
 // Customer-side targets · wired in v1.5 from procurement preferences. Today
 // these are sensible defaults so the scorecard can render meaningful red/
 // amber/green even on a freshly-installed tenant.
 const TARGETS = {
-  cfpKgCo2ePerTonne: 4500, // CelestiAL-aligned
-  recycledContentPct: 50,
+  cfpKgCo2ePerTonne: 1200, // EcoZen-aligned (low-carbon zinc, kg CO₂e/t)
+  recycledContentPct: 25,
   complianceCoveragePct: 95,
 }
 
@@ -77,7 +77,7 @@ export default async function SupplierScorecardPage() {
           Supplier scorecard
         </p>
         <h1 className="font-display mt-2 text-[36px] font-semibold leading-tight text-[var(--fg-default)]">
-          {totalDpps} passport{totalDpps === 1 ? '' : 's'} received from EGA.
+          {totalDpps} passport{totalDpps === 1 ? '' : 's'} received from HZL.
         </h1>
         <p className="mt-2 max-w-2xl text-[14px] text-[var(--fg-muted)]">
           Performance against your procurement targets. Numbers are weighted by mass, so a
@@ -107,14 +107,14 @@ export default async function SupplierScorecardPage() {
           target={`Target: ≥${TARGETS.recycledContentPct}%`}
           status={recycledStatus.tier}
           delta={`${recycledStatus.deltaPct >= 0 ? '+' : ''}${recycledStatus.deltaPct.toFixed(1)}% vs target`}
-          context={`${Math.round((totalWeight / 1000) * (weightedRecycled / 100)).toLocaleString()} tonnes secondary aluminium`}
+          context={`${Math.round((totalWeight / 1000) * (weightedRecycled / 100)).toLocaleString()} tonnes secondary zinc/lead`}
           spark={monthRecycled.map((v) => v ?? 0)}
         />
         <ScoreCard
           label="CO₂e avoided"
           value={`${Math.round(co2eAvoided).toLocaleString()}`}
           unit="tonnes"
-          target={`vs IAI ${INDUSTRY_AVG_CFP.toLocaleString()} kg/t baseline`}
+          target={`vs IZA ${INDUSTRY_AVG_CFP.toLocaleString()} kg/t baseline`}
           status="success"
           context="Reportable in your scope-3 disclosure"
         />

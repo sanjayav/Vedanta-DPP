@@ -3,10 +3,10 @@
 Idempotent. Runs once on lifespan startup when `DPP_ENV != "production"`.
 
 Steps:
-  1. Ensure the default tenant row exists (id from settings, slug "ega").
+  1. Ensure the default tenant row exists (id from settings, slug "hzl").
   2. Bind `app.current_tenant_id` so RLS allows the upserts in step 3.
   3. Call `seed_canonical_data` to insert process steps, manifest attributes,
-     EGA portfolio products, and product→step chain links.
+     HZL portfolio products, and product→step chain links.
   4. If there are zero issued DPPs for this tenant, fire one cast event per
      preset so the Passports / Audit / Pipeline surfaces have data to render.
      Skipped on every subsequent boot.
@@ -49,7 +49,7 @@ async def ensure_default_tenant(session: AsyncSession, settings: Settings) -> No
             """
             INSERT INTO tenants (id, slug, legal_name, status, tier, branding, created_at)
             VALUES (
-                :id, :slug, 'Emirates Global Aluminium PJSC',
+                :id, :slug, 'Hindustan Zinc Limited',
                 'active', 'production', '{}', now()
             )
             ON CONFLICT (id) DO NOTHING
@@ -67,23 +67,33 @@ async def ensure_default_tenant(session: AsyncSession, settings: Settings) -> No
 
 
 def _build_cast_event_payload(preset: dict[str, Any], tenant_id: int) -> dict[str, Any]:
-    """Mirror of @dpp/sim buildCastEvent. Mutates nothing in `preset`."""
+    """Mirror of @dpp/sim buildCastEvent. Mutates nothing in `preset`.
+
+    Maps the Chem-X v1.0 HZL preset shape onto the v1.0 cast-event payload
+    contract (which still uses the legacy `alloyEn`/`alloyAa` field names —
+    those are preserved as opaque grade-code carriers until a v1.5 cast-event
+    schema lands).
+    """
     cast_number = f"C-{datetime.now(UTC).strftime('%Y%m%d')}-{random.randint(10000, 99999)}"  # noqa: S311
-    dims = preset.get("dimensions") or {}
+    physical = preset.get("physical") or {}
+    dims = physical.get("dimensions") or preset.get("dimensions") or {}
+    grade_code = preset.get("gradeCode") or preset.get("tradeName") or "UNKNOWN"
+    bis_or_iso = (preset.get("speakingCodes") or {}).get("bisStandard") or grade_code
+    site_tag = preset.get("producingSiteTag", "CHA")
+    casthouse_bpns = f"BPNSHZS{site_tag}00012N"
+    smelter_bpns = casthouse_bpns
     cast_payload: dict[str, Any] = {
         "castNumber": cast_number,
-        "alloyEn": preset["alloyEn"],
-        "alloyAa": preset["alloyAa"],
-        "brand": preset["brand"],
-        "form": preset["form"],
-        "weightKg": preset["weightKg"],
-        "casthouseUfi": preset["casthouseUfi"],
-        "smelterUfi": preset["smelterUfi"],
-        "purityGrade": preset["purityGrade"],
+        "alloyEn": bis_or_iso,
+        "alloyAa": grade_code,
+        "brand": preset.get("tradeName") or grade_code,
+        "form": preset.get("form", "ingot_25kg"),
+        "weightKg": float(physical.get("unitMassKg", 25.0)),
+        "casthouseUfi": casthouse_bpns,
+        "smelterUfi": smelter_bpns,
+        "purityGrade": str(preset.get("purityPercent", 99.995)),
     }
-    if "temper" in preset:
-        cast_payload["temper"] = preset["temper"]
-    for key in ("diameterMm", "lengthMm", "widthMm", "thicknessMm"):
+    for key in ("diameterMm", "lengthMm", "widthMm", "thicknessMm", "heightMm"):
         if key in dims:
             cast_payload[key] = dims[key]
 

@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://schemas.passport.hzlindia.com/dpp/v1.0.0.json",
   "title": "Vedanta — Hindustan Zinc Digital Material/Product Passport",
-  "description": "Canonical DMP/DPP record schema for HZL zinc, lead and silver products. Aligns with: Chem-X Sustainability Guideline v1.0 (six EF 3.1 LCIA categories with DQR/PDS), Chem-X Business Identity / BPDM Guideline v1.0 (CX-0010 BPN identifiers), Chem-X Material Identifier Guideline v1.0 (did:web), TfS PCF Guideline v3.0, ISO 14067:2018 (carbon footprint), ISO 14025 EPD, ISO 14040/44 (LCA), ISO 22095 (chain of custody), ISO/IEC 6523 (organisation identification), W3C Decentralized Identifiers v1.0, ESPR Annex III (mandatory subset), India BIS IS 209 (zinc) / IS 27 (lead), REACH, RoHS. The 18 top-level sections mirror the prior aluminium schema topology so downstream services remain structurally compatible.",
+  "description": "Canonical DMP/DPP record schema for HZL zinc, lead and silver products. Aligns with: Chem-X Sustainability Guideline v1.0 (six EF 3.1 LCIA categories with DQR/PDS), Chem-X Business Identity / BPDM Guideline v1.0 (CX-0010 BPN identifiers), Chem-X Material Identifier Guideline v1.0 (did:web), TfS PCF Guideline v3.0, ISO 14067:2018 (carbon footprint), ISO 14025 EPD, ISO 14040/44 (LCA), ISO 22095 (chain of custody), ISO/IEC 6523 (organisation identification), W3C Decentralized Identifiers v1.0, ESPR Annex III (mandatory subset), India BIS IS 209 (zinc) / IS 27 (lead), REACH, RoHS. The 18 top-level sections mirror the prior platform topology so downstream services remain structurally compatible.",
   "type": "object",
   "additionalProperties": false,
   "required": [

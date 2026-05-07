@@ -3,7 +3,7 @@ import { FirePresetButton } from '@/components/console/FirePresetButton'
 
 /**
  * Sources tab · Simulator sub-tab landing.
- * Card grid of EGA-anchored presets per SDD §5.1.5. Click "Fire event" to
+ * Card grid of HZL-anchored presets per SDD §5.1.5. Click "Fire event" to
  * issue a live DPP via the canonical pipeline.
  */
 export default async function SourcesPage() {
@@ -19,8 +19,9 @@ export default async function SourcesPage() {
         </span>
       </header>
       <p className="text-[14px] text-[var(--fg-muted)]">
-        Each preset is seeded with verified EGA values (DNV CFP, ASI #428, DEWA solar PPA). Firing a
-        preset creates a real DPP visible under the DPPs tab and on the public viewer.
+        Each preset is seeded with verified HZL values (DNV CFP, IZA Zinc Mark, Serentica 530 MW
+        renewables PDA, EPD-IES-0006472). Firing a preset creates a real DPP visible under the DPPs
+        tab and on the public viewer.
       </p>
 
       {presets.length === 0 ? (

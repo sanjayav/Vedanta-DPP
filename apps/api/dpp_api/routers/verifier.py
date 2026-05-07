@@ -1,12 +1,13 @@
-"""Verifier-tier API surface — DNV / Bureau Veritas / ASI / notified bodies.
+"""Verifier-tier API surface — DNV / Bureau Veritas / IZA / ILA / notified bodies.
 
 The caller authenticates with a bearer JWT minted by their IdP. Required
 claims:
   - role  = "verifier"
   - did   = the verifier's DID (the credential issuer DID we record)
   - tnt   = the *target tenant* this token is acting on (so a single DNV
-            wallet can issue against EGA, Hydro, Norsk Aluminium, etc., and
-            we resolve which tenant's brand-period the credential lands on)
+            wallet can issue against HZL, sister Vedanta entities, and other
+            non-ferrous producers, and we resolve which tenant's brand-period
+            the credential lands on)
 
 In v1.5 we accept a W3C VC Presentation in lieu of a JWT — a thin verifier
 that validates the presentation against the trust list, then synthesises an
@@ -48,7 +49,7 @@ class IssueCfpRequest(BaseModel):
     statement_ref: str = Field(min_length=1, max_length=256)
     verifier_name: str = Field(min_length=1, max_length=256)
     assurance_level: str = "limited"
-    industry_average: float | None = 14600
+    industry_average: float | None = 3700  # IZA global SHG zinc average (kg CO2e/t)
     methodology: str = "ISO 14067:2018 + IAI v2.0 + PCR 2022:08 v1.0"
     decomposition: dict[str, float] | None = None
     facility_ufi: str | None = None

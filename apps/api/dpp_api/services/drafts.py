@@ -1198,11 +1198,11 @@ def _default_visibility(attribute_path: str, audience: str) -> bool:
         return True
     hidden_for_public = (
         "chemistry.fullElementalBreakdown",
-        "smelting.amperageKa",
+        "smelting.cellCurrentDensityAPerM2",
         "smelting.currentEfficiencyPct",
         "casting.solidificationRateMmPerMin",
-        "refining.causticSodaConsumptionKgPerTonne",
-        "anode.bakeFurnaceFuelMix",
+        "concentration.flotationReagentsKgPerTonne",
+        "roasting.acidPlantOutputTpa",
     )
     if audience == "public" and attribute_path in hidden_for_public:
         return False
@@ -1232,22 +1232,22 @@ def _build_body(summary: dict[str, Any], product: Product, draft: DppDraft) -> d
     body.setdefault("identification", {}).setdefault("castNumber", draft.cast_number)
     body.setdefault("upi", {})
     body["upi"].setdefault("itemSerial", draft.item_serial or draft.cast_number)
-    body["upi"].setdefault("gtin", "07640100040030")
+    body["upi"].setdefault("gtin", "08906029930012")
     # GS1 GTINs are 14 digits — coerce anything that doesn't match (synthesized
     # demo values, hand-typed variants) to keep the dpp_records.gtin VARCHAR(14)
     # column happy and the public viewer URL well-formed.
     gtin_raw = str(body["upi"]["gtin"])
     gs1_gtin_digits = 14
     if not (gtin_raw.isdigit() and len(gtin_raw) == gs1_gtin_digits):
-        body["upi"]["gtin"] = "07640100040030"
+        body["upi"]["gtin"] = "08906029930012"
     body["upi"].setdefault(
         "digitalLinkUrl",
-        f"https://id.ega.example/01/{body['upi']['gtin']}/21/{body['upi']['itemSerial']}",
+        f"https://passport.hzlindia.com/01/{body['upi']['gtin']}/21/{body['upi']['itemSerial']}",
     )
     body.setdefault("physical", {}).setdefault("form", product.form)
     body["physical"].setdefault("weightKg", body.get("physical", {}).get("weightKg", 0))
     body.setdefault("producer", {}).setdefault("brand", product.brand)
-    body["producer"].setdefault("name", product.brand or "EGA Aluminium")
+    body["producer"].setdefault("name", product.brand or "Hindustan Zinc Limited")
 
     # Required `meta` block — signer + schema both depend on these defaults.
     # Authored fields (e.g. languages, accessRights.publicFields) match the
@@ -1258,7 +1258,7 @@ def _build_body(summary: dict[str, Any], product: Product, draft: DppDraft) -> d
     body["meta"].setdefault("lastUpdated", now.isoformat())
     body["meta"].setdefault("expiresAt", expires_at.isoformat())
     body["meta"].setdefault("lifecycleState", "published")
-    body["meta"].setdefault("languages", ["en", "ar", "de"])
+    body["meta"].setdefault("languages", ["en", "hi", "de"])
     body["meta"].setdefault("issuerDid", settings.dpp_issuer_did)
     body["meta"].setdefault(
         "accessRights",

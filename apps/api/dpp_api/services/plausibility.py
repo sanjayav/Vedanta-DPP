@@ -3,8 +3,13 @@
 Catches the obviously-wrong cast events before they become signed DPPs.
 Two failure modes: hard rejection (raise) or soft warning (return).
 
-Bounds are conservative — derived from EGA's published 2024 LCA and IAI v2.0
-sector statistics. They tighten as v1.5 introduces site-specific data.
+Bounds are conservative — derived from HZL's published 2024 PCF data, the
+IZA global SHG zinc benchmark and the ILA refined-lead benchmark. They tighten
+as v1.5 introduces site-specific data.
+
+CFP bounds are expressed in **kg CO2e per tonne** (the legacy persisted unit
+on `dpp_records.cfp_kg_co2e_per_tonne`); preset PCFs use kg CO2e/kg per
+Chem-X v1.0, so the generator multiplies by 1000 before persistence.
 """
 
 from __future__ import annotations
@@ -24,30 +29,25 @@ class PlausibilityResult:
 MIN_COMPLIANCE_ENTRIES = 5
 MAX_PERCENT = 100
 
-# Conservative cradle-to-gate CFP bounds per IAI v2.0 + EGA verified data (kg CO₂e/t).
-# Lower bound: hourly-matched solar (theoretical minimum for primary). Upper bound:
-# coal-grid primary average (China baseline ~20 t/t).
+# Conservative cradle-to-gate PCF bounds per IZA / ILA + HZL verified data
+# (kg CO2e/t). EcoZen lower bound assumes Serentica RE PDA fully consumed;
+# upper bound for refined lead reflects the pyro Pb-Zn route.
 _CFP_BANDS: dict[str, tuple[float, float]] = {
-    "CelestiAL": (3000.0, 6000.0),
-    "CelestiAL-R": (2200.0, 4500.0),
-    "Standard": (8500.0, 13000.0),
-    "High-Purity": (8500.0, 14000.0),
-    "Foundry Alloy": (3000.0, 13000.0),
+    "EcoZen": (500.0, 1500.0),
+    "CGG": (2500.0, 4500.0),
+    "CGG Jumbo": (2500.0, 4500.0),
+    "Vedanta 99.99": (1000.0, 2500.0),
 }
 
 # Weight bounds per cast form (kg). These are absolute extremes; production
 # casts cluster near the centre. Anything outside the band is almost certainly
 # a unit mistake.
 _WEIGHT_BANDS: dict[str, tuple[float, float]] = {
-    "extrusion_billet": (50.0, 5000.0),  # 152mm × 0.5m to 406mm × 7.5m
-    "sheet_ingot": (5000.0, 35000.0),
-    "foundry_ingot": (5.0, 50.0),
-    "t_bar": (200.0, 2000.0),
-    "sow": (300.0, 1200.0),
-    "standard_ingot": (15.0, 30.0),
-    "properzi": (50.0, 5000.0),
-    "hdc_small": (5.0, 100.0),
-    "b_ingot": (5.0, 50.0),
+    "ingot_25kg": (20.0, 30.0),
+    "jumbo_1t": (900.0, 1100.0),
+    "block_2t": (1800.0, 2200.0),
+    "slab_500kg": (450.0, 550.0),
+    "anode": (200.0, 1500.0),
 }
 
 
@@ -67,14 +67,17 @@ def check_cast_event(cast_event: dict[str, Any]) -> PlausibilityResult:
             )
             severity = "reject"
 
-    # Dimensions sanity — a billet must declare diameter, sheet ingots width+thickness.
-    if form == "extrusion_billet" and not cast.get("diameterMm"):
-        issues.append("extrusion_billet must declare diameterMm")
-        severity = "reject"
-    if form == "sheet_ingot":
-        for key in ("widthMm", "thicknessMm"):
+    # Dimensions sanity — a 25 kg ingot must declare length+width+height,
+    # a jumbo block must declare length+width.
+    if form == "ingot_25kg":
+        for key in ("lengthMm", "widthMm"):
             if not cast.get(key):
-                issues.append(f"sheet_ingot must declare {key}")
+                issues.append(f"ingot_25kg must declare {key}")
+                severity = "reject"
+    if form == "jumbo_1t":
+        for key in ("lengthMm", "widthMm"):
+            if not cast.get(key):
+                issues.append(f"jumbo_1t must declare {key}")
                 severity = "reject"
 
     return PlausibilityResult(ok=severity != "reject", severity=severity, issues=issues)

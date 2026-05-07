@@ -194,18 +194,21 @@ def upgrade() -> None:
             """
         )
 
-    # ── Seed the EGA tenant ────────────────────────────────────────────────
+    # ── Seed the HZL tenant ────────────────────────────────────────────────
+    # Migration 0008_hzl_seed UPDATEs this row to its final form (full HZL
+    # branding + did:web). Seeding a placeholder here keeps the FK chain valid
+    # for older migrations that referenced tenant id=1 before the rebrand.
     op.execute(
         """
         INSERT INTO tenants (id, slug, legal_name, issuer_did, status, tier, branding)
         VALUES (
             1,
-            'ega',
-            'Emirates Global Aluminium PJSC',
-            'did:web:dpp.ega.local',
+            'hzl',
+            'Hindustan Zinc Limited',
+            'did:web:passport.hzlindia.local',
             'active',
             'production',
-            '{"primaryColor": "#0F4C81", "logo": null}'::jsonb
+            '{"primaryColor": "#0E7C5A", "logo": null}'::jsonb
         )
         ON CONFLICT (id) DO NOTHING;
         """

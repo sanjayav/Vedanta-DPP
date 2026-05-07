@@ -456,7 +456,7 @@ function stateInfoFor(raw: string): { label: string; tone: StatusTone } {
  *  cast pattern first and only fall back to a hash of the full UPI when
  *  no recognisable cast is present. */
 function makeProductUid(d: DppRow): string {
-  const brand = (d.brand || 'EGA').toUpperCase().slice(0, 8)
+  const brand = (d.brand || 'HZL').toUpperCase().slice(0, 8)
   const alloy = (d.alloy || '')
     .replace(/[^0-9A-Z]/gi, '')
     .slice(0, 6)
