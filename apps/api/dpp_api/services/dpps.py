@@ -96,9 +96,7 @@ async def _hidden_paths_for_record(
     session: AsyncSession, *, record_id: int, audience: str
 ) -> set[str]:
     """Return attribute paths the producer hid from this audience at publish time."""
-    draft = await session.scalar(
-        select(DppDraft).where(DppDraft.published_dpp_id == record_id)
-    )
+    draft = await session.scalar(select(DppDraft).where(DppDraft.published_dpp_id == record_id))
     if draft is None:
         return set()
     rows = (
@@ -214,9 +212,7 @@ async def withdraw_dpp(
 async def resolve_by_digital_link(
     session: AsyncSession, *, gtin: str, batch: str, serial: str | None = None
 ) -> str | None:
-    stmt = select(DppRecord.upi).where(
-        DppRecord.gtin == gtin, DppRecord.cast_number == batch
-    )
+    stmt = select(DppRecord.upi).where(DppRecord.gtin == gtin, DppRecord.cast_number == batch)
     if serial:
         stmt = stmt.where(DppRecord.item_serial == serial)
     result: str | None = await session.scalar(stmt)

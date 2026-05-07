@@ -26,20 +26,20 @@ References
 from __future__ import annotations
 
 import re
-from enum import Enum
+from enum import StrEnum
 from typing import Final
 
 ALPHABET: Final[str] = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 _ALPHA_INDEX: Final[dict[str, int]] = {c: i for i, c in enumerate(ALPHABET)}
 RADIX: Final[int] = 36
 MODULUS: Final[int] = 1271
+ENTITY_CHARS_LEN: Final[int] = 10
+PAYLOAD_LEN_NO_CHECK: Final[int] = 14  # "BPN" + type + 10 entity chars
 
-_BPN_REGEX: Final[re.Pattern[str]] = re.compile(
-    r"^BPN([LSA])([A-Z0-9]{10})([A-Z0-9]{2})$"
-)
+_BPN_REGEX: Final[re.Pattern[str]] = re.compile(r"^BPN([LSA])([A-Z0-9]{10})([A-Z0-9]{2})$")
 
 
-class BpnType(str, Enum):
+class BpnType(StrEnum):
     """Type character of the BPN — selects the Chem-X resource class."""
 
     LEGAL_ENTITY = "L"
@@ -82,7 +82,7 @@ def compute_check_chars(payload14: str) -> str:
     >>> compute_check_chars("BPNLHZL0000001")  # doctest: +SKIP
     '...'
     """
-    if len(payload14) != 14:
+    if len(payload14) != PAYLOAD_LEN_NO_CHECK:
         raise ValueError(f"expected 14-char payload, got {len(payload14)}")
     payload_int = _to_base36(payload14)
     # 16-char BPN value = payload_int * 36^2 + check_int
@@ -115,11 +115,8 @@ def mint(bpn_type: BpnType, entity_chars: str) -> str:
     ``mint(BpnType.LEGAL_ENTITY, 'HZL0000001')`` → ``BPNLHZL0000001XX``.
     """
     entity = entity_chars.upper()
-    if len(entity) != 10 or not all(c in _ALPHA_INDEX for c in entity):
-        raise ValueError(
-            "entity_chars must be 10 characters from [0-9A-Z]; got "
-            f"{entity_chars!r}"
-        )
+    if len(entity) != ENTITY_CHARS_LEN or not all(c in _ALPHA_INDEX for c in entity):
+        raise ValueError(f"entity_chars must be 10 characters from [0-9A-Z]; got {entity_chars!r}")
     payload14 = f"BPN{bpn_type.value}{entity}"
     return payload14 + compute_check_chars(payload14)
 
@@ -150,15 +147,15 @@ def _mint_const(t: BpnType, entity: str) -> str:
 
 def _site(tag3: str, counter: int) -> str:
     entity = f"HZS{tag3.upper()[:3]:<3}{counter:04d}"
-    if len(entity) != 10:
-        raise ValueError(f"site entity_chars not 10: {entity!r}")
+    if len(entity) != ENTITY_CHARS_LEN:
+        raise ValueError(f"site entity_chars not {ENTITY_CHARS_LEN}: {entity!r}")
     return mint(BpnType.SITE, entity)
 
 
 def _addr(tag3: str, counter: int) -> str:
     entity = f"HZA{tag3.upper()[:3]:<3}{counter:04d}"
-    if len(entity) != 10:
-        raise ValueError(f"address entity_chars not 10: {entity!r}")
+    if len(entity) != ENTITY_CHARS_LEN:
+        raise ValueError(f"address entity_chars not {ENTITY_CHARS_LEN}: {entity!r}")
     return mint(BpnType.ADDRESS, entity)
 
 
@@ -213,46 +210,46 @@ DEPOT_RAI_BPNA: Final[str] = _addr("DRA", 1)
 
 __all__ = [
     "ALPHABET",
+    "CHANDERIYA_BPNA",
+    "CHANDERIYA_BPNS",
+    "DARIBA_SMELTER_BPNA",
+    "DARIBA_SMELTER_BPNS",
+    "DEBARI_BPNA",
+    "DEBARI_BPNS",
+    "DEPOT_BEN_BPNA",
+    "DEPOT_BEN_BPNS",
+    "DEPOT_CHE_BPNA",
+    "DEPOT_CHE_BPNS",
+    "DEPOT_FAR_BPNA",
+    "DEPOT_FAR_BPNS",
+    "DEPOT_HYD_BPNA",
+    "DEPOT_HYD_BPNS",
+    "DEPOT_JAM_BPNA",
+    "DEPOT_JAM_BPNS",
+    "DEPOT_KOL_BPNA",
+    "DEPOT_KOL_BPNS",
+    "DEPOT_PUN_BPNA",
+    "DEPOT_PUN_BPNS",
+    "DEPOT_RAI_BPNA",
+    "DEPOT_RAI_BPNS",
+    # HZL seed constants
+    "HZL_BPNL",
+    "HZL_REGISTERED_BPNA",
+    "KAYAD_BPNA",
+    "KAYAD_BPNS",
+    "PANTNAGAR_BPNA",
+    "PANTNAGAR_BPNS",
+    "RAJPURA_DARIBA_BPNA",
+    "RAJPURA_DARIBA_BPNS",
+    "RAMPURA_AGUCHA_BPNA",
+    "RAMPURA_AGUCHA_BPNS",
+    "SINDESAR_KHURD_BPNA",
+    "SINDESAR_KHURD_BPNS",
+    "ZAWAR_BPNA",
+    "ZAWAR_BPNS",
     "BpnType",
     "compute_check_chars",
     "is_valid",
     "mint",
     "parse",
-    # HZL seed constants
-    "HZL_BPNL",
-    "HZL_REGISTERED_BPNA",
-    "RAMPURA_AGUCHA_BPNS",
-    "SINDESAR_KHURD_BPNS",
-    "RAJPURA_DARIBA_BPNS",
-    "ZAWAR_BPNS",
-    "KAYAD_BPNS",
-    "CHANDERIYA_BPNS",
-    "DARIBA_SMELTER_BPNS",
-    "DEBARI_BPNS",
-    "PANTNAGAR_BPNS",
-    "DEPOT_HYD_BPNS",
-    "DEPOT_PUN_BPNS",
-    "DEPOT_CHE_BPNS",
-    "DEPOT_KOL_BPNS",
-    "DEPOT_JAM_BPNS",
-    "DEPOT_FAR_BPNS",
-    "DEPOT_BEN_BPNS",
-    "DEPOT_RAI_BPNS",
-    "RAMPURA_AGUCHA_BPNA",
-    "SINDESAR_KHURD_BPNA",
-    "RAJPURA_DARIBA_BPNA",
-    "ZAWAR_BPNA",
-    "KAYAD_BPNA",
-    "CHANDERIYA_BPNA",
-    "DARIBA_SMELTER_BPNA",
-    "DEBARI_BPNA",
-    "PANTNAGAR_BPNA",
-    "DEPOT_HYD_BPNA",
-    "DEPOT_PUN_BPNA",
-    "DEPOT_CHE_BPNA",
-    "DEPOT_KOL_BPNA",
-    "DEPOT_JAM_BPNA",
-    "DEPOT_FAR_BPNA",
-    "DEPOT_BEN_BPNA",
-    "DEPOT_RAI_BPNA",
 ]

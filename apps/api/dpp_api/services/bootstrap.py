@@ -68,9 +68,7 @@ async def ensure_default_tenant(session: AsyncSession, settings: Settings) -> No
 
 def _build_cast_event_payload(preset: dict[str, Any], tenant_id: int) -> dict[str, Any]:
     """Mirror of @dpp/sim buildCastEvent. Mutates nothing in `preset`."""
-    cast_number = (
-        f"C-{datetime.now(UTC).strftime('%Y%m%d')}-{random.randint(10000, 99999)}"  # noqa: S311
-    )
+    cast_number = f"C-{datetime.now(UTC).strftime('%Y%m%d')}-{random.randint(10000, 99999)}"  # noqa: S311
     dims = preset.get("dimensions") or {}
     cast_payload: dict[str, Any] = {
         "castNumber": cast_number,
@@ -144,9 +142,7 @@ async def _lock_default_dpp_configs(session: AsyncSession, tenant_id: int) -> in
     """
     target_version = "1.0"
     locked = 0
-    products = (
-        await session.scalars(select(Product).where(Product.tenant_id == tenant_id))
-    ).all()
+    products = (await session.scalars(select(Product).where(Product.tenant_id == tenant_id))).all()
     for product in products:
         existing = await session.scalar(
             select(ProductDppConfig).where(

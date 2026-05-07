@@ -63,7 +63,9 @@ async def test_full_pipeline_issues_signed_dpp(db_session: AsyncSession) -> None
     assert verify.body_sha256 == record.body_sha256
 
     # The cast event flipped to published.
-    cast_event = await db_session.scalar(select(CastEvent).where(CastEvent.id == ingestion.cast_event_id))
+    cast_event = await db_session.scalar(
+        select(CastEvent).where(CastEvent.id == ingestion.cast_event_id)
+    )
     assert cast_event is not None
     assert cast_event.status == "published"
 

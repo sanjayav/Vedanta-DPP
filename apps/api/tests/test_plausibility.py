@@ -73,8 +73,6 @@ def _dpp_body(*, brand: str, cfp: float) -> dict[str, object]:
         "recycledContent": {"totalPercent": 0},
         "compliance": {
             "regulations": [{"name": n} for n in ("REACH", "RoHS", "TSCA", "Conflict", "PFAS")],
-            "certifications": [
-                {"name": n} for n in ("ASI", "CoC", "9001", "14001", "45001")
-            ],
+            "certifications": [{"name": n} for n in ("ASI", "CoC", "9001", "14001", "45001")],
         },
     }

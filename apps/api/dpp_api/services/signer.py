@@ -27,7 +27,9 @@ from .keystore import get_key_provider
 
 def canonicalise(body: dict[str, Any]) -> bytes:
     """Deterministic JSON encoding suitable for hashing + signing."""
-    return json.dumps(body, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
+    return json.dumps(body, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode(
+        "utf-8"
+    )
 
 
 def body_sha256(body: dict[str, Any]) -> str:
@@ -135,9 +137,7 @@ def verify_envelope(envelope: dict[str, Any]) -> VerificationResult:
 
     proof_type = proof.get("type")
     if proof_type != "Ed25519Signature2020":
-        return VerificationResult(
-            valid=False, error=f"unsupported proof type: {proof_type!r}"
-        )
+        return VerificationResult(valid=False, error=f"unsupported proof type: {proof_type!r}")
     proof_value = proof.get("proofValue")
     if not isinstance(proof_value, str):
         raise ValueError("proof.proofValue must be a string")
@@ -158,7 +158,9 @@ def verify_envelope(envelope: dict[str, Any]) -> VerificationResult:
         return VerificationResult(valid=False, error=f"bad signature: {exc}")
 
     issuer = envelope.get("issuer")
-    issuer_id = issuer["id"] if isinstance(issuer, dict) else issuer if isinstance(issuer, str) else None
+    issuer_id = (
+        issuer["id"] if isinstance(issuer, dict) else issuer if isinstance(issuer, str) else None
+    )
 
     body = envelope.get("credentialSubject", {}).get("dpp")
     body_hash = body_sha256(body) if isinstance(body, dict) else None

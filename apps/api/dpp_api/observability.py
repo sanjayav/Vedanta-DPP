@@ -79,9 +79,7 @@ def _init_otel(settings: Settings) -> None:
         )
         provider = TracerProvider(resource=resource)
         provider.add_span_processor(
-            BatchSpanProcessor(
-                OTLPSpanExporter(endpoint=settings.dpp_otel_exporter_otlp_endpoint)
-            )
+            BatchSpanProcessor(OTLPSpanExporter(endpoint=settings.dpp_otel_exporter_otlp_endpoint))
         )
         trace.set_tracer_provider(provider)
     except Exception as exc:

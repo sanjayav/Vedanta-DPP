@@ -13,7 +13,11 @@ def _valid_event() -> dict[str, object]:
     return {
         "schemaVersion": "1.0.0",
         "trackingId": uuid4().hex,
-        "source": {"kind": "simulator", "actor": "tests", "presetId": "celestial-extrusion-billet-6063"},
+        "source": {
+            "kind": "simulator",
+            "actor": "tests",
+            "presetId": "celestial-extrusion-billet-6063",
+        },
         "occurredAt": datetime.now(UTC).isoformat(),
         "tenantId": 1,
         "cast": {

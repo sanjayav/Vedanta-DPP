@@ -68,9 +68,7 @@ def require_role(*roles: Role) -> Callable[..., Any]:
         if principal is None:  # pragma: no cover — defensive
             raise _unauthorized("auth not resolved")
         if principal.role not in allowed:
-            raise _forbidden(
-                f"role '{principal.role}' not in {sorted(allowed)}"
-            )
+            raise _forbidden(f"role '{principal.role}' not in {sorted(allowed)}")
         return principal
 
     # Wire the inner Principal through Depends(require_principal). We do this

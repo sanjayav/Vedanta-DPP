@@ -61,9 +61,7 @@ async def query_audit_log(
     """Return a page of audit-log entries plus the total count for the filter."""
     stmt = select(AuditLog).where(AuditLog.tenant_id == query.tenant_id)
     count_stmt = (
-        select(func.count())
-        .select_from(AuditLog)
-        .where(AuditLog.tenant_id == query.tenant_id)
+        select(func.count()).select_from(AuditLog).where(AuditLog.tenant_id == query.tenant_id)
     )
     if query.action:
         stmt = stmt.where(AuditLog.action == query.action)

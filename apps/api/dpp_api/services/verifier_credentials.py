@@ -119,9 +119,7 @@ async def revoke_credential(
     if row is None or row.tenant_id != tenant_id:
         raise ValueError("credential not found")
     if row.verifier_did != verifier_did:
-        raise PermissionError(
-            f"credential is owned by {row.verifier_did}, not {verifier_did}"
-        )
+        raise PermissionError(f"credential is owned by {row.verifier_did}, not {verifier_did}")
     if row.state == "revoked":
         return RevocationResult(credential_id=credential_id, affected_dpp_upis=[])
 

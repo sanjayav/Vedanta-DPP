@@ -83,9 +83,7 @@ async def detail_endpoint(
     principal: Principal = Depends(require_portfolio_read),
     session: AsyncSession = Depends(get_tenant_session),
 ) -> dict[str, object]:
-    detail = await product_detail(
-        session, tenant_id=principal.tenant_id, product_id=product_id
-    )
+    detail = await product_detail(session, tenant_id=principal.tenant_id, product_id=product_id)
     if detail is None:
         raise HTTPException(status_code=404, detail="product not found")
     return detail

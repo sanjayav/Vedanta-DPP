@@ -94,9 +94,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
             return await call_next(request)
         # Cheap allowlist for unauthenticated public surfaces that have their
         # own caching (QR endpoints + public DPP path), and infra probes.
-        if request.url.path.startswith("/healthz") or request.url.path.startswith(
-            "/.well-known/"
-        ):
+        if request.url.path.startswith("/healthz") or request.url.path.startswith("/.well-known/"):
             return await call_next(request)
 
         bucket_key, capacity, rate_per_minute = self._resolve_bucket(request, settings)
@@ -168,9 +166,8 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
                 )
             except AuthError:
                 pass  # fall through to anon
-        client_ip = (
-            request.headers.get("x-forwarded-for", "").split(",")[0].strip()
-            or (request.client.host if request.client else "unknown")
+        client_ip = request.headers.get("x-forwarded-for", "").split(",")[0].strip() or (
+            request.client.host if request.client else "unknown"
         )
         return (
             f"rl:anon:{client_ip}",

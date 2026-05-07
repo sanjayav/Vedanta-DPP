@@ -72,7 +72,9 @@ class Tenant(Base):
     )
 
     __table_args__ = (
-        CheckConstraint("status IN ('trialing','active','suspended','terminated')", name="ck_tenants_status"),
+        CheckConstraint(
+            "status IN ('trialing','active','suspended','terminated')", name="ck_tenants_status"
+        ),
         CheckConstraint("tier IN ('poc','production','enterprise')", name="ck_tenants_tier"),
     )
 
@@ -217,9 +219,7 @@ class ReferenceCfp(Base):
     verifier_did: Mapped[str] = mapped_column(String(512), nullable=False)
     verifier_name: Mapped[str] = mapped_column(String(256), nullable=False)
     statement_ref: Mapped[str] = mapped_column(String(256), nullable=False)
-    assurance_level: Mapped[str] = mapped_column(
-        String(16), nullable=False, default="limited"
-    )
+    assurance_level: Mapped[str] = mapped_column(String(16), nullable=False, default="limited")
     decomposition: Mapped[dict[str, Any]] = mapped_column(
         JSONB, nullable=False, default_factory=dict, server_default="{}"
     )
@@ -239,7 +239,9 @@ class ReferenceCfp(Base):
             "assurance_level IN ('limited','reasonable')",
             name="ck_reference_cfp_assurance",
         ),
-        CheckConstraint("state IN ('active','superseded','revoked')", name="ck_reference_cfp_state"),
+        CheckConstraint(
+            "state IN ('active','superseded','revoked')", name="ck_reference_cfp_state"
+        ),
     )
 
 
@@ -316,7 +318,9 @@ class WebhookSubscription(Base):
     last_delivery_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True, default=None
     )
-    failure_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0, server_default="0")
+    failure_count: Mapped[int] = mapped_column(
+        Integer, nullable=False, default=0, server_default="0"
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,
@@ -326,9 +330,7 @@ class WebhookSubscription(Base):
 
     __table_args__ = (
         Index("ix_webhooks_tenant_customer", "tenant_id", "customer_org"),
-        CheckConstraint(
-            "state IN ('active','paused','deleted')", name="ck_webhooks_state"
-        ),
+        CheckConstraint("state IN ('active','paused','deleted')", name="ck_webhooks_state"),
     )
 
 
@@ -419,9 +421,7 @@ class Product(Base):
         server_default=func.now(),
     )
 
-    __table_args__ = (
-        UniqueConstraint("tenant_id", "slug", name="uq_products_tenant_slug"),
-    )
+    __table_args__ = (UniqueConstraint("tenant_id", "slug", name="uq_products_tenant_slug"),)
 
 
 class ProductProcessChain(Base):
@@ -442,9 +442,7 @@ class ProductProcessChain(Base):
     notes: Mapped[str | None] = mapped_column(Text, nullable=True, default=None)
 
     __table_args__ = (
-        UniqueConstraint(
-            "product_id", "process_step_id", name="uq_chain_product_step"
-        ),
+        UniqueConstraint("product_id", "process_step_id", name="uq_chain_product_step"),
     )
 
 
@@ -469,9 +467,7 @@ class DppManifestAttr(Base):
     necessity: Mapped[str] = mapped_column(
         String(16), nullable=False, default="mandatory", server_default="mandatory"
     )
-    regulatory_anchor: Mapped[str | None] = mapped_column(
-        String(256), nullable=True, default=None
-    )
+    regulatory_anchor: Mapped[str | None] = mapped_column(String(256), nullable=True, default=None)
     description: Mapped[str | None] = mapped_column(Text, nullable=True, default=None)
 
     __table_args__ = (
@@ -528,9 +524,7 @@ class ProductDppConfig(Base):
     )
 
     __table_args__ = (
-        UniqueConstraint(
-            "product_id", "dpp_version", name="uq_pdpcfg_product_version"
-        ),
+        UniqueConstraint("product_id", "dpp_version", name="uq_pdpcfg_product_version"),
     )
 
 
@@ -587,7 +581,10 @@ class DppDraft(Base):
 
     __table_args__ = (
         UniqueConstraint(
-            "tenant_id", "product_id", "dpp_version", "cast_number",
+            "tenant_id",
+            "product_id",
+            "dpp_version",
+            "cast_number",
             name="uq_dpp_drafts_tenant_product_version_cast",
         ),
         Index("ix_dpp_drafts_tenant_state", "tenant_id", "state"),
@@ -653,9 +650,7 @@ class DppAttributeValue(Base):
     )
 
     __table_args__ = (
-        UniqueConstraint(
-            "draft_id", "manifest_attr_id", name="uq_attribute_values_draft_attr"
-        ),
+        UniqueConstraint("draft_id", "manifest_attr_id", name="uq_attribute_values_draft_attr"),
         Index(
             "ix_attribute_values_draft_step",
             "draft_id",
@@ -713,9 +708,7 @@ class DppAttributeAssignment(Base):
     )
 
     __table_args__ = (
-        UniqueConstraint(
-            "draft_id", "manifest_attr_id", name="uq_assignments_draft_attr"
-        ),
+        UniqueConstraint("draft_id", "manifest_attr_id", name="uq_assignments_draft_attr"),
         Index("ix_assignments_assignee_email", "assignee_email", "status"),
         CheckConstraint(
             "status IN ('pending','accepted','submitted','revoked')",
@@ -809,7 +802,9 @@ class DppPublishDisclosure(Base):
 
     __table_args__ = (
         UniqueConstraint(
-            "draft_id", "attribute_path", "audience",
+            "draft_id",
+            "attribute_path",
+            "audience",
             name="uq_disclosures_draft_attr_audience",
         ),
         Index("ix_disclosures_draft_audience", "draft_id", "audience"),
@@ -843,15 +838,9 @@ class DataSource(Base):
         nullable=False,
     )
     origin: Mapped[str] = mapped_column(String(16), nullable=False)
-    supplier_name: Mapped[str | None] = mapped_column(
-        String(256), nullable=True, default=None
-    )
-    supplier_did: Mapped[str | None] = mapped_column(
-        String(256), nullable=True, default=None
-    )
-    connector_kind: Mapped[str | None] = mapped_column(
-        String(32), nullable=True, default=None
-    )
+    supplier_name: Mapped[str | None] = mapped_column(String(256), nullable=True, default=None)
+    supplier_did: Mapped[str | None] = mapped_column(String(256), nullable=True, default=None)
+    connector_kind: Mapped[str | None] = mapped_column(String(32), nullable=True, default=None)
     connector_config: Mapped[dict[str, Any]] = mapped_column(
         JSONB, nullable=False, default_factory=dict, server_default="{}"
     )
@@ -864,9 +853,7 @@ class DataSource(Base):
     last_sync_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True, default=None
     )
-    last_sync_status: Mapped[str | None] = mapped_column(
-        String(16), nullable=True, default=None
-    )
+    last_sync_status: Mapped[str | None] = mapped_column(String(16), nullable=True, default=None)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,
@@ -875,9 +862,7 @@ class DataSource(Base):
     )
 
     __table_args__ = (
-        UniqueConstraint(
-            "product_id", "process_step_id", name="uq_data_source_product_step"
-        ),
+        UniqueConstraint("product_id", "process_step_id", name="uq_data_source_product_step"),
     )
 
 
@@ -966,9 +951,7 @@ class Address(Base):
     address_type: Mapped[str] = mapped_column(String(32), nullable=False)
     country: Mapped[str] = mapped_column(String(2), nullable=False)
     subdivision: Mapped[str | None] = mapped_column(String(8), nullable=True, default=None)
-    admin_area_level_2: Mapped[str | None] = mapped_column(
-        String(128), nullable=True, default=None
-    )
+    admin_area_level_2: Mapped[str | None] = mapped_column(String(128), nullable=True, default=None)
     city: Mapped[str] = mapped_column(String(128), nullable=False)
     postal_code: Mapped[str | None] = mapped_column(String(32), nullable=True, default=None)
     street: Mapped[str | None] = mapped_column(String(256), nullable=True, default=None)

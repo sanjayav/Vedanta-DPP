@@ -28,12 +28,11 @@ from datetime import UTC, datetime, timedelta
 from typing import Any
 from uuid import uuid4
 
-from . import bpn
 from ..settings import get_settings
+from . import bpn
 from .presets import get_preset
 from .reference_data import CfpReference
 from .schema_validator import validate_against
-
 
 # ── Producing-site lookup ─────────────────────────────────────────────────
 # Maps the 3-char site tag (preset.producingSiteTag, also used by the BPN
@@ -81,7 +80,9 @@ def _build_material_id(
     material_uuid = str(uuid4())
     did = f"did:web:{issuer_did_host}:{bpnl}?{passport_class}={material_uuid}"
     settings = get_settings()
-    resolver_url = f"{settings.dpp_resolver_base_url.rstrip('/')}/{passport_class}/{bpnl}/{material_uuid}"
+    resolver_url = (
+        f"{settings.dpp_resolver_base_url.rstrip('/')}/{passport_class}/{bpnl}/{material_uuid}"
+    )
     return {
         "did": did,
         "uuid": material_uuid,
@@ -101,13 +102,54 @@ def _producer_block(metadata: dict[str, Any] | None = None) -> dict[str, Any]:
         "registeredAddressBpna": bpn.HZL_REGISTERED_BPNA,
         "country": "IN",
         "identifiers": [
-            {"category": "NBR", "type": "CIN", "value": "L27204RJ1966PLC001208", "issuingCountry": "IN", "issuingBody": "MCA"},
-            {"category": "IBR", "type": "LEI", "value": "335800LB39TLJ8YTWM98", "issuingBody": "GLEIF"},
-            {"category": "TIN", "type": "PAN", "value": "AAACH7354K", "issuingCountry": "IN", "issuingBody": "Income Tax Department"},
-            {"category": "VAT", "type": "GSTIN", "value": "08AAACH7354K1ZB", "issuingCountry": "IN", "issuingBody": "GSTN — Rajasthan"},
-            {"category": "OTH", "type": "ISIN", "value": "INE267A01025", "issuingCountry": "IN", "issuingBody": "NSDL"},
-            {"category": "OTH", "type": "NSE_TICKER", "value": "HINDZINC", "issuingCountry": "IN", "issuingBody": "NSE"},
-            {"category": "OTH", "type": "BSE_CODE", "value": "500188", "issuingCountry": "IN", "issuingBody": "BSE"},
+            {
+                "category": "NBR",
+                "type": "CIN",
+                "value": "L27204RJ1966PLC001208",
+                "issuingCountry": "IN",
+                "issuingBody": "MCA",
+            },
+            {
+                "category": "IBR",
+                "type": "LEI",
+                "value": "335800LB39TLJ8YTWM98",
+                "issuingBody": "GLEIF",
+            },
+            {
+                "category": "TIN",
+                "type": "PAN",
+                "value": "AAACH7354K",
+                "issuingCountry": "IN",
+                "issuingBody": "Income Tax Department",
+            },
+            {
+                "category": "VAT",
+                "type": "GSTIN",
+                "value": "08AAACH7354K1ZB",
+                "issuingCountry": "IN",
+                "issuingBody": "GSTN — Rajasthan",
+            },
+            {
+                "category": "OTH",
+                "type": "ISIN",
+                "value": "INE267A01025",
+                "issuingCountry": "IN",
+                "issuingBody": "NSDL",
+            },
+            {
+                "category": "OTH",
+                "type": "NSE_TICKER",
+                "value": "HINDZINC",
+                "issuingCountry": "IN",
+                "issuingBody": "NSE",
+            },
+            {
+                "category": "OTH",
+                "type": "BSE_CODE",
+                "value": "500188",
+                "issuingCountry": "IN",
+                "issuingBody": "BSE",
+            },
         ],
         "regulatoryContact": {
             "team": "HZL Regulatory Affairs",
@@ -155,11 +197,13 @@ def build_dpp_from_cast_event(
     preset = get_preset(source["presetId"]) if source.get("presetId") else None
 
     now = datetime.now(UTC)
-    expires_at = now + timedelta(days=365 * 10)            # ESPR Art 10(3)
-    lcia_valid_until = now + timedelta(days=365 * 3)       # Chem-X §3.4
+    expires_at = now + timedelta(days=365 * 10)  # ESPR Art 10(3)
+    lcia_valid_until = now + timedelta(days=365 * 3)  # Chem-X §3.4
 
     # ── identifiers ──────────────────────────────────────────────────────
-    issuer_did_host = settings.dpp_resolver_base_url.replace("https://", "").replace("http://", "").split("/")[0]
+    issuer_did_host = (
+        settings.dpp_resolver_base_url.replace("https://", "").replace("http://", "").split("/")[0]
+    )
     issuer_did = f"did:web:{issuer_did_host}:{bpn.HZL_BPNL}"
 
     passport_class = "dpp"  # Could become "dmp" for B2B-only intermediates
@@ -189,7 +233,7 @@ def build_dpp_from_cast_event(
         physical = {
             "unitMassKg": cast["unitMassKg"],
             "bundleMassKg": cast.get("bundleMassKg", 1000),
-            "unitsPerBundle": int((cast.get("bundleMassKg", 1000) // cast["unitMassKg"])) or 1,
+            "unitsPerBundle": int(cast.get("bundleMassKg", 1000) // cast["unitMassKg"]) or 1,
         }
 
     # ── chemistry ────────────────────────────────────────────────────────
@@ -200,11 +244,18 @@ def build_dpp_from_cast_event(
             "composition": [
                 {
                     "element": {"zinc": "Zn", "lead": "Pb", "silver": "Ag"}[cast["metal"]],
-                    "casNumber": {"zinc": "7440-66-6", "lead": "7439-92-1", "silver": "7440-22-4"}[cast["metal"]],
+                    "casNumber": {"zinc": "7440-66-6", "lead": "7439-92-1", "silver": "7440-22-4"}[
+                        cast["metal"]
+                    ],
                     "role": "primary",
                     "guaranteedMinPercent": 99.0,
                 },
-                {"element": "Fe", "casNumber": "7439-89-6", "role": "impurity", "guaranteedMaxPercent": 0.05},
+                {
+                    "element": "Fe",
+                    "casNumber": "7439-89-6",
+                    "role": "impurity",
+                    "guaranteedMaxPercent": 0.05,
+                },
             ]
         }
     )
@@ -230,17 +281,27 @@ def build_dpp_from_cast_event(
     elif preset and "sustainability" in preset:
         sustainability = dict(preset["sustainability"])
     else:
-        sustainability = {cat: _empty_lcia(cat) for cat in (
-            "pcf",
-            "resourceUseFossil",
-            "waterScarcity",
-            "acidification",
-            "ozoneDepletion",
-            "photochemicalOzone",
-        )}
+        sustainability = {
+            cat: _empty_lcia(cat)
+            for cat in (
+                "pcf",
+                "resourceUseFossil",
+                "waterScarcity",
+                "acidification",
+                "ozoneDepletion",
+                "photochemicalOzone",
+            )
+        }
 
     # Ensure all six required categories are present even if the preset omitted any.
-    for cat in ("pcf", "resourceUseFossil", "waterScarcity", "acidification", "ozoneDepletion", "photochemicalOzone"):
+    for cat in (
+        "pcf",
+        "resourceUseFossil",
+        "waterScarcity",
+        "acidification",
+        "ozoneDepletion",
+        "photochemicalOzone",
+    ):
         sustainability.setdefault(cat, _empty_lcia(cat))
 
     # ── compliance ───────────────────────────────────────────────────────
@@ -253,7 +314,11 @@ def build_dpp_from_cast_event(
             "regulations": [
                 {"name": "REACH", "reference": "EC 1907/2006", "status": "compliant"},
                 {"name": "BIS", "reference": "Indian Standards", "status": "compliant"},
-                {"name": "CBAM declaration ready", "reference": "(EU) 2023/956", "status": "pending"},
+                {
+                    "name": "CBAM declaration ready",
+                    "reference": "(EU) 2023/956",
+                    "status": "pending",
+                },
             ],
             "certifications": [
                 {"name": "ISO 9001:2015", "status": "compliant"},
@@ -267,17 +332,20 @@ def build_dpp_from_cast_event(
         "schemaVersion": "1.0.0",
         "passportType": "DPP",
         "materialId": material_id,
-        "identification": _strip_none({
-            "metal": cast["metal"],
-            "gradeCode": preset["gradeCode"] if preset else cast["gradeCode"],
-            "purityPercent": preset["purityPercent"] if preset else 99.0,
-            "designation": preset.get("label") if preset else cast["gradeCode"],
-            "form": cast["form"],
-            "tradeName": preset.get("tradeName") if preset else None,
-            "applicableStandards": (preset or {}).get(
-                "applicableStandards", ["IS 209:1992"] if cast["metal"] == "zinc" else ["IS 27:2023"]
-            ),
-        }),
+        "identification": _strip_none(
+            {
+                "metal": cast["metal"],
+                "gradeCode": preset["gradeCode"] if preset else cast["gradeCode"],
+                "purityPercent": preset["purityPercent"] if preset else 99.0,
+                "designation": preset.get("label") if preset else cast["gradeCode"],
+                "form": cast["form"],
+                "tradeName": preset.get("tradeName") if preset else None,
+                "applicableStandards": (preset or {}).get(
+                    "applicableStandards",
+                    ["IS 209:1992"] if cast["metal"] == "zinc" else ["IS 27:2023"],
+                ),
+            }
+        ),
         "producer": _producer_block(),
         "origin": {
             "country": "IN",
@@ -294,8 +362,12 @@ def build_dpp_from_cast_event(
             ],
         },
         "product": {
-            "name": preset["label"] if preset else f"HZL {cast['metal'].title()} {cast['gradeCode']}",
-            "purposeStatement": preset["summary"] if preset else "HZL refined non-ferrous metal product.",
+            "name": preset["label"]
+            if preset
+            else f"HZL {cast['metal'].title()} {cast['gradeCode']}",
+            "purposeStatement": preset["summary"]
+            if preset
+            else "HZL refined non-ferrous metal product.",
             "intendedMarkets": (preset or {}).get("intendedMarkets", []),
             "intendedRegions": (preset or {}).get("intendedRegions", []),
         },

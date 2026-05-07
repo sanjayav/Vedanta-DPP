@@ -39,9 +39,7 @@ async def test_hash_chain_is_consistent(db_session: AsyncSession) -> None:
         details={"i": 3},
     )
 
-    rows = (
-        await db_session.scalars(select(AuditLog).order_by(AuditLog.id.asc()))
-    ).all()
+    rows = (await db_session.scalars(select(AuditLog).order_by(AuditLog.id.asc()))).all()
     assert len(rows) >= 3
     last_three = rows[-3:]
     assert last_three[0].id == a.id

@@ -81,12 +81,8 @@ async def compute_metrics(session: AsyncSession) -> PipelineMetrics:
     ) or 0
     issued_per_minute = round(issued_60min / 60, 2)
 
-    avg_cfp_24h = (
-        await session.scalar(
-            select(func.avg(DppRecord.cfp_kg_co2e_per_tonne)).where(
-                DppRecord.issued_at >= window_24h
-            )
-        )
+    avg_cfp_24h = await session.scalar(
+        select(func.avg(DppRecord.cfp_kg_co2e_per_tonne)).where(DppRecord.issued_at >= window_24h)
     )
 
     by_brand_rows = (
@@ -190,9 +186,7 @@ class RecentEvent:
     pipeline_seconds: float | None
 
 
-async def issuance_timeseries(
-    session: AsyncSession, *, days: int = 30
-) -> list[dict[str, Any]]:
+async def issuance_timeseries(session: AsyncSession, *, days: int = 30) -> list[dict[str, Any]]:
     """Daily issuance + CFP average + recycled-content average for the last N days.
 
     Used by the executive overview to render trend charts. Days with no
@@ -200,9 +194,7 @@ async def issuance_timeseries(
     a contiguous series).
     """
     now = datetime.now(UTC)
-    start = (now - timedelta(days=days - 1)).replace(
-        hour=0, minute=0, second=0, microsecond=0
-    )
+    start = (now - timedelta(days=days - 1)).replace(hour=0, minute=0, second=0, microsecond=0)
 
     rows = (
         await session.execute(
@@ -238,15 +230,11 @@ async def issuance_timeseries(
     out: list[dict[str, Any]] = []
     for i in range(days):
         d = (start + timedelta(days=i)).date().isoformat()
-        out.append(
-            by_day.get(d, {"date": d, "count": 0, "avgCfp": None, "avgRecycled": None})
-        )
+        out.append(by_day.get(d, {"date": d, "count": 0, "avgCfp": None, "avgRecycled": None}))
     return out
 
 
-async def list_recent_events(
-    session: AsyncSession, *, limit: int = 50
-) -> list[dict[str, Any]]:
+async def list_recent_events(session: AsyncSession, *, limit: int = 50) -> list[dict[str, Any]]:
     """Recent cast events with their pipeline outcome.
 
     Joins cast_events ⟶ dpp_records (LEFT) so we can show in-flight events
@@ -278,9 +266,7 @@ async def list_recent_events(
     for r in rows:
         cast = r.payload.get("cast", {}) if isinstance(r.payload, dict) else {}
         pipeline_seconds = (
-            (r.issued_at - r.received_at).total_seconds()
-            if r.issued_at is not None
-            else None
+            (r.issued_at - r.received_at).total_seconds() if r.issued_at is not None else None
         )
         out.append(
             {
@@ -294,9 +280,7 @@ async def list_recent_events(
                 "status": r.status,
                 "upi": r.upi,
                 "cfpKgCo2ePerTonne": (
-                    float(r.cfp_kg_co2e_per_tonne)
-                    if r.cfp_kg_co2e_per_tonne is not None
-                    else None
+                    float(r.cfp_kg_co2e_per_tonne) if r.cfp_kg_co2e_per_tonne is not None else None
                 ),
                 "issuedAt": r.issued_at.isoformat() if r.issued_at else None,
                 "error": r.error,

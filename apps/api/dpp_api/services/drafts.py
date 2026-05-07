@@ -74,9 +74,7 @@ async def create_draft(
         )
     )
     if cfg is None or cfg.state != "locked":
-        raise ValueError(
-            "product DPP config must be locked before drafting passports"
-        )
+        raise ValueError("product DPP config must be locked before drafting passports")
 
     existing = await session.scalar(
         select(DppDraft).where(
@@ -143,9 +141,7 @@ async def create_draft(
     return await get_draft(session, tenant_id=tenant_id, draft_id=draft.id)
 
 
-async def get_draft(
-    session: AsyncSession, *, tenant_id: int, draft_id: int
-) -> dict[str, Any]:
+async def get_draft(session: AsyncSession, *, tenant_id: int, draft_id: int) -> dict[str, Any]:
     """Full draft view: stages × attributes × values × assignments + completion."""
     draft = await session.get(DppDraft, draft_id)
     if draft is None or draft.tenant_id != tenant_id:
@@ -194,9 +190,7 @@ async def get_draft(
     ).all()
     assn_by_attr = {a.manifest_attr_id: a for a in assignments}
     sources = (
-        await session.scalars(
-            select(DataSource).where(DataSource.product_id == draft.product_id)
-        )
+        await session.scalars(select(DataSource).where(DataSource.product_id == draft.product_id))
     ).all()
     src_by_step = {s.process_step_id: s for s in sources}
 
@@ -224,9 +218,7 @@ async def get_draft(
                     "sourceRef": v.source_ref if v else None,
                     "status": v.status if v else "empty",
                     "enteredBy": v.entered_by if v else None,
-                    "enteredAt": v.entered_at.isoformat()
-                    if v and v.entered_at
-                    else None,
+                    "enteredAt": v.entered_at.isoformat() if v and v.entered_at else None,
                     "assignment": _serialise_assignment(assn) if assn else None,
                 }
             )
@@ -825,9 +817,7 @@ async def fetch_assignment_by_token(
     requester wants — but never the values entered by anyone else.
     """
     row = await session.scalar(
-        select(DppAttributeAssignment).where(
-            DppAttributeAssignment.access_token == access_token
-        )
+        select(DppAttributeAssignment).where(DppAttributeAssignment.access_token == access_token)
     )
     if row is None:
         return None
@@ -937,11 +927,7 @@ async def begin_disclosure(
     ).all()
     have = {(d.attribute_path, d.audience) for d in existing}
     paths = sorted(
-        {
-            attr["attributePath"]
-            for stage in summary["stages"]
-            for attr in stage["attributes"]
-        }
+        {attr["attributePath"] for stage in summary["stages"] for attr in stage["attributes"]}
     )
     for path in paths:
         for audience in AUDIENCES:
@@ -976,9 +962,7 @@ async def begin_disclosure(
     return await get_disclosure(session, tenant_id=tenant_id, draft_id=draft_id)
 
 
-async def get_disclosure(
-    session: AsyncSession, *, tenant_id: int, draft_id: int
-) -> dict[str, Any]:
+async def get_disclosure(session: AsyncSession, *, tenant_id: int, draft_id: int) -> dict[str, Any]:
     await _require_draft(session, tenant_id, draft_id)
     rows = (
         await session.scalars(
@@ -1143,9 +1127,7 @@ async def publish_draft(
 # ── helpers ─────────────────────────────────────────────────────────────
 
 
-async def _require_draft(
-    session: AsyncSession, tenant_id: int, draft_id: int
-) -> DppDraft:
+async def _require_draft(session: AsyncSession, tenant_id: int, draft_id: int) -> DppDraft:
     draft = await session.get(DppDraft, draft_id)
     if draft is None or draft.tenant_id != tenant_id:
         raise ValueError("draft not found")
@@ -1227,9 +1209,7 @@ def _default_visibility(attribute_path: str, audience: str) -> bool:
     return True
 
 
-def _build_body(
-    summary: dict[str, Any], product: Product, draft: DppDraft
-) -> dict[str, Any]:
+def _build_body(summary: dict[str, Any], product: Product, draft: DppDraft) -> dict[str, Any]:
     from ..settings import get_settings
 
     settings = get_settings()

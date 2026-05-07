@@ -35,9 +35,7 @@ class CfpReference:
     decomposition: dict[str, float]
 
 
-async def lookup_cfp(
-    session: AsyncSession, *, tenant_id: int, brand: str
-) -> CfpReference | None:
+async def lookup_cfp(session: AsyncSession, *, tenant_id: int, brand: str) -> CfpReference | None:
     stmt = (
         select(ReferenceCfp)
         .where(

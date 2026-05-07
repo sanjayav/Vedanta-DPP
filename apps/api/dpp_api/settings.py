@@ -84,9 +84,7 @@ class Settings(BaseSettings):
     dpp_api_base_url: str = Field(default="http://localhost:8000")
 
     # ── CORS ────────────────────────────────────────────────────────────────
-    dpp_cors_origins: str = Field(
-        default="http://localhost:3000,http://localhost:3001"
-    )
+    dpp_cors_origins: str = Field(default="http://localhost:3000,http://localhost:3001")
 
     # ── Logging ─────────────────────────────────────────────────────────────
     dpp_log_level: str = Field(default="INFO")
@@ -144,9 +142,8 @@ class Settings(BaseSettings):
             errors.append("dpp_jwt_jwks_url is required in production")
         if self.dpp_jwt_dev_secret is not None:
             errors.append("dpp_jwt_dev_secret must be unset in production")
-        if (
-            self.dpp_signing_provider == "local_file"
-            and "dev-keys" in str(self.dpp_issuer_key_path)
+        if self.dpp_signing_provider == "local_file" and "dev-keys" in str(
+            self.dpp_issuer_key_path
         ):
             errors.append(
                 "dpp_signing_provider=local_file with dev-keys is forbidden in "
@@ -154,13 +151,9 @@ class Settings(BaseSettings):
                 "non-default secret-mounted path"
             )
         if self.dpp_signing_provider == "aws_kms" and not self.dpp_kms_key_id:
-            errors.append(
-                "dpp_kms_key_id is required when dpp_signing_provider=aws_kms"
-            )
+            errors.append("dpp_kms_key_id is required when dpp_signing_provider=aws_kms")
         if errors:
-            raise ValueError(
-                "production security misconfiguration:\n  - " + "\n  - ".join(errors)
-            )
+            raise ValueError("production security misconfiguration:\n  - " + "\n  - ".join(errors))
         return self
 
 

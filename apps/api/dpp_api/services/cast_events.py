@@ -40,9 +40,7 @@ async def ingest_cast_event(session: AsyncSession, payload: dict[str, Any]) -> I
         )
     )
     if existing is not None:
-        return IngestionResult(
-            cast_event_id=existing.id, tracking_id=tracking_id, duplicate=True
-        )
+        return IngestionResult(cast_event_id=existing.id, tracking_id=tracking_id, duplicate=True)
 
     record = CastEvent(
         tenant_id=tenant_id,
@@ -62,9 +60,7 @@ async def ingest_cast_event(session: AsyncSession, payload: dict[str, Any]) -> I
 async def get_status_by_tracking_id(
     session: AsyncSession, tracking_id: str
 ) -> dict[str, Any] | None:
-    row = await session.scalar(
-        select(CastEvent).where(CastEvent.tracking_id == tracking_id)
-    )
+    row = await session.scalar(select(CastEvent).where(CastEvent.tracking_id == tracking_id))
     if row is None:
         return None
     return {

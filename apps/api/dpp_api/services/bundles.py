@@ -50,11 +50,7 @@ async def export_bundle(
     if not upi_list:
         raise ValueError("at least one UPI is required")
 
-    rows = (
-        await session.scalars(
-            select(DppRecord).where(DppRecord.upi.in_(upi_list))
-        )
-    ).all()
+    rows = (await session.scalars(select(DppRecord).where(DppRecord.upi.in_(upi_list)))).all()
     found = {r.upi: r for r in rows}
     missing = [u for u in upi_list if u not in found]
     if missing:

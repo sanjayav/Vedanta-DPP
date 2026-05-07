@@ -300,8 +300,7 @@ _CATALOGUE: list[SignalDef] = [
         target_max=1.18,
         regulatory_anchor="DX+ operating window",
         description=(
-            "Cryolite chemistry. Outside band → liquidus shift, alumina-feed "
-            "inefficiency."
+            "Cryolite chemistry. Outside band → liquidus shift, alumina-feed inefficiency."
         ),
         owner_step="smelting",
         provenance=Provenance(
@@ -370,10 +369,7 @@ _CATALOGUE: list[SignalDef] = [
         target_min=None,
         target_max=80.0,
         regulatory_anchor="IEA grid factors",
-        description=(
-            "Average intensity of imported grid electricity when solar is "
-            "unavailable."
-        ),
+        description=("Average intensity of imported grid electricity when solar is unavailable."),
         owner_step="power_generation",
         provenance=Provenance(
             source_kind="external_feed",
@@ -444,8 +440,7 @@ _CATALOGUE: list[SignalDef] = [
         target_max=300.0,
         regulatory_anchor="EN 573-3 spec window",
         description=(
-            "Max element deviation from grade nominal. Beyond 300 ppm → "
-            "re-grade or re-melt."
+            "Max element deviation from grade nominal. Beyond 300 ppm → re-grade or re-melt."
         ),
         owner_step="casthouse",
         provenance=Provenance(
@@ -465,10 +460,7 @@ _CATALOGUE: list[SignalDef] = [
         target_min=680.0,
         target_max=720.0,
         regulatory_anchor="DC casting envelope",
-        description=(
-            "Mould-side metal temperature. Outside band → grain-structure "
-            "defects."
-        ),
+        description=("Mould-side metal temperature. Outside band → grain-structure defects."),
         owner_step="casthouse",
         provenance=Provenance(
             source_kind="sensor",
@@ -791,10 +783,7 @@ _CATALOGUE: list[SignalDef] = [
         target_min=100.0,
         target_max=100.0,
         regulatory_anchor="SDD §8.5 DoD",
-        description=(
-            "Share of issued DPPs (last 24h) carrying the full DoD attribute "
-            "set."
-        ),
+        description=("Share of issued DPPs (last 24h) carrying the full DoD attribute set."),
         owner_step="third_party_verification",
         provenance=Provenance(
             source_kind="derived",
@@ -813,10 +802,7 @@ _CATALOGUE: list[SignalDef] = [
         target_min=100.0,
         target_max=100.0,
         regulatory_anchor="EU Reg 2023/956 (CBAM)",
-        description=(
-            "Embodied-emissions declaration completeness for in-flight EU "
-            "shipments."
-        ),
+        description=("Embodied-emissions declaration completeness for in-flight EU shipments."),
         owner_step="third_party_verification",
         provenance=Provenance(
             source_kind="derived",
@@ -1018,9 +1004,7 @@ _GROUP_LABELS: dict[SignalGroup, str] = {
 }
 
 
-async def _resolve_real_overrides(
-    session: AsyncSession, tenant_id: int
-) -> dict[str, float | None]:
+async def _resolve_real_overrides(session: AsyncSession, tenant_id: int) -> dict[str, float | None]:
     cfp = await _real_carbon_rolling(session, tenant_id)
     overrides: dict[str, float | None] = {
         "carbon.cfp_rolling_kg_per_t": cfp,
@@ -1084,8 +1068,7 @@ async def compute_plant_status(session: AsyncSession, *, tenant_id: int) -> Plan
     real_overrides = await _resolve_real_overrides(session, tenant_id)
 
     signals = [
-        _read_signal(s, tenant_id=tenant_id, real_overrides=real_overrides)
-        for s in _CATALOGUE
+        _read_signal(s, tenant_id=tenant_id, real_overrides=real_overrides) for s in _CATALOGUE
     ]
 
     groups: dict[SignalGroup, GroupRollup] = {}
@@ -1169,9 +1152,7 @@ async def compute_signal_detail(
             "mean": round(sum(vals) / n, 4),
             "p50": round(sorted_vals[n // 2], 4),
             "p95": round(sorted_vals[max(0, int(n * 0.95) - 1)], 4),
-            "stddev": round(
-                math.sqrt(sum((v - (sum(vals) / n)) ** 2 for v in vals) / n), 4
-            ),
+            "stddev": round(math.sqrt(sum((v - (sum(vals) / n)) ** 2 for v in vals) / n), 4),
             "samples": float(n),
         }
     else:
@@ -1190,9 +1171,11 @@ async def compute_signal_detail(
                 if run_start is None:
                     run_start = p
                     run_extreme = p.value
-                elif run_extreme is None or (
-                    sig_def.target_max is not None and p.value > run_extreme
-                ) or (sig_def.target_min is not None and p.value < (run_extreme or 0)):
+                elif (
+                    run_extreme is None
+                    or (sig_def.target_max is not None and p.value > run_extreme)
+                    or (sig_def.target_min is not None and p.value < (run_extreme or 0))
+                ):
                     run_extreme = p.value
             elif run_start is not None:
                 breach_events.append(

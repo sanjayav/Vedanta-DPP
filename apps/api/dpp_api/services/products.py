@@ -35,18 +35,14 @@ from .audit import append_audit
 # ── L1: portfolio + canonical chain ─────────────────────────────────────
 
 
-async def list_portfolio(
-    session: AsyncSession, *, tenant_id: int
-) -> dict[str, Any]:
+async def list_portfolio(session: AsyncSession, *, tenant_id: int) -> dict[str, Any]:
     """Everything-map view: all products, the canonical chain, version state."""
     products = (
         await session.scalars(
             select(Product).where(Product.tenant_id == tenant_id).order_by(Product.id)
         )
     ).all()
-    steps = (
-        await session.scalars(select(ProcessStep).order_by(ProcessStep.ordinal))
-    ).all()
+    steps = (await session.scalars(select(ProcessStep).order_by(ProcessStep.ordinal))).all()
 
     # For each product, fetch chain + config rows in one pass.
     chain_rows = (
@@ -116,10 +112,15 @@ async def product_detail(
 
     chain = (
         await session.execute(
-            select(ProductProcessChain.process_step_id, ProductProcessChain.ordinal,
-                   ProductProcessChain.notes,
-                   ProcessStep.slug, ProcessStep.name, ProcessStep.tier,
-                   ProcessStep.description)
+            select(
+                ProductProcessChain.process_step_id,
+                ProductProcessChain.ordinal,
+                ProductProcessChain.notes,
+                ProcessStep.slug,
+                ProcessStep.name,
+                ProcessStep.tier,
+                ProcessStep.description,
+            )
             .join(ProcessStep, ProcessStep.id == ProductProcessChain.process_step_id)
             .where(ProductProcessChain.product_id == product_id)
             .order_by(ProductProcessChain.ordinal)
@@ -186,8 +187,13 @@ async def manifest_for_product(
     # Steps in this product's chain.
     chain_rows = (
         await session.execute(
-            select(ProductProcessChain.process_step_id, ProductProcessChain.ordinal,
-                   ProcessStep.slug, ProcessStep.name, ProcessStep.tier)
+            select(
+                ProductProcessChain.process_step_id,
+                ProductProcessChain.ordinal,
+                ProcessStep.slug,
+                ProcessStep.name,
+                ProcessStep.tier,
+            )
             .join(ProcessStep, ProcessStep.id == ProductProcessChain.process_step_id)
             .where(ProductProcessChain.product_id == product_id)
             .order_by(ProductProcessChain.ordinal)
@@ -632,14 +638,11 @@ async def ingest_readiness(
         )
     )
     sources = (
-        await session.scalars(
-            select(DataSource).where(DataSource.product_id == product_id)
-        )
+        await session.scalars(select(DataSource).where(DataSource.product_id == product_id))
     ).all()
     chain = (
         await session.execute(
-            select(ProductProcessChain.process_step_id, ProcessStep.slug,
-                   ProcessStep.name)
+            select(ProductProcessChain.process_step_id, ProcessStep.slug, ProcessStep.name)
             .join(ProcessStep, ProcessStep.id == ProductProcessChain.process_step_id)
             .where(ProductProcessChain.product_id == product_id)
             .order_by(ProductProcessChain.ordinal)
@@ -649,9 +652,7 @@ async def ingest_readiness(
     declared_step_ids = {s.process_step_id for s in sources}
     step_status: list[dict[str, Any]] = []
     for r in chain:
-        src = next(
-            (s for s in sources if s.process_step_id == r.process_step_id), None
-        )
+        src = next((s for s in sources if s.process_step_id == r.process_step_id), None)
         step_status.append(
             {
                 "stepId": r.process_step_id,
@@ -668,15 +669,9 @@ async def ingest_readiness(
     config_locked = cfg is not None and cfg.state == "locked"
     every_step_has_source = all(s["hasSource"] for s in step_status)
     third_party_granted = all(
-        s.permission_state == "granted"
-        for s in sources
-        if s.origin == "third_party"
+        s.permission_state == "granted" for s in sources if s.origin == "third_party"
     )
-    ready = (
-        config_locked
-        and every_step_has_source
-        and third_party_granted
-    )
+    ready = config_locked and every_step_has_source and third_party_granted
 
     return {
         "product": _serialise_product(product),
@@ -687,8 +682,7 @@ async def ingest_readiness(
         "ready": ready,
         "stepStatus": step_status,
         "missingSourceStepIds": [
-            r.process_step_id for r in chain
-            if r.process_step_id not in declared_step_ids
+            r.process_step_id for r in chain if r.process_step_id not in declared_step_ids
         ],
         "pendingThirdParties": [
             _serialise_source(s)

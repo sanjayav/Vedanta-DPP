@@ -28,7 +28,11 @@ def _event() -> dict[str, object]:
     return {
         "schemaVersion": "1.0.0",
         "trackingId": uuid4().hex,
-        "source": {"kind": "simulator", "actor": "tests", "presetId": "celestial-extrusion-billet-6063"},
+        "source": {
+            "kind": "simulator",
+            "actor": "tests",
+            "presetId": "celestial-extrusion-billet-6063",
+        },
         "occurredAt": datetime.now(UTC).isoformat(),
         "tenantId": 1,
         "cast": {
@@ -53,9 +57,7 @@ async def test_rollover_re_signs_and_records_history(db_session: AsyncSession) -
     ingestion = await ingest_cast_event(db_session, _event())
     pipeline = await run_dpp_pipeline(db_session, ingestion.cast_event_id)
 
-    record_before = await db_session.scalar(
-        select(DppRecord).where(DppRecord.upi == pipeline.upi)
-    )
+    record_before = await db_session.scalar(select(DppRecord).where(DppRecord.upi == pipeline.upi))
     assert record_before is not None
     assert record_before.cfp_kg_co2e_per_tonne == 4273
     assert record_before.revision_count == 0
@@ -87,9 +89,7 @@ async def test_rollover_re_signs_and_records_history(db_session: AsyncSession) -
     assert not result.failed
 
     # 4. The record is updated, verifies, and preserves history.
-    record_after = await db_session.scalar(
-        select(DppRecord).where(DppRecord.upi == pipeline.upi)
-    )
+    record_after = await db_session.scalar(select(DppRecord).where(DppRecord.upi == pipeline.upi))
     assert record_after is not None
     assert record_after.cfp_kg_co2e_per_tonne == 4150
     assert record_after.body["carbon"]["valueKgCo2ePerTonne"] == 4150
@@ -170,9 +170,7 @@ async def test_rollover_dry_run_does_not_mutate(db_session: AsyncSession) -> Non
         verifier_name="DNV",
         statement_ref="DNV-2026-CelestiAL",
     )
-    before = await db_session.scalar(
-        select(DppRecord).where(DppRecord.upi == pipeline.upi)
-    )
+    before = await db_session.scalar(select(DppRecord).where(DppRecord.upi == pipeline.upi))
     before_cfp = before.cfp_kg_co2e_per_tonne if before else 0
 
     result = await rollover_dpps_to_credential(
@@ -184,9 +182,7 @@ async def test_rollover_dry_run_does_not_mutate(db_session: AsyncSession) -> Non
     )
     assert pipeline.upi in result.succeeded
 
-    after = await db_session.scalar(
-        select(DppRecord).where(DppRecord.upi == pipeline.upi)
-    )
+    after = await db_session.scalar(select(DppRecord).where(DppRecord.upi == pipeline.upi))
     assert after is not None
     assert after.cfp_kg_co2e_per_tonne == before_cfp  # unchanged
     assert after.revision_count == 0

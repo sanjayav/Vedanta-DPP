@@ -46,10 +46,4 @@ def svg_bytes(payload: str, *, border: int = 2) -> bytes:
 
 def zpl(payload: str, *, x: int = 50, y: int = 50, magnification: int = 6) -> str:
     """Zebra ZPL II command stream — ready for direct printer transmission."""
-    return (
-        "^XA"
-        f"^FO{x},{y}"
-        f"^BQN,2,{magnification}"
-        f"^FDQA,{payload}^FS"
-        "^XZ"
-    )
+    return f"^XA^FO{x},{y}^BQN,2,{magnification}^FDQA,{payload}^FS^XZ"

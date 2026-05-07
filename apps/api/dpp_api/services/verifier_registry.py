@@ -40,9 +40,7 @@ class _BrandLine:
     created_at: str
 
 
-async def list_verifier_registry(
-    session: AsyncSession, *, tenant_id: int
-) -> list[dict[str, Any]]:
+async def list_verifier_registry(session: AsyncSession, *, tenant_id: int) -> list[dict[str, Any]]:
     """Return one card per verifier DID with all brand lines + DPP counts."""
     rows = (
         await session.scalars(
@@ -89,10 +87,7 @@ async def list_verifier_registry(
         if r.state == "active":
             active_statement_refs[r.verifier_did].add(r.statement_ref)
             iso_to = r.period_to.date().isoformat()
-            if (
-                bucket["latestPeriodTo"] is None
-                or iso_to > bucket["latestPeriodTo"]
-            ):
+            if bucket["latestPeriodTo"] is None or iso_to > bucket["latestPeriodTo"]:
                 bucket["latestPeriodTo"] = iso_to
                 bucket["latestStatementRef"] = r.statement_ref
 

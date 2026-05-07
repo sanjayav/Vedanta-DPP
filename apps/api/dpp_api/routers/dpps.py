@@ -59,9 +59,7 @@ async def list_endpoint(
     principal: Principal = Depends(require_dpp_reviewer),
     session: AsyncSession = Depends(get_tenant_session),
 ) -> dict[str, object]:
-    items, total = await list_dpps(
-        session, brand=brand, state=state, limit=limit, offset=offset
-    )
+    items, total = await list_dpps(session, brand=brand, state=state, limit=limit, offset=offset)
     return {"items": items, "total": total, "limit": limit, "offset": offset}
 
 

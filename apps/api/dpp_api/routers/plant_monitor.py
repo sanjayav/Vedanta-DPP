@@ -34,8 +34,7 @@ def _serialize_provenance(p: Provenance) -> dict[str, Any]:
         "dataQuality": p.data_quality,
         "realData": p.real_data,
         "pipeline": [
-            {"name": stop.name, "kind": stop.kind, "note": stop.note}
-            for stop in p.pipeline
+            {"name": stop.name, "kind": stop.kind, "note": stop.note} for stop in p.pipeline
         ],
     }
 

@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://schemas.dpp.ega.ae/envelope/v1.0.0.json",
+  "$id": "https://schemas.passport.hzlindia.com/envelope/v1.0.0.json",
   "title": "Signed DPP Envelope (W3C VC 2.0)",
   "description": "W3C Verifiable Credential 2.0 envelope wrapping a canonical DPP record. Signed with the issuer DID's Ed25519 key per the Ed25519Signature2020 suite.",
   "type": "object",
@@ -45,7 +45,7 @@
       "required": ["id", "dpp"],
       "properties": {
         "id": { "type": "string", "format": "uri" },
-        "dpp": { "$ref": "https://schemas.dpp.ega.ae/dpp/v1.0.0.json" }
+        "dpp": { "$ref": "https://schemas.passport.hzlindia.com/dpp/v1.0.0.json" }
       }
     },
     "credentialStatus": {

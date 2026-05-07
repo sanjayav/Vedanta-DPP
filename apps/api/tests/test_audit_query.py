@@ -182,9 +182,7 @@ async def test_query_isolates_tenants(db_session: AsyncSession) -> None:
     )
     # RLS demands the GUC match the row's tenant_id on INSERT. Swap it so the
     # tenant-2 row is allowed in, then swap back for the queries below.
-    await db_session.execute(
-        text("SELECT set_config('app.current_tenant_id', '2', true)")
-    )
+    await db_session.execute(text("SELECT set_config('app.current_tenant_id', '2', true)"))
     await append_audit(
         db_session,
         tenant_id=2,
@@ -197,9 +195,7 @@ async def test_query_isolates_tenants(db_session: AsyncSession) -> None:
     await db_session.flush()
     # Unscoped (platform-tier) so both queries can see their respective rows
     # — query_audit_log applies the WHERE tenant_id filter itself.
-    await db_session.execute(
-        text("SELECT set_config('app.current_tenant_id', '', true)")
-    )
+    await db_session.execute(text("SELECT set_config('app.current_tenant_id', '', true)"))
 
     items_t1, _ = await query_audit_log(db_session, AuditQuery(tenant_id=1, limit=100))
     items_t2, total_t2 = await query_audit_log(db_session, AuditQuery(tenant_id=2, limit=100))

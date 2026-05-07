@@ -82,13 +82,20 @@ def _build_did_document(host: str, bpnl: str) -> dict[str, object]:
                 "id": f"{did}#dmp-resolver",
                 "type": "DigitalMaterialPassportResolver",
                 "serviceEndpoint": f"{resolver}/dmp/{bpnl}",
-                "description": "GET /dmp/{bpnl}/{uuid} returns the value-chain (one-up/one-down) DMP body. Requires VC presentation per Chem-X §25.",
+                "description": (
+                    "GET /dmp/{bpnl}/{uuid} returns the value-chain "
+                    "(one-up/one-down) DMP body. Requires VC presentation "
+                    "per Chem-X §25."
+                ),
             },
             {
                 "id": f"{did}#bpdm-pool",
                 "type": "BPDMPool",
                 "serviceEndpoint": f"{resolver}/bpdm",
-                "description": "Catena-X CX-0012 compatible BPDM pool serving HZL's legal entity, sites and addresses.",
+                "description": (
+                    "Catena-X CX-0012 compatible BPDM pool serving HZL's "
+                    "legal entity, sites and addresses."
+                ),
             },
         ],
     }
@@ -98,7 +105,9 @@ def _build_did_document(host: str, bpnl: str) -> dict[str, object]:
 async def did_document_root() -> dict[str, object]:
     """Root did:web document for the platform's primary issuer (HZL)."""
     settings = get_settings()
-    host = settings.dpp_resolver_base_url.replace("https://", "").replace("http://", "").split("/")[0]
+    host = (
+        settings.dpp_resolver_base_url.replace("https://", "").replace("http://", "").split("/")[0]
+    )
     return _build_did_document(host, bpn.HZL_BPNL)
 
 
@@ -112,7 +121,9 @@ async def did_document_by_bpnl(
     omitted in did:web URLs; clients fetch this path automatically.
     """
     settings = get_settings()
-    host = settings.dpp_resolver_base_url.replace("https://", "").replace("http://", "").split("/")[0]
+    host = (
+        settings.dpp_resolver_base_url.replace("https://", "").replace("http://", "").split("/")[0]
+    )
     if bpnl != bpn.HZL_BPNL:
         # Multi-tenant future: look up legal_entities and 404 if absent.
         raise HTTPException(status_code=404, detail=f"unknown BPNL: {bpnl}")

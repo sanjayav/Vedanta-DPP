@@ -124,11 +124,7 @@ async def list_endpoint(
     principal: Principal = Depends(require_dpp_reviewer),
     session: AsyncSession = Depends(get_tenant_session),
 ) -> dict[str, Any]:
-    return {
-        "drafts": await svc.list_drafts(
-            session, tenant_id=principal.tenant_id, state=state
-        )
-    }
+    return {"drafts": await svc.list_drafts(session, tenant_id=principal.tenant_id, state=state)}
 
 
 @router.get("/{draft_id}")
@@ -138,9 +134,7 @@ async def get_endpoint(
     session: AsyncSession = Depends(get_tenant_session),
 ) -> dict[str, Any]:
     try:
-        return await svc.get_draft(
-            session, tenant_id=principal.tenant_id, draft_id=draft_id
-        )
+        return await svc.get_draft(session, tenant_id=principal.tenant_id, draft_id=draft_id)
     except ValueError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
 
@@ -177,9 +171,7 @@ async def library_presets_endpoint(
     session: AsyncSession = Depends(get_tenant_session),
 ) -> dict[str, Any]:
     try:
-        d = await svc.get_draft(
-            session, tenant_id=principal.tenant_id, draft_id=draft_id
-        )
+        d = await svc.get_draft(session, tenant_id=principal.tenant_id, draft_id=draft_id)
         product_id = d["draft"]["productId"]
         presets = await svc.list_library_presets(
             session, tenant_id=principal.tenant_id, product_id=product_id
@@ -217,9 +209,7 @@ async def iot_connections_endpoint(
     session: AsyncSession = Depends(get_tenant_session),
 ) -> dict[str, Any]:
     try:
-        d = await svc.get_draft(
-            session, tenant_id=principal.tenant_id, draft_id=draft_id
-        )
+        d = await svc.get_draft(session, tenant_id=principal.tenant_id, draft_id=draft_id)
         product_id = d["draft"]["productId"]
         rows = await svc.list_iot_connections(
             session,
@@ -332,9 +322,7 @@ async def inbox_endpoint(
     """
     rows = await svc.list_assignments_for_email(session, assignee_email=email)
     if principal.email and principal.email.lower() == email.lower():
-        rows = await svc.list_assignments_for_email_with_tokens(
-            session, assignee_email=email
-        )
+        rows = await svc.list_assignments_for_email_with_tokens(session, assignee_email=email)
     return {"assignments": rows}
 
 
@@ -392,9 +380,7 @@ async def get_disclosure_endpoint(
     session: AsyncSession = Depends(get_tenant_session),
 ) -> dict[str, Any]:
     try:
-        return await svc.get_disclosure(
-            session, tenant_id=principal.tenant_id, draft_id=draft_id
-        )
+        return await svc.get_disclosure(session, tenant_id=principal.tenant_id, draft_id=draft_id)
     except ValueError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
 

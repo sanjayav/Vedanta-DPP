@@ -49,9 +49,25 @@ def _event(brand: str = "CelestiAL", form: str = "extrusion_billet") -> dict[str
     if form == "extrusion_billet":
         cast.update({"diameterMm": 228, "lengthMm": 7000})
     elif form == "sheet_ingot":
-        cast.update({"widthMm": 1900, "thicknessMm": 600, "lengthMm": 7600, "weightKg": 22500, "alloyEn": "EN AW-5754"})
+        cast.update(
+            {
+                "widthMm": 1900,
+                "thicknessMm": 600,
+                "lengthMm": 7600,
+                "weightKg": 22500,
+                "alloyEn": "EN AW-5754",
+            }
+        )
     elif form == "sow":
-        cast.update({"lengthMm": 760, "widthMm": 220, "thicknessMm": 130, "weightKg": 680, "alloyEn": "EN AC-46000"})
+        cast.update(
+            {
+                "lengthMm": 760,
+                "widthMm": 220,
+                "thicknessMm": 130,
+                "weightKg": 680,
+                "alloyEn": "EN AC-46000",
+            }
+        )
     return base
 
 
@@ -91,7 +107,9 @@ async def test_fetch_for_customer_applies_legitimate_filter(db_session: AsyncSes
 @pytest.mark.asyncio
 async def test_compliance_summary_aggregates_population(db_session: AsyncSession) -> None:
     for brand in ("CelestiAL", "CelestiAL-R", "Standard"):
-        form = {"CelestiAL": "extrusion_billet", "CelestiAL-R": "sheet_ingot", "Standard": "sow"}[brand]
+        form = {"CelestiAL": "extrusion_billet", "CelestiAL-R": "sheet_ingot", "Standard": "sow"}[
+            brand
+        ]
         ingestion = await ingest_cast_event(db_session, _event(brand=brand, form=form))
         await run_dpp_pipeline(db_session, ingestion.cast_event_id)
 

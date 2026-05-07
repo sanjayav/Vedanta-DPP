@@ -225,9 +225,7 @@ async def db_session() -> AsyncIterator[AsyncSession]:
     async with sessionmaker() as session:
         # Bind tenant_id=1 by default — tests that need cross-tenant access
         # call session.execute(set_config(...)) explicitly.
-        await session.execute(
-            text("SELECT set_config('app.current_tenant_id', '1', true)")
-        )
+        await session.execute(text("SELECT set_config('app.current_tenant_id', '1', true)"))
         try:
             yield session
         finally:

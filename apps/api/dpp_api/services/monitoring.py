@@ -142,10 +142,10 @@ async def attribute_monitor_report(
     # The data_sources table is tenant-scoped; the join keeps us honest under RLS.
     sources_by_step: dict[int, list[AttributeSourceView]] = defaultdict(list)
     src_rows = (
-        await session.execute(
-            select(DataSource).where(DataSource.tenant_id == tenant_id)
-        )
-    ).scalars().all()
+        (await session.execute(select(DataSource).where(DataSource.tenant_id == tenant_id)))
+        .scalars()
+        .all()
+    )
     for s in src_rows:
         sources_by_step[s.process_step_id].append(
             AttributeSourceView(
@@ -178,8 +178,7 @@ async def attribute_monitor_report(
                 select(
                     func.count().label("dpp_count"),
                     func.max(DppRecord.issued_at).label("last_seen_at"),
-                )
-                .where(
+                ).where(
                     DppRecord.tenant_id == tenant_id,
                     DppRecord.state == "published",
                     text("body #> :path IS NOT NULL").bindparams(path=path_array),

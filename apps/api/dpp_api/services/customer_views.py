@@ -93,11 +93,7 @@ async def fetch_for_customer(
 
 async def compliance_summary(session: AsyncSession) -> dict[str, Any]:
     """Aggregate compliance posture across the visible DPP population."""
-    rows = (
-        await session.scalars(
-            select(DppRecord).where(DppRecord.state == "published")
-        )
-    ).all()
+    rows = (await session.scalars(select(DppRecord).where(DppRecord.state == "published"))).all()
 
     by_status: dict[str, dict[str, int]] = defaultdict(lambda: defaultdict(int))
     total = 0
@@ -125,11 +121,7 @@ async def compliance_summary(session: AsyncSession) -> dict[str, Any]:
 
 async def carbon_aggregate(session: AsyncSession) -> dict[str, Any]:
     """CFP aggregates per brand — table + comparison ready for the UI."""
-    rows = (
-        await session.scalars(
-            select(DppRecord).where(DppRecord.state == "published")
-        )
-    ).all()
+    rows = (await session.scalars(select(DppRecord).where(DppRecord.state == "published"))).all()
 
     by_brand: dict[str, list[float]] = defaultdict(list)
     weights_by_brand: dict[str, float] = defaultdict(float)
@@ -159,11 +151,7 @@ async def carbon_aggregate(session: AsyncSession) -> dict[str, Any]:
 
 
 async def recycled_content_aggregate(session: AsyncSession) -> dict[str, Any]:
-    rows = (
-        await session.scalars(
-            select(DppRecord).where(DppRecord.state == "published")
-        )
-    ).all()
+    rows = (await session.scalars(select(DppRecord).where(DppRecord.state == "published"))).all()
     total_weight = sum(r.weight_kg for r in rows) or 1
     weighted_avg = sum(r.weight_kg * r.recycled_content_pct for r in rows) / total_weight
 
@@ -181,7 +169,9 @@ async def recycled_content_aggregate(session: AsyncSession) -> dict[str, Any]:
                 "brand": brand,
                 "totalWeightKg": stats["weight"],
                 "recycledTonnes": stats["recycled"] / 1000,
-                "recycledPct": (stats["recycled"] / stats["weight"] * 100) if stats["weight"] else 0,
+                "recycledPct": (stats["recycled"] / stats["weight"] * 100)
+                if stats["weight"]
+                else 0,
             }
             for brand, stats in sorted(by_brand.items())
         ],

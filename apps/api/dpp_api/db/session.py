@@ -121,9 +121,7 @@ def _make_tenant_session_dep() -> Any:
         sm = sessionmaker()
         async with sm() as session:
             if principal.tenant_id and principal.tenant_id > 0:
-                await session.execute(
-                    _set_tenant_sql(), {"tenant_id": str(principal.tenant_id)}
-                )
+                await session.execute(_set_tenant_sql(), {"tenant_id": str(principal.tenant_id)})
             try:
                 yield session
                 await session.commit()

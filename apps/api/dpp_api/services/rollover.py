@@ -58,9 +58,7 @@ async def rollover_dpps_to_credential(
     if credential is None or credential.tenant_id != tenant_id:
         raise ValueError("credential not found")
     if credential.state != "active":
-        raise ValueError(
-            f"credential {credential_id} is not active (state={credential.state})"
-        )
+        raise ValueError(f"credential {credential_id} is not active (state={credential.state})")
 
     cfp_override = CfpReference(
         value_kg_co2e_per_tonne=credential.value_kg_co2e_per_tonne,
@@ -91,9 +89,7 @@ async def rollover_dpps_to_credential(
     now = datetime.now(UTC)
 
     for record in candidates:
-        current_ref = (
-            record.body.get("carbon", {}).get("verificationStatementRef")
-        )
+        current_ref = record.body.get("carbon", {}).get("verificationStatementRef")
         if current_ref == credential.statement_ref:
             skipped.append(record.upi)
             continue
@@ -148,9 +144,7 @@ async def _rollover_one(
     if cast_event is None:
         raise ValueError("source cast_event no longer accessible")
 
-    new_body = build_dpp_from_cast_event(
-        cast_event.payload, cfp_override=cfp_override
-    )
+    new_body = build_dpp_from_cast_event(cast_event.payload, cfp_override=cfp_override)
     new_envelope = sign_dpp_envelope(new_body)
     new_sha = body_sha256(new_body)
 

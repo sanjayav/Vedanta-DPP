@@ -21,10 +21,14 @@ async def list_tenants(session: AsyncSession) -> list[dict[str, Any]]:
     unscoped (tenant_id=0) so RLS lets us see all rows.
     """
     rows = (
-        await session.execute(
-            text_with_counts(),
+        (
+            await session.execute(
+                text_with_counts(),
+            )
         )
-    ).mappings().all()
+        .mappings()
+        .all()
+    )
     return [dict(r) for r in rows]
 
 
@@ -80,17 +84,11 @@ async def trust_list(session: AsyncSession) -> list[dict[str, Any]]:
 
 async def platform_overview(session: AsyncSession) -> dict[str, Any]:
     """Single-row counters for the Admin overview tab."""
-    tenants_count = (
-        await session.scalar(
-            select(func.count()).select_from(_tenants_table())
-        )
-    ) or 0
+    tenants_count = (await session.scalar(select(func.count()).select_from(_tenants_table()))) or 0
     dpp_count = (await session.scalar(select(func.count()).select_from(DppRecord))) or 0
     active_creds = (
         await session.scalar(
-            select(func.count())
-            .select_from(ReferenceCfp)
-            .where(ReferenceCfp.state == "active")
+            select(func.count()).select_from(ReferenceCfp).where(ReferenceCfp.state == "active")
         )
         or 0
     )

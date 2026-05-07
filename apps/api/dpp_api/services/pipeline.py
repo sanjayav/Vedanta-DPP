@@ -69,9 +69,7 @@ async def run_dpp_pipeline(session: AsyncSession, cast_event_id: int) -> Pipelin
 
     # 3. Persist DPP record.
     existing = await session.scalar(
-        select(DppRecord).where(
-            DppRecord.tenant_id == cast_event.tenant_id, DppRecord.upi == upi
-        )
+        select(DppRecord).where(DppRecord.tenant_id == cast_event.tenant_id, DppRecord.upi == upi)
     )
     if existing is not None:
         existing.body = dpp_body
