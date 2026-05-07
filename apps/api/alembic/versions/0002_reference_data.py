@@ -57,7 +57,8 @@ def upgrade() -> None:
             server_default=sa.text("now()"),
         ),
         sa.CheckConstraint(
-            "assurance_level IN ('limited','reasonable')", name="ck_reference_cfp_assurance"
+            "assurance_level IN ('limited','reasonable','self_declared')",
+            name="ck_reference_cfp_assurance",
         ),
         sa.CheckConstraint(
             "state IN ('active','superseded','revoked')", name="ck_reference_cfp_state"
@@ -143,39 +144,65 @@ def downgrade() -> None:
 
 
 def _seed_from_presets() -> None:
-    """Insert one CFP row per preset and the SDD-mandated minimum compliance set."""
+    """Insert one CFP row per preset and the HZL-aligned minimum compliance set.
+
+    The new (zinc/lead/silver) preset shape carries six EF 3.1 LCIA categories
+    inside `sustainability.pcf` and a producing-site tag instead of the
+    aluminium-era `brand` + `casthouseUfi`. We seed `reference_cfp` from
+    `sustainability.pcf` so the existing CFP override path keeps working
+    while the generator transitions to consuming the preset directly.
+    """
     presets_dir = _find_presets_dir()
     if presets_dir is None:
         return  # CI / fresh-install scenarios where the schema package isn't on disk
 
     cfp_rows: list[dict[str, object]] = []
-    seen_brands: set[str] = set()
+    seen: set[str] = set()
     for path in sorted(presets_dir.glob("*.json")):
         with path.open("r", encoding="utf-8") as fh:
             preset = json.load(fh)
-        brand = preset["brand"]
-        if brand in seen_brands:
+
+        grade = preset.get("gradeCode")
+        sustain = preset.get("sustainability") or {}
+        pcf = sustain.get("pcf") or {}
+        if grade is None or not pcf:
             continue
-        seen_brands.add(brand)
-        carbon = preset["carbon"]
+        if grade in seen:
+            continue
+        seen.add(grade)
+
+        # Convert the per-kg PCF to per-tonne to match the reference_cfp
+        # historical column. Industry average likewise.
+        value_per_tonne = float(pcf.get("value", 0.0)) * 1000.0
+        industry_avg = pcf.get("industryAverage") or {}
+        industry_avg_per_tonne = float(industry_avg.get("value", 0.0)) * 1000.0
+
+        period = pcf.get("reportingPeriod") or {
+            "from": f"{pcf.get('referenceYear', 2024)}-01-01",
+            "to": f"{pcf.get('referenceYear', 2024)}-12-31",
+        }
+        verifier = pcf.get("verifier") or {
+            "did": "did:web:passport.hzlindia.com:internal-verifier",
+            "name": "HZL Internal Verification",
+        }
+
         cfp_rows.append(
             {
                 "tenant_id": 1,
-                "brand": brand,
-                "facility_ufi": preset["casthouseUfi"],
-                "period_from": datetime.fromisoformat(carbon["reportingPeriod"]["from"]).replace(
-                    tzinfo=UTC
+                "brand": grade,
+                "facility_ufi": preset.get("producingSiteTag", "CHA"),
+                "period_from": datetime.fromisoformat(period["from"]).replace(tzinfo=UTC),
+                "period_to": datetime.fromisoformat(period["to"]).replace(tzinfo=UTC),
+                "value_kg_co2e_per_tonne": value_per_tonne,
+                "industry_average": industry_avg_per_tonne,
+                "verifier_did": verifier["did"],
+                "verifier_name": verifier["name"],
+                "statement_ref": pcf.get(
+                    "verificationStatementRef",
+                    f"HZL-{grade.upper()}-{pcf.get('referenceYear', 2024)}",
                 ),
-                "period_to": datetime.fromisoformat(carbon["reportingPeriod"]["to"]).replace(
-                    tzinfo=UTC
-                ),
-                "value_kg_co2e_per_tonne": float(carbon["valueKgCo2ePerTonne"]),
-                "industry_average": float(carbon["industryAverageKgCo2ePerTonne"]),
-                "verifier_did": carbon["verifierDid"],
-                "verifier_name": carbon["verifierName"],
-                "statement_ref": carbon["verificationStatementRef"],
-                "assurance_level": carbon["assuranceLevel"],
-                "decomposition": json.dumps(carbon["decomposition"]),
+                "assurance_level": pcf.get("assuranceLevel", "self_declared"),
+                "decomposition": json.dumps(sustain.get("pcfBreakdown") or {}),
             }
         )
 
@@ -202,19 +229,25 @@ def _seed_from_presets() -> None:
             cfp_rows,
         )
 
-    # Minimum compliance set per SDD §8.5 Definition of Done.
+    # HZL-aligned minimum compliance set (replaces ASI/aluminium defaults).
     compliance_rows = [
-        ("REACH", "EC 1907/2006", "regulation", None, None),
-        ("RoHS 2", "2011/65/EU", "regulation", None, None),
-        ("TSCA", "US TSCA", "regulation", None, None),
-        ("Conflict Minerals", "Reg (EU) 2017/821", "regulation", None, None),
-        ("PFAS", "REACH PFAS restriction", "regulation", None, None),
-        ("ASI Performance", "ASI Performance V3.1", "certification", "ASI", "ASI Performance #27"),
-        ("ASI Chain of Custody", "ASI CoC V2.1", "certification", "ASI", "ASI CoC #428"),
+        ("REACH", "EC 1907/2006", "regulation", "ECHA", None),
+        ("RoHS 2 / ELV", "2011/65/EU", "regulation", "EU", None),
+        ("CBAM declaration", "(EU) 2023/956", "regulation", "EU Commission", None),
+        ("BIS — Refined Zinc", "IS 209:1992", "regulation", "Bureau of Indian Standards", None),
+        ("BIS — Pig Lead", "IS 27:2023", "regulation", "Bureau of Indian Standards", None),
         ("ISO 9001", "ISO 9001:2015", "certification", "Notified body", None),
         ("ISO 14001", "ISO 14001:2015", "certification", "Notified body", None),
         ("ISO 45001", "ISO 45001:2018", "certification", "Notified body", None),
         ("ISO 50001", "ISO 50001:2018", "certification", "Notified body", None),
+        (
+            "EPD International — Zinc",
+            "EPD-IES-0006472:001",
+            "certification",
+            "International EPD System",
+            "EPD-IES-0006472:001",
+        ),
+        ("ICMM Mining Principles", "ICMM 2025", "certification", "ICMM", None),
     ]
     bind = op.get_bind()
     bind.execute(
