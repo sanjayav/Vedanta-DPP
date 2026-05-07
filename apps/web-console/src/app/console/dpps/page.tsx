@@ -257,7 +257,7 @@ function PassportRow({ dpp, qrSvg }: { dpp: DppRow; qrSvg: string | null }) {
   const productImage =
     demo && (demo.body.media as Record<string, unknown> | undefined)?.productImage
       ? ((demo.body.media as Record<string, unknown>).productImage as string)
-      : '/dpp-assets/products/celestial.jpg'
+      : '/dpp-assets/products/ecozen.jpg'
   const passportIdShort = shortHash(dpp.upi)
   const stateInfo = stateInfoFor(dpp.state)
   const productUid = makeProductUid(dpp)

@@ -26,15 +26,13 @@ function enrichWithDemoFallback(
   liveBody: Record<string, unknown>,
   upi: string,
 ): Record<string, unknown> {
+  const ident = (liveBody.identification ?? {}) as Record<string, unknown>
   const demo =
     matchDemoPassport(upi) ??
-    matchDemoPassport(
-      ((liveBody.identification as Record<string, unknown> | undefined)?.brand as string) ?? '',
-    ) ??
-    matchDemoPassport(
-      (((liveBody.identification ?? {}) as Record<string, unknown>).alloyEn as string) ?? '',
-    ) ??
-    matchDemoPassport('celestial')
+    matchDemoPassport((ident.tradeName as string) ?? '') ??
+    matchDemoPassport((ident.gradeCode as string) ?? '') ??
+    matchDemoPassport((ident.metal as string) ?? '') ??
+    matchDemoPassport('ecozen')
   if (!demo) return liveBody
   // Shallow-merge each top-level section: keep live keys, fill missing keys
   // from demo. Live primitive sections (string/number) are kept as-is.
