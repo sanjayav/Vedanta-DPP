@@ -249,9 +249,12 @@ function TransferRow({ t, canAct }: { t: Transfer; canAct: boolean }) {
     tone: 'muted' as StateTone,
   }
   const demo = matchDemoPassport(t.passportUpi)
-  const productImage = (demo?.body.media as Record<string, unknown> | undefined)?.productImage as
+  // Demo bodies carry the public-viewer path `/dpp-assets/products/...`;
+  // rewrite to the console's `/products/...` mount.
+  const rawImage = (demo?.body.media as Record<string, unknown> | undefined)?.productImage as
     | string
     | undefined
+  const productImage = rawImage?.replace(/^\/dpp-assets\/products\//, '/products/')
 
   return (
     <tr className="ot-row">

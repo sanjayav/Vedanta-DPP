@@ -251,13 +251,28 @@ export default async function DppsPage({ searchParams }: PageProps) {
 
 // ── Row ──────────────────────────────────────────────────────────────────
 
+/**
+ * The demo-passport bank uses the public-viewer path
+ * `/dpp-assets/products/<slug>.jpg` (web-public serves under /dpp-assets).
+ * The console (web-console) serves the same images at `/products/<slug>.jpg`.
+ * This helper rewrites either form to whichever the current app actually
+ * has, falling back to ecozen if the demo carries no image at all.
+ */
+function consoleProductImage(raw: string | undefined): string {
+  if (!raw) return '/products/ecozen.jpg'
+  return raw.replace(/^\/dpp-assets\/products\//, '/products/')
+}
+
 function PassportRow({ dpp, qrSvg }: { dpp: DppRow; qrSvg: string | null }) {
   const demo =
     matchDemoPassport(dpp.upi) ?? matchDemoPassport(dpp.brand) ?? matchDemoPassport(dpp.alloy)
-  const productImage =
-    demo && (demo.body.media as Record<string, unknown> | undefined)?.productImage
-      ? ((demo.body.media as Record<string, unknown>).productImage as string)
-      : '/dpp-assets/products/ecozen.jpg'
+  const productImage = consoleProductImage(
+    demo
+      ? ((demo.body.media as Record<string, unknown> | undefined)?.productImage as
+          | string
+          | undefined)
+      : undefined,
+  )
   const passportIdShort = shortHash(dpp.upi)
   const stateInfo = stateInfoFor(dpp.state)
   const productUid = makeProductUid(dpp)
