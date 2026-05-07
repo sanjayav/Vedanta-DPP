@@ -115,11 +115,23 @@ def check_dpp_body(body: dict[str, Any]) -> PlausibilityResult:
         )
         severity = "reject"
 
-    # Carbon must reference a verifier with a non-empty DID.
-    verifier = body.get("carbon", {}).get("verifier", {})
-    if not verifier.get("did"):
-        issues.append("carbon.verifier.did is empty — every DPP requires a CFP verifier")
-        severity = "reject"
+    # PCF must be present and numeric. Per Chem-X v1.0, third-party
+    # verifier DID is optional (self-declared assurance is allowed for
+    # internal tier reports); we only hard-require a non-zero PCF value
+    # so the passport can render carbon at all.
+    sustainability = body.get("sustainability", {}) or {}
+    pcf = sustainability.get("pcf", {}) or {}
+    pcf_value = pcf.get("value")
+    if not isinstance(pcf_value, (int, float)) or pcf_value <= 0:
+        # Fall back to the legacy carbon.valueKgCo2ePerTonne shape (pre-Chem-X
+        # bodies still in flight). If neither is present, that's a reject.
+        legacy_carbon = body.get("carbon", {}) or {}
+        legacy_value = legacy_carbon.get("valueKgCo2ePerTonne")
+        if not isinstance(legacy_value, (int, float)) or legacy_value <= 0:
+            issues.append(
+                "sustainability.pcf.value is missing or zero — every DPP requires a PCF"
+            )
+            severity = "reject"
 
     # Recycled-content total must be 0–100.
     reco = body.get("recycledContent", {}).get("totalPercent")

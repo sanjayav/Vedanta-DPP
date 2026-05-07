@@ -8,6 +8,7 @@ retry, parallelise, and observe each layer independently.
 
 from __future__ import annotations
 
+import uuid
 from dataclasses import dataclass
 from datetime import UTC, datetime
 
@@ -43,8 +44,11 @@ async def run_dpp_pipeline(session: AsyncSession, cast_event_id: int) -> Pipelin
         raise PlausibilityRejection(cast_check)
 
     # 1. Generate canonical DPP body, looking up live reference data first.
+    cast_for_lookup = cast_event.payload["cast"]
     cfp_ref = await lookup_cfp(
-        session, tenant_id=cast_event.tenant_id, brand=cast_event.payload["cast"]["brand"]
+        session,
+        tenant_id=cast_event.tenant_id,
+        brand=cast_for_lookup.get("gradeCode") or cast_for_lookup.get("tradeName") or "UNKNOWN",
     )
     compliance_ref = await lookup_compliance(session, tenant_id=cast_event.tenant_id)
     has_compliance = bool(compliance_ref["regulations"]) or bool(compliance_ref["certifications"])
@@ -64,8 +68,25 @@ async def run_dpp_pipeline(session: AsyncSession, cast_event_id: int) -> Pipelin
     envelope = sign_dpp_envelope(dpp_body)
     sha = body_sha256(dpp_body)
 
-    upi_struct = dpp_body["upi"]
-    upi = f"{upi_struct['gtin']}/{upi_struct['castNumber']}/{upi_struct.get('itemSerial', '0001')}"
+    # v1.0 HZL UPI · the canonical Chem-X material URL form is BPNL/UUID.
+    # `gtin` and `cast_number` are kept as transitional columns on the
+    # `dpp_records` table; we synthesize a per-metal HSN-aligned GTIN if
+    # the body doesn't carry one (zinc 7901, lead 7801).
+    material_id = dpp_body.get("materialId") or {}
+    producer = dpp_body.get("producer") or {}
+    bpnl = producer.get("bpnl") or "BPNLHZL0000001QX"
+    uuid_str = material_id.get("uuid") or str(uuid.uuid4())
+    cast_payload = cast_event.payload.get("cast") or {}
+    cast_number = cast_payload.get("castNumber") or dpp_body.get("origin", {}).get(
+        "manufacturingBatch", "C-UNKNOWN"
+    )
+    item_serial = cast_payload.get("itemSerial")
+    metal = (dpp_body.get("identification") or {}).get("metal", "zinc")
+    gtin = (
+        ((dpp_body.get("upi") or {}).get("gtin"))
+        or ("08901003079011" if metal == "zinc" else "08901003078011")
+    )
+    upi = f"{bpnl}/{uuid_str}"
 
     # 3. Persist DPP record.
     existing = await session.scalar(
@@ -83,15 +104,22 @@ async def run_dpp_pipeline(session: AsyncSession, cast_event_id: int) -> Pipelin
         record = DppRecord(
             tenant_id=cast_event.tenant_id,
             upi=upi,
-            gtin=upi_struct["gtin"],
-            cast_number=upi_struct["castNumber"],
-            item_serial=upi_struct.get("itemSerial"),
-            brand=dpp_body["identification"]["brand"],
-            alloy=dpp_body["identification"]["alloyEn"],
+            gtin=gtin,
+            cast_number=cast_number,
+            item_serial=item_serial,
+            brand=(
+                dpp_body["identification"].get("tradeName")
+                or dpp_body["identification"]["gradeCode"]
+            ),
+            alloy=dpp_body["identification"]["gradeCode"],
             form=dpp_body["identification"]["form"],
-            weight_kg=dpp_body["physical"]["netWeightKg"],
-            cfp_kg_co2e_per_tonne=dpp_body["carbon"]["valueKgCo2ePerTonne"],
-            recycled_content_pct=dpp_body["recycledContent"]["totalPercent"],
+            weight_kg=dpp_body["physical"].get("unitMassKg") or dpp_body["physical"].get("netWeightKg") or 0.0,
+            # PCF in v1.0 is kg CO₂e/kg; the legacy column is kg CO₂e/tonne.
+            cfp_kg_co2e_per_tonne=float(
+                dpp_body.get("sustainability", {}).get("pcf", {}).get("value", 0.0)
+            )
+            * 1000,
+            recycled_content_pct=dpp_body.get("recycledContent", {}).get("totalPercent", 0),
             state="published",
             body=dpp_body,
             envelope=envelope,
@@ -117,8 +145,11 @@ async def run_dpp_pipeline(session: AsyncSession, cast_event_id: int) -> Pipelin
         details={
             "cast_event_id": cast_event.id,
             "tracking_id": cast_event.tracking_id,
-            "brand": dpp_body["identification"]["brand"],
-            "cfp": dpp_body["carbon"]["valueKgCo2ePerTonne"],
+            "brand": dpp_body["identification"].get("tradeName")
+            or dpp_body["identification"].get("gradeCode"),
+            "pcf_kg_co2e_per_kg": dpp_body.get("sustainability", {})
+            .get("pcf", {})
+            .get("value"),
             "body_sha256": sha,
         },
     )
@@ -126,6 +157,6 @@ async def run_dpp_pipeline(session: AsyncSession, cast_event_id: int) -> Pipelin
     return PipelineResult(
         dpp_id=record.id,
         upi=upi,
-        digital_link_url=upi_struct["digitalLinkUrl"],
+        digital_link_url=material_id.get("resolverUrl") or f"https://passport.hzlindia.com/dpp/{upi}",
         state="published",
     )

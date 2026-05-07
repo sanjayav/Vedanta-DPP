@@ -77,6 +77,41 @@ export default async function OverviewPage() {
         </span>
       </header>
 
+      {/* ── Vedanta · HZL anchor metrics (FY 2024-25 from Sustainability Report) */}
+      <section className="mb-10 rounded-[var(--radius-lg)] border border-[var(--surface-border)] bg-white px-6 py-5">
+        <div className="mb-3 flex items-baseline justify-between">
+          <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-[var(--fg-subtle)]">
+            Vedanta · Hindustan Zinc · FY 2024-25
+          </p>
+          <a
+            href="https://www.hzlindia.com/sustainability/sustainability-report/"
+            target="_blank"
+            rel="noreferrer"
+            className="font-mono text-[10px] uppercase tracking-[0.15em] text-[var(--color-accent)] hover:underline"
+          >
+            Sustainability Report ↗
+          </a>
+        </div>
+        <div className="grid grid-cols-2 gap-x-6 gap-y-3 md:grid-cols-4 xl:grid-cols-7">
+          <AnchorStat label="Zinc production" value="827" unit="kt" />
+          <AnchorStat label="Lead production" value="225" unit="kt" />
+          <AnchorStat label="Silver production" value="687" unit="MT" />
+          <AnchorStat label="Refined capacity" value="1.123" unit="Mnt" />
+          <AnchorStat label="Captive power" value="625.16" unit="MW" />
+          <AnchorStat label="Renewable share" value="13" unit="%" hint="→ 70% by FY28" />
+          <AnchorStat label="Workforce" value="25,531" hint="incl. contractors" />
+        </div>
+        <div className="mt-4 grid grid-cols-2 gap-x-6 gap-y-3 border-t border-[var(--surface-border)] pt-4 md:grid-cols-4 xl:grid-cols-7">
+          <AnchorStat label="GHG saved" value="0.67" unit="Mn tCO₂e" />
+          <AnchorStat label="Carbon intensity ↓" value="15" unit="%" hint="vs FY 2019-20" />
+          <AnchorStat label="Water positive" value="3.32" unit="x" />
+          <AnchorStat label="ZLD coverage" value="100" unit="%" />
+          <AnchorStat label="TRIFR" value="1.20" hint="↓ 55% vs FY20" />
+          <AnchorStat label="CSR spend" value="273.45" unit="₹ cr" />
+          <AnchorStat label="S&P CSA" value="#1" hint="Metals & Mining 2024" />
+        </div>
+      </section>
+
       {/* ── Hero KPIs ────────────────────────────────────────────────────── */}
       <section className="mb-10 grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-6">
         <Stat label="DPPs issued (lifetime)" value={total.toLocaleString()} />
@@ -292,6 +327,35 @@ export default async function OverviewPage() {
 }
 
 // ── Building blocks ──────────────────────────────────────────────────────
+
+/** Compact metric tile for the FY 2024-25 anchor strip · cited from
+ *  Hindustan Zinc Sustainability Report (page numbers in HZL_DATA_DOSSIER.md). */
+function AnchorStat({
+  label,
+  value,
+  unit,
+  hint,
+}: {
+  label: string
+  value: string
+  unit?: string
+  hint?: string
+}) {
+  return (
+    <div className="flex flex-col">
+      <span className="font-mono text-[10px] uppercase tracking-[0.15em] text-[var(--fg-subtle)]">
+        {label}
+      </span>
+      <span className="mt-1 text-[18px] font-semibold leading-tight tracking-tight text-[var(--fg-default)]">
+        {value}
+        {unit && (
+          <span className="ml-1 text-[12px] font-normal text-[var(--fg-muted)]">{unit}</span>
+        )}
+      </span>
+      {hint && <span className="mt-0.5 text-[10px] text-[var(--fg-subtle)]">{hint}</span>}
+    </div>
+  )
+}
 
 function ChartCard({
   title,

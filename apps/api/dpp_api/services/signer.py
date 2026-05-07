@@ -57,18 +57,31 @@ def sign_dpp_envelope(dpp_body: dict[str, Any]) -> dict[str, Any]:
     issuer_did = settings.dpp_issuer_did
     verification_method = f"{issuer_did}#key-1"
 
+    # In v1.0 the canonical material URL lives at materialId.resolverUrl;
+    # legacy bodies put it at upi.digitalLinkUrl. Read both for resilience.
+    material_id = dpp_body.get("materialId") or {}
+    legacy_upi = dpp_body.get("upi") or {}
+    subject_url = (
+        material_id.get("resolverUrl")
+        or material_id.get("did")
+        or legacy_upi.get("digitalLinkUrl")
+        or "urn:dpp:unknown"
+    )
+    producer = dpp_body.get("producer") or {}
+    issuer_name = producer.get("legalName") or producer.get("name") or "Hindustan Zinc Limited"
+
     envelope_unsigned: dict[str, Any] = {
         "@context": [
             "https://www.w3.org/ns/credentials/v2",
-            "https://schemas.dpp.ega.ae/contexts/dpp/v1.jsonld",
+            "https://schemas.passport.hzlindia.com/contexts/dpp/v1.jsonld",
         ],
-        "id": dpp_body["upi"]["digitalLinkUrl"],
+        "id": subject_url,
         "type": ["VerifiableCredential", "DigitalProductPassport"],
-        "issuer": {"id": issuer_did, "name": dpp_body["producer"]["name"]},
+        "issuer": {"id": issuer_did, "name": issuer_name},
         "validFrom": now.isoformat(),
-        "validUntil": dpp_body["meta"]["expiresAt"],
+        "validUntil": dpp_body.get("meta", {}).get("expiresAt"),
         "credentialSubject": {
-            "id": dpp_body["upi"]["digitalLinkUrl"],
+            "id": subject_url,
             "dpp": dpp_body,
         },
     }

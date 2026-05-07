@@ -273,9 +273,11 @@ async def list_recent_events(session: AsyncSession, *, limit: int = 50) -> list[
                 "castEventId": int(r.id),
                 "trackingId": r.tracking_id,
                 "castNumber": cast.get("castNumber"),
-                "brand": r.brand or cast.get("brand"),
-                "alloy": r.alloy or cast.get("alloyEn"),
-                "weightKg": float(r.weight_kg) if r.weight_kg is not None else cast.get("weightKg"),
+                "brand": r.brand or cast.get("tradeName") or cast.get("gradeCode"),
+                "alloy": r.alloy or cast.get("gradeCode"),
+                "weightKg": (
+                    float(r.weight_kg) if r.weight_kg is not None else cast.get("unitMassKg")
+                ),
                 "receivedAt": r.received_at.isoformat(),
                 "status": r.status,
                 "upi": r.upi,

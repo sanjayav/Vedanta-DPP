@@ -163,9 +163,14 @@ def _addr(tag3: str, counter: int) -> str:
 HZL_BPNL: Final[str] = _mint_const(BpnType.LEGAL_ENTITY, "HZL0000001")
 
 # Sites — mines
+# Per HZL Sustainability Report FY 2024-25 p5: 6 active mining assets in
+# Rajasthan (Rampura Agucha, Sindesar Khurd, Rajpura Dariba, Bamnia Kalan,
+# Kayad, Zawar) plus Maton — Maton is in the biodiversity reporting
+# boundary only and is not a producing mine, so it's omitted here.
 RAMPURA_AGUCHA_BPNS: Final[str] = _site("RAM", 1)
 SINDESAR_KHURD_BPNS: Final[str] = _site("SKM", 1)
 RAJPURA_DARIBA_BPNS: Final[str] = _site("RDM", 1)
+BAMNIA_KALAN_BPNS: Final[str] = _site("BKM", 1)
 ZAWAR_BPNS: Final[str] = _site("ZAW", 1)
 KAYAD_BPNS: Final[str] = _site("KAY", 1)
 
@@ -192,6 +197,7 @@ HZL_REGISTERED_BPNA: Final[str] = _addr("REG", 1)
 RAMPURA_AGUCHA_BPNA: Final[str] = _addr("RAM", 1)
 SINDESAR_KHURD_BPNA: Final[str] = _addr("SKM", 1)
 RAJPURA_DARIBA_BPNA: Final[str] = _addr("RDM", 1)
+BAMNIA_KALAN_BPNA: Final[str] = _addr("BKM", 1)
 ZAWAR_BPNA: Final[str] = _addr("ZAW", 1)
 KAYAD_BPNA: Final[str] = _addr("KAY", 1)
 CHANDERIYA_BPNA: Final[str] = _addr("CHA", 1)
@@ -210,6 +216,8 @@ DEPOT_RAI_BPNA: Final[str] = _addr("DRA", 1)
 
 __all__ = [
     "ALPHABET",
+    "BAMNIA_KALAN_BPNA",
+    "BAMNIA_KALAN_BPNS",
     "CHANDERIYA_BPNA",
     "CHANDERIYA_BPNS",
     "DARIBA_SMELTER_BPNA",

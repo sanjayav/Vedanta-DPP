@@ -1074,11 +1074,15 @@ async def publish_draft(
         cast_number=body["identification"]["castNumber"],
         item_serial=body.get("upi", {}).get("itemSerial"),
         brand=product.brand,
-        alloy=body["identification"].get("alloyEn", product.alloy_family),
+        alloy=body["identification"].get("gradeCode") or product.alloy_family,
         form=body["physical"].get("form", product.form),
-        weight_kg=float(body["physical"].get("weightKg", 0.0)),
+        weight_kg=float(
+            body["physical"].get("unitMassKg") or body["physical"].get("weightKg") or 0.0
+        ),
         cfp_kg_co2e_per_tonne=float(
-            (body.get("carbon", {}).get("valueKgCo2ePerTonne", 0.0)) or 0.0
+            body.get("sustainability", {}).get("pcf", {}).get("value", 0.0) * 1000
+            or body.get("carbon", {}).get("valueKgCo2ePerTonne", 0.0)
+            or 0.0
         ),
         recycled_content_pct=float(
             (body.get("recycledContent", {}).get("totalPercent", 0.0)) or 0.0
@@ -1245,7 +1249,10 @@ def _build_body(summary: dict[str, Any], product: Product, draft: DppDraft) -> d
         f"https://passport.hzlindia.com/01/{body['upi']['gtin']}/21/{body['upi']['itemSerial']}",
     )
     body.setdefault("physical", {}).setdefault("form", product.form)
-    body["physical"].setdefault("weightKg", body.get("physical", {}).get("weightKg", 0))
+    body["physical"].setdefault(
+        "unitMassKg",
+        body.get("physical", {}).get("unitMassKg") or body.get("physical", {}).get("weightKg", 0),
+    )
     body.setdefault("producer", {}).setdefault("brand", product.brand)
     body["producer"].setdefault("name", product.brand or "Hindustan Zinc Limited")
 

@@ -66,34 +66,40 @@ async def ensure_default_tenant(session: AsyncSession, settings: Settings) -> No
     )
 
 
-def _build_cast_event_payload(preset: dict[str, Any], tenant_id: int) -> dict[str, Any]:
-    """Mirror of @dpp/sim buildCastEvent. Mutates nothing in `preset`.
+_SITE_BPNS_BY_TAG: dict[str, str] = {
+    "CHA": "BPNSHZSCHA00012N",
+    "DAR": "BPNSHZSDAR00027L",
+    "DEB": "BPNSHZSDEB00033K",
+    "PNT": "BPNSHZSPNT00041J",
+}
 
-    Maps the Chem-X v1.0 HZL preset shape onto the v1.0 cast-event payload
-    contract (which still uses the legacy `alloyEn`/`alloyAa` field names —
-    those are preserved as opaque grade-code carriers until a v1.5 cast-event
-    schema lands).
+
+def _build_cast_event_payload(preset: dict[str, Any], tenant_id: int) -> dict[str, Any]:
+    """Build a v1.0 cast-event payload from a Chem-X HZL preset.
+
+    Emits exactly the v1.0 cast-event/cast field set: castNumber, metal,
+    gradeCode, form, unitMassKg, siteBpns, plus optional bundleMassKg and
+    dimensions. Legacy aluminium fields (alloyEn / alloyAa / brand /
+    weightKg / casthouseUfi / smelterUfi / purityGrade) are not emitted —
+    the v1.0 schema rejects them as additionalProperties.
     """
     cast_number = f"C-{datetime.now(UTC).strftime('%Y%m%d')}-{random.randint(10000, 99999)}"  # noqa: S311
     physical = preset.get("physical") or {}
     dims = physical.get("dimensions") or preset.get("dimensions") or {}
-    grade_code = preset.get("gradeCode") or preset.get("tradeName") or "UNKNOWN"
-    bis_or_iso = (preset.get("speakingCodes") or {}).get("bisStandard") or grade_code
     site_tag = preset.get("producingSiteTag", "CHA")
-    casthouse_bpns = f"BPNSHZS{site_tag}00012N"
-    smelter_bpns = casthouse_bpns
+    site_bpns = _SITE_BPNS_BY_TAG.get(site_tag, _SITE_BPNS_BY_TAG["CHA"])
     cast_payload: dict[str, Any] = {
         "castNumber": cast_number,
-        "alloyEn": bis_or_iso,
-        "alloyAa": grade_code,
-        "brand": preset.get("tradeName") or grade_code,
+        "metal": preset.get("metal", "zinc"),
+        "gradeCode": preset.get("gradeCode") or preset.get("tradeName") or "UNKNOWN",
         "form": preset.get("form", "ingot_25kg"),
-        "weightKg": float(physical.get("unitMassKg", 25.0)),
-        "casthouseUfi": casthouse_bpns,
-        "smelterUfi": smelter_bpns,
-        "purityGrade": str(preset.get("purityPercent", 99.995)),
+        "unitMassKg": float(physical.get("unitMassKg", 25.0)),
+        "siteBpns": site_bpns,
     }
-    for key in ("diameterMm", "lengthMm", "widthMm", "thicknessMm", "heightMm"):
+    bundle_mass = physical.get("bundleMassKg")
+    if isinstance(bundle_mass, (int, float)):
+        cast_payload["bundleMassKg"] = float(bundle_mass)
+    for key in ("lengthMm", "widthMm", "heightMm"):
         if key in dims:
             cast_payload[key] = dims[key]
 
