@@ -96,3 +96,8 @@ test-results/
 .terraform/
 *.tfstate
 *.tfstate.backup
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Claude Code harness scratch
+# ──────────────────────────────────────────────────────────────────────────────
+.claude/scheduled_tasks.lock
