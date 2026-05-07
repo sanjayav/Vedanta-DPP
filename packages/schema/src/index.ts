@@ -17,9 +17,9 @@ import dppV1 from '../schemas/dpp/v1.0.0.json' with { type: 'json' }
 import castEventV1 from '../schemas/cast-event/v1.0.0.json' with { type: 'json' }
 import envelopeV1 from '../schemas/envelope/v1.0.0.json' with { type: 'json' }
 
-import celestial from '../presets/celestial.json' with { type: 'json' }
-import celestialR from '../presets/celestial-r.json' with { type: 'json' }
-import standard from '../presets/standard.json' with { type: 'json' }
+import zincEcozen from '../presets/zinc-ecozen.json' with { type: 'json' }
+import zincCggJumbo from '../presets/zinc-cgg-jumbo.json' with { type: 'json' }
+import leadPure9999 from '../presets/lead-pure-99-99.json' with { type: 'json' }
 
 export const schemas = {
   dpp: { 'v1.0.0': dppV1 },
@@ -28,9 +28,9 @@ export const schemas = {
 } as const
 
 export const presets = {
-  celestial,
-  'celestial-r': celestialR,
-  standard,
+  'zinc-ecozen-shg-99-995': zincEcozen,
+  'zinc-cgg-jumbo': zincCggJumbo,
+  'lead-pure-99-99': leadPure9999,
 } as const
 
 export type PresetId = keyof typeof presets

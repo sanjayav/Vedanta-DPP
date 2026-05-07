@@ -11,9 +11,9 @@
     "./dpp/v1.0.0": "./schemas/dpp/v1.0.0.json",
     "./cast-event/v1.0.0": "./schemas/cast-event/v1.0.0.json",
     "./envelope/v1.0.0": "./schemas/envelope/v1.0.0.json",
-    "./presets/celestial": "./presets/celestial.json",
-    "./presets/celestial-r": "./presets/celestial-r.json",
-    "./presets/standard": "./presets/standard.json"
+    "./presets/zinc-ecozen": "./presets/zinc-ecozen.json",
+    "./presets/zinc-cgg-jumbo": "./presets/zinc-cgg-jumbo.json",
+    "./presets/lead-pure-99-99": "./presets/lead-pure-99-99.json"
   },
   "files": [
     "schemas",

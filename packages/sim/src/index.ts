@@ -41,6 +41,19 @@ export function buildCastEvent(opts: FireOptions): CastEvent {
     Math.random() * 90000 + 10000,
   )}`
 
+  // Pre-minted Chanderiya BPNS — see apps/api/dpp_api/services/bpn.py.
+  // Producer-tag → BPNS lookup is canonical there; the sim uses the most-cited
+  // smelter as the default and lets opts.overrides set siteBpns explicitly.
+  const SITE_BY_TAG: Record<string, string> = {
+    CHA: 'BPNSHZSCHA00012N',
+    DAR: 'BPNSHZSDAR0001OU',
+    DEB: 'BPNSHZSDEB00014X',
+    PAN: 'BPNSHZSPAN0001TJ',
+  }
+  const siteBpns = SITE_BY_TAG[preset.producingSiteTag ?? 'CHA'] ?? SITE_BY_TAG.CHA
+
+  const dims = preset.physical.dimensions ?? {}
+
   return {
     schemaVersion: '1.0.0',
     trackingId,
@@ -53,23 +66,15 @@ export function buildCastEvent(opts: FireOptions): CastEvent {
     tenantId: opts.tenantId ?? 1,
     cast: {
       castNumber,
-      alloyEn: preset.alloyEn,
-      alloyAa: preset.alloyAa,
-      brand: preset.brand,
+      metal: preset.metal,
+      gradeCode: preset.gradeCode,
       form: preset.form,
-      temper: preset.temper,
-      weightKg: preset.weightKg,
-      ...(preset.dimensions.diameterMm !== undefined && {
-        diameterMm: preset.dimensions.diameterMm,
-      }),
-      ...(preset.dimensions.lengthMm !== undefined && { lengthMm: preset.dimensions.lengthMm }),
-      ...(preset.dimensions.widthMm !== undefined && { widthMm: preset.dimensions.widthMm }),
-      ...(preset.dimensions.thicknessMm !== undefined && {
-        thicknessMm: preset.dimensions.thicknessMm,
-      }),
-      casthouseUfi: preset.casthouseUfi,
-      smelterUfi: preset.smelterUfi,
-      purityGrade: preset.purityGrade,
+      unitMassKg: preset.physical.unitMassKg,
+      bundleMassKg: preset.physical.bundleMassKg,
+      siteBpns,
+      ...(dims.lengthMm !== undefined && { lengthMm: dims.lengthMm }),
+      ...(dims.widthMm !== undefined && { widthMm: dims.widthMm }),
+      ...(dims.heightMm !== undefined && { heightMm: dims.heightMm }),
       ...opts.overrides,
     },
   }

@@ -1,11 +1,11 @@
 /**
- * Hand-authored mirror of cast-event/v1.0.0.json.
+ * Hand-authored mirror of cast-event/v1.0.0.json (Vedanta · HZL edition).
  *
  * Every ingestion source produces this exact payload — simulator, public-data,
  * manual entry, MES (v2). The DPP generator consumes only this canonical shape.
  */
 
-import type { AlloyBrand, Gln, Iso8601DateTime, ProductForm } from './dpp'
+import type { Bpns, Iso8601DateTime, Metal, ProductForm } from './dpp'
 
 export type CastEventSourceKind =
   | 'simulator'
@@ -25,19 +25,17 @@ export interface CastEventSource {
 
 export interface CastPayload {
   castNumber: string
-  alloyEn: string
-  alloyAa?: string
-  brand: AlloyBrand
+  metal: Metal
+  gradeCode: string
   form: ProductForm
-  temper?: string
-  weightKg: number
-  diameterMm?: number
+  unitMassKg: number
+  bundleMassKg?: number
   lengthMm?: number
   widthMm?: number
-  thicknessMm?: number
-  casthouseUfi: Gln
-  smelterUfi?: Gln
-  purityGrade?: string
+  heightMm?: number
+  siteBpns: Bpns
+  lotNumber?: string
+  itemSerial?: string
   customerReference?: string
 }
 

@@ -1,0 +1,427 @@
+{
+  "id": "zinc-ecozen-shg-99-995",
+  "label": "EcoZen — Special High Grade Zinc 99.995%",
+  "summary": "Asia's first low-carbon zinc — cradle-to-gate carbon footprint <1 t CO2e/t Zn, ~75% below the IZA global SHG average. Produced at the Chanderiya smelter, India's first IZA Zinc Mark certified site (April 2026).",
+  "metal": "zinc",
+  "gradeCode": "EcoZen-SHG",
+  "tradeName": "EcoZen",
+  "purityPercent": 99.995,
+  "form": "ingot_25kg",
+  "applicableStandards": [
+    "IS 209:1992",
+    "BS EN 1179:2003",
+    "ASTM B6-18"
+  ],
+  "physical": {
+    "unitMassKg": 25,
+    "unitMassToleranceKg": 2,
+    "bundleMassKg": 1000,
+    "bundleMassToleranceKg": 50,
+    "unitsPerBundle": 40,
+    "dimensions": {
+      "lengthMm": 435,
+      "widthMm": 110,
+      "heightMm": 80,
+      "tolerance": "±5"
+    },
+    "bundleDimensions": {
+      "lengthMm": 960,
+      "widthMm": 470,
+      "heightMm": 475,
+      "tolerance": "±10"
+    },
+    "packaging": {
+      "strapMaterial": "PET strapping",
+      "palletised": true,
+      "markings": "vedanta SHG 99.995 / EcoZen logo"
+    }
+  },
+  "chemistry": {
+    "composition": [
+      {
+        "element": "Zn",
+        "casNumber": "7440-66-6",
+        "role": "primary",
+        "guaranteedMinPercent": 99.995,
+        "typicalAssayPercent": 99.996,
+        "method": "ICP-OES (NABL-accredited HZL lab)"
+      },
+      {
+        "element": "Pb",
+        "casNumber": "7439-92-1",
+        "role": "impurity",
+        "guaranteedMaxPercent": 0.003,
+        "typicalAssayPercent": 0.002,
+        "method": "ICP-OES"
+      },
+      {
+        "element": "Cd",
+        "casNumber": "7440-43-9",
+        "role": "impurity",
+        "guaranteedMaxPercent": 0.003,
+        "typicalAssayPercent": 0.0002,
+        "method": "ICP-OES"
+      },
+      {
+        "element": "Fe",
+        "casNumber": "7439-89-6",
+        "role": "impurity",
+        "guaranteedMaxPercent": 0.002,
+        "typicalAssayPercent": 0.001,
+        "method": "ICP-OES"
+      },
+      {
+        "element": "Cu",
+        "casNumber": "7440-50-8",
+        "role": "impurity",
+        "guaranteedMaxPercent": 0.001,
+        "method": "ICP-OES"
+      },
+      {
+        "element": "Sn",
+        "casNumber": "7440-31-5",
+        "role": "impurity",
+        "guaranteedMaxPercent": 0.001,
+        "method": "ICP-OES"
+      },
+      {
+        "element": "Al",
+        "casNumber": "7429-90-5",
+        "role": "impurity",
+        "guaranteedMaxPercent": 0.001,
+        "method": "ICP-OES"
+      }
+    ]
+  },
+  "speakingCodes": {
+    "casNumber": "7440-66-6",
+    "ecNumber": "231-175-3",
+    "hsnCode": "79011200",
+    "lmeBrandName": "Vedanta SHG 99.995",
+    "bisStandard": "IS 209:1992 — Zn99.995"
+  },
+  "producingSiteTag": "CHA",
+  "sustainability": {
+    "pcf": {
+      "value": 0.95,
+      "unit": "kg CO2e/kg",
+      "declaredUnit": "1 kg of unpackaged EcoZen SHG zinc ingot at factory gate, Chanderiya, India",
+      "systemBoundary": "cradle_to_gate",
+      "method": {
+        "framework": "IPCC_AR6",
+        "version": "GWP100y",
+        "characterizationModel": "ISO 14067:2018 + IPCC AR6 GWP100y, mass-balance allocation per ISO 22095"
+      },
+      "referenceYear": 2024,
+      "reportingPeriod": {
+        "from": "2024-01-01",
+        "to": "2024-12-31"
+      },
+      "primaryDataSharePercent": 78,
+      "dataQualityRating": {
+        "overall": 2,
+        "technological": 2,
+        "geographical": 1,
+        "temporal": 2
+      },
+      "cutOffPercent": 3,
+      "allocationMethod": "physical_allocation",
+      "lciDatabase": {
+        "name": "ecoinvent",
+        "version": "3.10"
+      },
+      "assuranceLevel": "limited",
+      "industryAverage": {
+        "value": 3.7,
+        "unit": "kg CO2e/kg",
+        "source": "IZA global SHG average",
+        "year": 2023
+      }
+    },
+    "pcfBreakdown": {
+      "miningKgCo2e": 0.18,
+      "concentrationKgCo2e": 0.12,
+      "smeltingKgCo2e": 0.32,
+      "refiningKgCo2e": 0.11,
+      "castingKgCo2e": 0.07,
+      "electricityKgCo2e": 0.06,
+      "thermalEnergyKgCo2e": 0.05,
+      "transportInboundKgCo2e": 0.04
+    },
+    "resourceUseFossil": {
+      "value": 14.2,
+      "unit": "MJ/kg",
+      "declaredUnit": "1 kg EcoZen at factory gate",
+      "systemBoundary": "cradle_to_gate",
+      "method": {
+        "framework": "EF_3.1",
+        "version": "3.1",
+        "characterizationModel": "Van Oers et al. 2002 — LHV-based"
+      },
+      "referenceYear": 2024,
+      "primaryDataSharePercent": 78,
+      "dataQualityRating": {
+        "overall": 2,
+        "technological": 2,
+        "geographical": 1,
+        "temporal": 2
+      },
+      "cutOffPercent": 3,
+      "lciDatabase": {
+        "name": "ecoinvent",
+        "version": "3.10"
+      }
+    },
+    "waterScarcity": {
+      "value": 4.8,
+      "unit": "m3 world eq/kg",
+      "declaredUnit": "1 kg EcoZen at factory gate",
+      "systemBoundary": "cradle_to_gate",
+      "method": {
+        "framework": "EF_3.1",
+        "version": "3.1",
+        "characterizationModel": "AWARE (Boulay et al. 2018), country resolution = IN"
+      },
+      "referenceYear": 2024,
+      "primaryDataSharePercent": 65,
+      "dataQualityRating": {
+        "overall": 2,
+        "technological": 2,
+        "geographical": 1,
+        "temporal": 2
+      },
+      "cutOffPercent": 5,
+      "lciDatabase": {
+        "name": "ecoinvent",
+        "version": "3.10"
+      }
+    },
+    "acidification": {
+      "value": 0.041,
+      "unit": "mol H+ eq/kg",
+      "declaredUnit": "1 kg EcoZen at factory gate",
+      "systemBoundary": "cradle_to_gate",
+      "method": {
+        "framework": "EF_3.1",
+        "version": "3.1",
+        "characterizationModel": "Accumulated Exceedance (Seppälä 2006; Posch 2008)"
+      },
+      "referenceYear": 2024,
+      "primaryDataSharePercent": 70,
+      "dataQualityRating": {
+        "overall": 2,
+        "technological": 2,
+        "geographical": 2,
+        "temporal": 2
+      },
+      "cutOffPercent": 3,
+      "lciDatabase": {
+        "name": "ecoinvent",
+        "version": "3.10"
+      }
+    },
+    "ozoneDepletion": {
+      "value": 1.2e-09,
+      "unit": "kg CFC-11 eq/kg",
+      "declaredUnit": "1 kg EcoZen at factory gate",
+      "systemBoundary": "cradle_to_gate",
+      "method": {
+        "framework": "EF_3.1",
+        "version": "3.1",
+        "characterizationModel": "WMO 2014 ODP factors"
+      },
+      "referenceYear": 2024,
+      "primaryDataSharePercent": 50,
+      "dataQualityRating": {
+        "overall": 3,
+        "technological": 3,
+        "geographical": 2,
+        "temporal": 3
+      },
+      "cutOffPercent": 3,
+      "lciDatabase": {
+        "name": "ecoinvent",
+        "version": "3.10"
+      }
+    },
+    "photochemicalOzone": {
+      "value": 0.0089,
+      "unit": "kg NMVOC eq/kg",
+      "declaredUnit": "1 kg EcoZen at factory gate",
+      "systemBoundary": "cradle_to_gate",
+      "method": {
+        "framework": "EF_3.1",
+        "version": "3.1",
+        "characterizationModel": "LOTOS-EUROS (Van Zelm 2008)"
+      },
+      "referenceYear": 2024,
+      "primaryDataSharePercent": 70,
+      "dataQualityRating": {
+        "overall": 2,
+        "technological": 2,
+        "geographical": 2,
+        "temporal": 2
+      },
+      "cutOffPercent": 3,
+      "lciDatabase": {
+        "name": "ecoinvent",
+        "version": "3.10"
+      }
+    },
+    "renewableElectricityPercent": 70,
+    "epd": {
+      "registrationNumber": "EPD-IES-0006472:001",
+      "programOperator": "International EPD System (environdec.com)",
+      "publicationDate": "2023-01-16",
+      "validUntil": "2028-01-15",
+      "url": "https://www.environdec.com/library/epd6472",
+      "pcr": "PCR 2019:14 Construction products (EN 15804+A2), v1.3.4"
+    }
+  },
+  "recycledContent": {
+    "totalPercent": 0,
+    "preConsumerPercent": 0,
+    "postConsumerPercent": 0,
+    "chainOfCustodyModel": "mass_balance"
+  },
+  "compliance": {
+    "regulations": [
+      {
+        "name": "REACH",
+        "reference": "EC 1907/2006 — Zinc (CAS 7440-66-6)",
+        "status": "compliant",
+        "issuer": "ECHA",
+        "validFrom": "2010-12-01"
+      },
+      {
+        "name": "RoHS / ELV",
+        "reference": "Cd <0.01%, Pb <0.1% per RoHS Annex II",
+        "status": "compliant",
+        "issuer": "EU"
+      },
+      {
+        "name": "BIS — Refined Zinc",
+        "reference": "IS 209:1992 — Zn99.995",
+        "status": "compliant",
+        "issuer": "Bureau of Indian Standards"
+      },
+      {
+        "name": "CBAM declaration ready",
+        "reference": "Regulation (EU) 2023/956",
+        "status": "compliant",
+        "issuer": "EU Commission"
+      }
+    ],
+    "certifications": [
+      {
+        "name": "ISO 9001:2015",
+        "status": "compliant",
+        "issuer": "RINA / TÜV (verify)"
+      },
+      {
+        "name": "ISO 14001:2015",
+        "status": "compliant",
+        "issuer": "RINA / TÜV (verify)"
+      },
+      {
+        "name": "ISO 45001:2018",
+        "status": "compliant",
+        "issuer": "RINA / TÜV (verify)"
+      },
+      {
+        "name": "EPD International",
+        "reference": "EPD-IES-0006472:001",
+        "status": "compliant",
+        "issuer": "International EPD System",
+        "validFrom": "2023-01-16",
+        "validUntil": "2028-01-15"
+      },
+      {
+        "name": "ICMM Mining Principles",
+        "status": "compliant",
+        "issuer": "ICMM",
+        "validFrom": "2025-08-13"
+      },
+      {
+        "name": "IZA Zinc Mark — Chanderiya site",
+        "status": "compliant",
+        "issuer": "International Zinc Association",
+        "validFrom": "2026-04-01"
+      }
+    ],
+    "lmeRegisteredBrand": {
+      "brandName": "Vedanta SHG 99.995",
+      "url": "https://www.lme.com/en/sustainability-and-physical-markets/brands/approved-brands"
+    }
+  },
+  "circularity": {
+    "recyclabilityIndicator": "100% — zinc is infinitely recyclable without loss of properties (IZA)",
+    "materialRecoveryPotential": "≥95% recovery in modern EAF dust recycling and Waelz kiln operations",
+    "reuseInformation": "Process scrap remelted internally; spent galvanising bath returned for refining.",
+    "recyclingInformation": "Refer to IZA Recycling Guide; secondary zinc recovered from steel-mill EAF dust globally.",
+    "disposalInformation": "Never landfill — zinc is fully recyclable. Forward to certified non-ferrous metal recycler.",
+    "treatmentFacilityInfo": "Internal smelter circuits at Chanderiya, Dariba, Debari handle return scrap."
+  },
+  "espr": {
+    "durability": "Inert metal at ambient conditions; protective galvanic action extends host steel life by decades.",
+    "reliability": "Conforms to IS 209 / EN 1179 / ASTM B6 across the certified production batch.",
+    "reusability": "Zinc can be re-melted and re-cast indefinitely.",
+    "energyEfficiency": "Hydrometallurgical RLE route at Chanderiya, ISO 50001 certified.",
+    "resourceEfficiency": "≥95% in-process scrap recovery; tailings re-processed for residual metal."
+  },
+  "soc": {
+    "summaryStatement": "no_svhc_above_threshold",
+    "entries": [
+      {
+        "iupacName": "Lead",
+        "casNumber": "7439-92-1",
+        "ecNumber": "231-100-4",
+        "locationInProduct": "homogeneous",
+        "value": 0.002,
+        "unit": "wt%",
+        "concentrationDescriptor": "typical impurity, well below 0.1% SVHC threshold"
+      },
+      {
+        "iupacName": "Cadmium",
+        "casNumber": "7440-43-9",
+        "ecNumber": "231-152-8",
+        "locationInProduct": "homogeneous",
+        "value": 0.0002,
+        "unit": "wt%",
+        "concentrationDescriptor": "typical impurity, well below RoHS limit"
+      }
+    ]
+  },
+  "useAndLife": {
+    "storageInstructions": "Store indoors, dry, well-ventilated. Keep packaging strapped until use.",
+    "handlingInstructions": "Use approved lifting equipment for 1 t bundles. PPE: safety shoes, gloves, hi-vis.",
+    "safetyInformation": "Solid metal — non-flammable. Molten zinc: see SDS for thermal-burn and zinc-fume-fever precautions.",
+    "sdsUrl": "https://www.hzlindia.com/wp-content/uploads/SDS-Zinc.pdf"
+  },
+  "intendedMarkets": [
+    "galvanising",
+    "automotive",
+    "infrastructure",
+    "renewable_energy_structures",
+    "electronics",
+    "energy_storage"
+  ],
+  "intendedRegions": [
+    "IN",
+    "AE",
+    "DE",
+    "JP",
+    "KR",
+    "TW",
+    "US"
+  ],
+  "story": {
+    "headline": "Asia's first low-carbon zinc.",
+    "subhead": "Less than 1 tonne CO2e per tonne of metal — about 75% below the global SHG average.",
+    "bullets": [
+      "Produced at Chanderiya, India's first IZA Zinc Mark certified smelter (April 2026).",
+      "Backed by HZL's 530 MW renewable PDA with Serentica (round-the-clock RE).",
+      "Tata Steel partnership: ~400 kg CO2e saved per tonne of galvanised steel."
+    ]
+  }
+}

@@ -1,0 +1,384 @@
+{
+  "id": "lead-pure-99-99",
+  "label": "Refined Lead 99.99% — Pure Lead",
+  "summary": "LME-registered refined lead under the 'Vedanta 99.99' brand. Produced at the Chanderiya integrated zinc-lead smelter from primary mine ore plus internal recycle streams. Predominantly serves the lead-acid battery industry across automotive SLI, e-rickshaw and industrial UPS segments.",
+  "metal": "lead",
+  "gradeCode": "Lead-99.99",
+  "purityPercent": 99.99,
+  "form": "ingot_25kg",
+  "applicableStandards": [
+    "IS 27:2023 — Pig Lead",
+    "ASTM B29-22"
+  ],
+  "physical": {
+    "unitMassKg": 25,
+    "unitMassToleranceKg": 2,
+    "bundleMassKg": 1000,
+    "bundleMassToleranceKg": 50,
+    "unitsPerBundle": 40,
+    "dimensions": {
+      "lengthMm": 535,
+      "widthMm": 85,
+      "heightMm": 75,
+      "tolerance": "±2"
+    },
+    "packaging": {
+      "strapMaterial": "PET strapping",
+      "palletised": true,
+      "markings": "vedanta 99.99 / LME-registered brand"
+    }
+  },
+  "chemistry": {
+    "composition": [
+      {
+        "element": "Pb",
+        "casNumber": "7439-92-1",
+        "role": "primary",
+        "guaranteedMinPercent": 99.99,
+        "method": "ICP-OES (NABL-accredited HZL lab)"
+      },
+      {
+        "element": "Sb",
+        "casNumber": "7440-36-0",
+        "role": "impurity",
+        "guaranteedMaxPercent": 0.0005,
+        "method": "ICP-OES"
+      },
+      {
+        "element": "As",
+        "casNumber": "7440-38-2",
+        "role": "impurity",
+        "guaranteedMaxPercent": 0.0005,
+        "method": "ICP-OES"
+      },
+      {
+        "element": "Bi",
+        "casNumber": "7440-69-9",
+        "role": "impurity",
+        "guaranteedMaxPercent": 0.0005,
+        "method": "ICP-OES"
+      },
+      {
+        "element": "Cu",
+        "casNumber": "7440-50-8",
+        "role": "impurity",
+        "guaranteedMaxPercent": 0.0005,
+        "method": "ICP-OES"
+      },
+      {
+        "element": "Ag",
+        "casNumber": "7440-22-4",
+        "role": "impurity",
+        "guaranteedMaxPercent": 0.0015,
+        "method": "ICP-OES"
+      },
+      {
+        "element": "Zn",
+        "casNumber": "7440-66-6",
+        "role": "impurity",
+        "guaranteedMaxPercent": 0.0002,
+        "method": "ICP-OES"
+      },
+      {
+        "element": "Sn",
+        "casNumber": "7440-31-5",
+        "role": "impurity",
+        "guaranteedMaxPercent": 0.0005,
+        "method": "ICP-OES"
+      },
+      {
+        "element": "Cd",
+        "casNumber": "7440-43-9",
+        "role": "impurity",
+        "guaranteedMaxPercent": 0.0002,
+        "method": "ICP-OES"
+      }
+    ]
+  },
+  "speakingCodes": {
+    "casNumber": "7439-92-1",
+    "ecNumber": "231-100-4",
+    "hsnCode": "78011000",
+    "lmeBrandName": "Vedanta 99.99",
+    "bisStandard": "IS 27:2023 — Pig Lead"
+  },
+  "producingSiteTag": "CHA",
+  "sustainability": {
+    "pcf": {
+      "value": 1.6,
+      "unit": "kg CO2e/kg",
+      "declaredUnit": "1 kg of unpackaged refined lead ingot at factory gate, Chanderiya, India",
+      "systemBoundary": "cradle_to_gate",
+      "method": {
+        "framework": "IPCC_AR6",
+        "version": "GWP100y",
+        "characterizationModel": "ISO 14067:2018 + IPCC AR6 GWP100y; allocation per ISO 14044"
+      },
+      "referenceYear": 2024,
+      "reportingPeriod": {
+        "from": "2024-01-01",
+        "to": "2024-12-31"
+      },
+      "primaryDataSharePercent": 65,
+      "dataQualityRating": {
+        "overall": 3,
+        "technological": 2,
+        "geographical": 1,
+        "temporal": 3
+      },
+      "cutOffPercent": 3,
+      "allocationMethod": "physical_allocation",
+      "lciDatabase": {
+        "name": "ecoinvent",
+        "version": "3.10"
+      },
+      "assuranceLevel": "self_declared",
+      "industryAverage": {
+        "value": 1.3,
+        "unit": "kg CO2e/kg",
+        "source": "ILA / ecoinvent primary lead average",
+        "year": 2023
+      }
+    },
+    "pcfBreakdown": {
+      "miningKgCo2e": 0.18,
+      "concentrationKgCo2e": 0.14,
+      "smeltingKgCo2e": 0.78,
+      "refiningKgCo2e": 0.32,
+      "castingKgCo2e": 0.1,
+      "electricityKgCo2e": 0.05,
+      "thermalEnergyKgCo2e": 0.02,
+      "transportInboundKgCo2e": 0.01
+    },
+    "resourceUseFossil": {
+      "value": 18.6,
+      "unit": "MJ/kg",
+      "declaredUnit": "1 kg refined lead at factory gate",
+      "systemBoundary": "cradle_to_gate",
+      "method": {
+        "framework": "EF_3.1",
+        "version": "3.1",
+        "characterizationModel": "Van Oers et al. 2002"
+      },
+      "referenceYear": 2024,
+      "primaryDataSharePercent": 65,
+      "dataQualityRating": {
+        "overall": 3,
+        "technological": 2,
+        "geographical": 1,
+        "temporal": 3
+      },
+      "cutOffPercent": 3,
+      "lciDatabase": {
+        "name": "ecoinvent",
+        "version": "3.10"
+      }
+    },
+    "waterScarcity": {
+      "value": 5.2,
+      "unit": "m3 world eq/kg",
+      "declaredUnit": "1 kg refined lead at factory gate",
+      "systemBoundary": "cradle_to_gate",
+      "method": {
+        "framework": "EF_3.1",
+        "version": "3.1",
+        "characterizationModel": "AWARE (Boulay et al. 2018)"
+      },
+      "referenceYear": 2024,
+      "primaryDataSharePercent": 55,
+      "dataQualityRating": {
+        "overall": 3,
+        "technological": 2,
+        "geographical": 1,
+        "temporal": 3
+      },
+      "cutOffPercent": 5,
+      "lciDatabase": {
+        "name": "ecoinvent",
+        "version": "3.10"
+      }
+    },
+    "acidification": {
+      "value": 0.072,
+      "unit": "mol H+ eq/kg",
+      "declaredUnit": "1 kg refined lead at factory gate",
+      "systemBoundary": "cradle_to_gate",
+      "method": {
+        "framework": "EF_3.1",
+        "version": "3.1",
+        "characterizationModel": "Accumulated Exceedance (Seppälä 2006)"
+      },
+      "referenceYear": 2024,
+      "primaryDataSharePercent": 60,
+      "dataQualityRating": {
+        "overall": 3,
+        "technological": 2,
+        "geographical": 2,
+        "temporal": 3
+      },
+      "cutOffPercent": 3,
+      "lciDatabase": {
+        "name": "ecoinvent",
+        "version": "3.10"
+      }
+    },
+    "ozoneDepletion": {
+      "value": 1.8e-09,
+      "unit": "kg CFC-11 eq/kg",
+      "declaredUnit": "1 kg refined lead at factory gate",
+      "systemBoundary": "cradle_to_gate",
+      "method": {
+        "framework": "EF_3.1",
+        "version": "3.1",
+        "characterizationModel": "WMO 2014 ODP factors"
+      },
+      "referenceYear": 2024,
+      "primaryDataSharePercent": 45,
+      "dataQualityRating": {
+        "overall": 4,
+        "technological": 3,
+        "geographical": 2,
+        "temporal": 3
+      },
+      "cutOffPercent": 3,
+      "lciDatabase": {
+        "name": "ecoinvent",
+        "version": "3.10"
+      }
+    },
+    "photochemicalOzone": {
+      "value": 0.014,
+      "unit": "kg NMVOC eq/kg",
+      "declaredUnit": "1 kg refined lead at factory gate",
+      "systemBoundary": "cradle_to_gate",
+      "method": {
+        "framework": "EF_3.1",
+        "version": "3.1",
+        "characterizationModel": "LOTOS-EUROS"
+      },
+      "referenceYear": 2024,
+      "primaryDataSharePercent": 60,
+      "dataQualityRating": {
+        "overall": 3,
+        "technological": 2,
+        "geographical": 2,
+        "temporal": 3
+      },
+      "cutOffPercent": 3,
+      "lciDatabase": {
+        "name": "ecoinvent",
+        "version": "3.10"
+      }
+    },
+    "renewableElectricityPercent": 38
+  },
+  "recycledContent": {
+    "totalPercent": 12,
+    "preConsumerPercent": 8,
+    "postConsumerPercent": 4,
+    "chainOfCustodyModel": "mass_balance"
+  },
+  "compliance": {
+    "regulations": [
+      {
+        "name": "REACH",
+        "reference": "EC 1907/2006 — Lead (CAS 7439-92-1)",
+        "status": "compliant",
+        "issuer": "ECHA"
+      },
+      {
+        "name": "Battery Regulation (EU) 2023/1542",
+        "reference": "Lead-acid battery active material",
+        "status": "compliant",
+        "issuer": "EU"
+      },
+      {
+        "name": "BIS — Pig Lead",
+        "reference": "IS 27:2023",
+        "status": "compliant",
+        "issuer": "Bureau of Indian Standards"
+      }
+    ],
+    "certifications": [
+      {
+        "name": "ISO 9001:2015",
+        "status": "compliant",
+        "issuer": "verify"
+      },
+      {
+        "name": "ISO 14001:2015",
+        "status": "compliant",
+        "issuer": "verify"
+      },
+      {
+        "name": "ISO 45001:2018",
+        "status": "compliant",
+        "issuer": "verify"
+      },
+      {
+        "name": "ICMM Mining Principles",
+        "status": "compliant",
+        "issuer": "ICMM",
+        "validFrom": "2025-08-13"
+      }
+    ],
+    "lmeRegisteredBrand": {
+      "brandName": "Vedanta 99.99",
+      "url": "https://www.lme.com/en/sustainability-and-physical-markets/brands/approved-brands"
+    }
+  },
+  "circularity": {
+    "recyclabilityIndicator": "Lead has the highest recycling rate of any major commodity metal globally (>95% in lead-acid battery loop) per ILA.",
+    "materialRecoveryPotential": "≥99% recovery from spent lead-acid batteries via secondary smelters.",
+    "reuseInformation": "End-of-life lead-acid batteries collected via authorised recyclers under India BWM Rules.",
+    "recyclingInformation": "Refer to ILA Recycling Guide; closed-loop battery recycling networks in India and EU.",
+    "disposalInformation": "Hazardous waste — must be returned for authorised recycling. Never landfill.",
+    "treatmentFacilityInfo": "Chanderiya integrated smelter handles internal recycle; spent batteries flow to authorised secondary smelters."
+  },
+  "espr": {
+    "durability": "Refined lead is stable for decades under standard storage conditions.",
+    "reliability": "99.99% purity ensures consistent battery active-material performance and radiation-shielding density.",
+    "reusability": "Lead is infinitely recyclable without loss of properties.",
+    "energyEfficiency": "Smelter ISO 50001 certified; integrated zinc-lead heat recovery.",
+    "resourceEfficiency": "Co-product silver recovery at Pantnagar refinery captures economic value from impurity stream."
+  },
+  "soc": {
+    "summaryStatement": "svhc_above_threshold",
+    "entries": [
+      {
+        "iupacName": "Lead",
+        "casNumber": "7439-92-1",
+        "ecNumber": "231-100-4",
+        "locationInProduct": "homogeneous",
+        "value": 99.99,
+        "unit": "wt%",
+        "concentrationDescriptor": "Lead is itself an SVHC (Annex XV); its presence above 0.1% is by design as the primary product. Article 33 REACH communication applies — see SDS."
+      }
+    ]
+  },
+  "useAndLife": {
+    "storageInstructions": "Indoor, dry, well-ventilated. Keep off floor on pallets to prevent oxidation streaks.",
+    "handlingInstructions": "Use lifting equipment for 1 t bundles. PPE: chemical-resistant gloves, dust mask when grinding.",
+    "warnings": "Lead is toxic. Avoid skin contact, ingestion, inhalation of fumes/dust. Do not use for food contact, plumbing, or jewellery.",
+    "safetyInformation": "Solid metal — non-reactive at ambient. Molten lead and PbO/PbO2 fumes: respiratory protection mandatory.",
+    "sdsUrl": "https://www.hzlindia.com/wp-content/uploads/SDS-Lead.pdf"
+  },
+  "intendedMarkets": [
+    "lead_acid_batteries_automotive_SLI",
+    "lead_acid_batteries_industrial_UPS",
+    "radiation_shielding",
+    "cable_sheathing",
+    "pigments_chemicals",
+    "ammunition"
+  ],
+  "intendedRegions": [
+    "IN",
+    "AE",
+    "DE",
+    "JP",
+    "KR",
+    "VN",
+    "ID",
+    "TR"
+  ]
+}

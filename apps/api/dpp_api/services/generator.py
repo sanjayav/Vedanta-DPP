@@ -1,12 +1,25 @@
-"""DPP generator (Layer 2 → Layer 3).
+"""DPP generator (Layer 2 → Layer 3) — Vedanta / Hindustan Zinc edition.
 
-Maps a canonical CastEvent to a fully-populated DPP record by merging:
-  - the inbound cast payload (operator/casthouse/MES data)
-  - reference data: simulator preset (when source=simulator), CFP store, ASI registry
+Maps a canonical CastEvent to a fully-populated zinc/lead/silver passport by
+merging:
 
-For v1.0, when a simulator preset is referenced via source.presetId, that preset
-becomes the dominant source of truth. Real MES integrations in v2 will read
-from the reference-data store instead.
+  - the inbound cast payload (operator / smelter / refinery MES data)
+  - the simulator preset (when source.kind=simulator), which carries the
+    headline sustainability values, certifications and chemistry table from
+    the research dossier
+  - the BPDM identity scaffolding (HZL_BPNL plus per-site BPNS/BPNA)
+
+The resulting record validates against `dpp/v1.0.0` with all six Chem-X
+LCIA categories (PCF, resource use fossil, water scarcity, acidification,
+ozone depletion, photochemical ozone) populated with DQR/PDS provenance.
+
+References
+----------
+* Chem-X Sustainability Guideline v1.0 §3-§9
+* Chem-X Business Identity Guideline v1.0 §11-§22
+* Chem-X Material ID Guideline v1.0 §5-§6 (did:web)
+* TfS PCF Guideline v3.0 (cut-off, allocation, DQR, PDS)
+* ISO 14067:2018 (PCF), ISO 14025 EPD, ISO/IEC 6523 (BPN)
 """
 
 from __future__ import annotations
@@ -15,10 +28,118 @@ from datetime import UTC, datetime, timedelta
 from typing import Any
 from uuid import uuid4
 
+from . import bpn
 from ..settings import get_settings
 from .presets import get_preset
 from .reference_data import CfpReference
 from .schema_validator import validate_against
+
+
+# ── Producing-site lookup ─────────────────────────────────────────────────
+# Maps the 3-char site tag (preset.producingSiteTag, also used by the BPN
+# minting helpers) to the BPNS and a human-readable name. Mirrors the seed
+# data in alembic/versions/0008_hzl_seed.py.
+_SITE_BY_TAG: dict[str, tuple[str, str, str]] = {
+    "CHA": (bpn.CHANDERIYA_BPNS, "Chanderiya Lead-Zinc Smelter (CLZS)", "smelter_hydro"),
+    "DAR": (bpn.DARIBA_SMELTER_BPNS, "Dariba Smelting Complex (DSC)", "smelter_hydro"),
+    "DEB": (bpn.DEBARI_BPNS, "Zinc Smelter Debari (ZSD)", "smelter_hydro"),
+    "PAN": (bpn.PANTNAGAR_BPNS, "Pantnagar Metal Plant (PMP)", "refinery"),
+}
+
+
+def _resolve_site(preset: dict[str, Any] | None, cast: dict[str, Any]) -> tuple[str, str, str]:
+    """Return (BPNS, name, function) for the producing site.
+
+    The cast may carry an explicit `siteBpns`; otherwise we fall back to
+    the preset's `producingSiteTag`.
+    """
+    explicit = cast.get("siteBpns")
+    if explicit:
+        for bpns_const, name, fn in _SITE_BY_TAG.values():
+            if bpns_const == explicit:
+                return bpns_const, name, fn
+        # Unknown BPNS — accept it (validator already constrained syntax)
+        # but mark site name empty so the data captures clearly.
+        return explicit, "Hindustan Zinc Site", "smelter_hydro"
+    if preset and preset.get("producingSiteTag") in _SITE_BY_TAG:
+        return _SITE_BY_TAG[preset["producingSiteTag"]]
+    # Default: Chanderiya — the largest, most-cited HZL smelter.
+    return _SITE_BY_TAG["CHA"]
+
+
+def _build_material_id(
+    *,
+    bpnl: str,
+    issuer_did_host: str,
+    passport_class: str,
+) -> dict[str, Any]:
+    """Mint a Chem-X Material ID per the Material ID Guideline §5.4.
+
+    The DID Document is the legal entity's; the per-material UUID rides as
+    a query parameter so a single DID resolver can serve the entire portfolio.
+    """
+    material_uuid = str(uuid4())
+    did = f"did:web:{issuer_did_host}:{bpnl}?{passport_class}={material_uuid}"
+    settings = get_settings()
+    resolver_url = f"{settings.dpp_resolver_base_url.rstrip('/')}/{passport_class}/{bpnl}/{material_uuid}"
+    return {
+        "did": did,
+        "uuid": material_uuid,
+        "resolverUrl": resolver_url,
+        "passportClass": passport_class,
+    }
+
+
+def _producer_block(metadata: dict[str, Any] | None = None) -> dict[str, Any]:
+    """Hard-coded HZL producer block. In v2 this comes from the BPDM service."""
+    return {
+        "bpnl": bpn.HZL_BPNL,
+        "legalName": "Hindustan Zinc Limited",
+        "legalForm": "Public Limited Company",
+        "shortName": "HZL",
+        "tradeName": "Vedanta Hindustan Zinc",
+        "registeredAddressBpna": bpn.HZL_REGISTERED_BPNA,
+        "country": "IN",
+        "identifiers": [
+            {"category": "NBR", "type": "CIN", "value": "L27204RJ1966PLC001208", "issuingCountry": "IN", "issuingBody": "MCA"},
+            {"category": "IBR", "type": "LEI", "value": "335800LB39TLJ8YTWM98", "issuingBody": "GLEIF"},
+            {"category": "TIN", "type": "PAN", "value": "AAACH7354K", "issuingCountry": "IN", "issuingBody": "Income Tax Department"},
+            {"category": "VAT", "type": "GSTIN", "value": "08AAACH7354K1ZB", "issuingCountry": "IN", "issuingBody": "GSTN — Rajasthan"},
+            {"category": "OTH", "type": "ISIN", "value": "INE267A01025", "issuingCountry": "IN", "issuingBody": "NSDL"},
+            {"category": "OTH", "type": "NSE_TICKER", "value": "HINDZINC", "issuingCountry": "IN", "issuingBody": "NSE"},
+            {"category": "OTH", "type": "BSE_CODE", "value": "500188", "issuingCountry": "IN", "issuingBody": "BSE"},
+        ],
+        "regulatoryContact": {
+            "team": "HZL Regulatory Affairs",
+            "email": "infohzl@vedanta.co.in",
+            "phone": "+91 294 6604000",
+        },
+    }
+
+
+def _empty_lcia(category: str) -> dict[str, Any]:
+    """Conservative fallback when a preset omits a category. Real production
+    code would surface this as a validation warning — for the PoC we emit a
+    placeholder marked DQR=5 (worst) so the field exists and is honest."""
+    units = {
+        "pcf": ("kg CO2e/kg", 0.0),
+        "resourceUseFossil": ("MJ/kg", 0.0),
+        "waterScarcity": ("m3 world eq/kg", 0.0),
+        "acidification": ("mol H+ eq/kg", 0.0),
+        "ozoneDepletion": ("kg CFC-11 eq/kg", 0.0),
+        "photochemicalOzone": ("kg NMVOC eq/kg", 0.0),
+    }
+    unit, value = units[category]
+    return {
+        "value": value,
+        "unit": unit,
+        "declaredUnit": "1 kg of unpackaged product at factory gate",
+        "systemBoundary": "cradle_to_gate",
+        "method": {"framework": "EF_3.1", "version": "3.1"},
+        "referenceYear": datetime.now(UTC).year,
+        "primaryDataSharePercent": 0,
+        "dataQualityRating": {"overall": 5, "technological": 5, "geographical": 5, "temporal": 5},
+    }
 
 
 def build_dpp_from_cast_event(
@@ -27,184 +148,213 @@ def build_dpp_from_cast_event(
     cfp_override: CfpReference | None = None,
     compliance_override: dict[str, list[dict[str, Any]]] | None = None,
 ) -> dict[str, Any]:
-    """Construct a canonical DPP record from a validated cast event.
-
-    `cfp_override` and `compliance_override` come from the reference-data store
-    when available; the preset is the fallback for fresh installs and tests.
-    """
+    """Construct a canonical zinc/lead/silver passport from a validated cast event."""
     settings = get_settings()
     cast = cast_event["cast"]
     source = cast_event["source"]
     preset = get_preset(source["presetId"]) if source.get("presetId") else None
 
     now = datetime.now(UTC)
-    expires_at = now + timedelta(days=365 * 10)  # ESPR Art 10(3) — 10 year retention
+    expires_at = now + timedelta(days=365 * 10)            # ESPR Art 10(3)
+    lcia_valid_until = now + timedelta(days=365 * 3)       # Chem-X §3.4
 
-    gtin = _gtin_for(cast["brand"], cast["form"])
-    cast_number = cast["castNumber"]
-    item_serial = cast.get("itemSerial") or "0001"
-    digital_link = (
-        f"{settings.dpp_resolver_base_url}/01/{gtin}/10/{cast_number}/21/{item_serial}"
+    # ── identifiers ──────────────────────────────────────────────────────
+    issuer_did_host = settings.dpp_resolver_base_url.replace("https://", "").replace("http://", "").split("/")[0]
+    issuer_did = f"did:web:{issuer_did_host}:{bpn.HZL_BPNL}"
+
+    passport_class = "dpp"  # Could become "dmp" for B2B-only intermediates
+    material_id = _build_material_id(
+        bpnl=bpn.HZL_BPNL,
+        issuer_did_host=issuer_did_host,
+        passport_class=passport_class,
     )
 
-    if cfp_override is not None:
-        carbon = _carbon_from_reference(cfp_override)
-    elif preset is not None:
-        carbon = preset["carbon"]
+    # Speaking codes survive on materialId for compatibility with current
+    # processes (Chem-X §1.1 — patchwork of CAS / EC / REACH / LME).
+    if preset and "speakingCodes" in preset:
+        material_id["speakingCodes"] = preset["speakingCodes"]
+
+    # ── site ─────────────────────────────────────────────────────────────
+    site_bpns, site_name, site_fn = _resolve_site(preset, cast)
+
+    # ── physical ─────────────────────────────────────────────────────────
+    if preset and "physical" in preset:
+        physical = dict(preset["physical"])
+        # Cast may override unit/bundle masses for variant runs
+        if "unitMassKg" in cast and cast["unitMassKg"] != physical.get("unitMassKg"):
+            physical["unitMassKg"] = cast["unitMassKg"]
+        if "bundleMassKg" in cast:
+            physical["bundleMassKg"] = cast["bundleMassKg"]
     else:
-        carbon = _default_carbon(cast["brand"])
+        physical = {
+            "unitMassKg": cast["unitMassKg"],
+            "bundleMassKg": cast.get("bundleMassKg", 1000),
+            "unitsPerBundle": int((cast.get("bundleMassKg", 1000) // cast["unitMassKg"])) or 1,
+        }
 
-    recycled = preset["recycledContent"] if preset else _default_recycled()
+    # ── chemistry ────────────────────────────────────────────────────────
+    chemistry = (
+        preset["chemistry"]
+        if preset and "chemistry" in preset
+        else {
+            "composition": [
+                {
+                    "element": {"zinc": "Zn", "lead": "Pb", "silver": "Ag"}[cast["metal"]],
+                    "casNumber": {"zinc": "7440-66-6", "lead": "7439-92-1", "silver": "7440-22-4"}[cast["metal"]],
+                    "role": "primary",
+                    "guaranteedMinPercent": 99.0,
+                },
+                {"element": "Fe", "casNumber": "7439-89-6", "role": "impurity", "guaranteedMaxPercent": 0.05},
+            ]
+        }
+    )
 
+    # ── sustainability ───────────────────────────────────────────────────
+    if cfp_override is not None:
+        # Reference store override: replace PCF only, keep rest from preset.
+        sustainability = (preset.get("sustainability") if preset else {}) or {}
+        sustainability = dict(sustainability)
+        sustainability.setdefault("pcf", _empty_lcia("pcf")).update(
+            {
+                "value": cfp_override.value_kg_co2e_per_tonne / 1000.0,
+                "unit": "kg CO2e/kg",
+                "verifier": {
+                    "did": cfp_override.verifier_did,
+                    "name": cfp_override.verifier_name,
+                },
+                "verificationStatementRef": cfp_override.statement_ref,
+                "assuranceLevel": cfp_override.assurance_level,
+                "reportingPeriod": {"from": cfp_override.period_from, "to": cfp_override.period_to},
+            }
+        )
+    elif preset and "sustainability" in preset:
+        sustainability = dict(preset["sustainability"])
+    else:
+        sustainability = {cat: _empty_lcia(cat) for cat in (
+            "pcf",
+            "resourceUseFossil",
+            "waterScarcity",
+            "acidification",
+            "ozoneDepletion",
+            "photochemicalOzone",
+        )}
+
+    # Ensure all six required categories are present even if the preset omitted any.
+    for cat in ("pcf", "resourceUseFossil", "waterScarcity", "acidification", "ozoneDepletion", "photochemicalOzone"):
+        sustainability.setdefault(cat, _empty_lcia(cat))
+
+    # ── compliance ───────────────────────────────────────────────────────
+    if compliance_override is not None:
+        compliance = compliance_override
+    elif preset and "compliance" in preset:
+        compliance = preset["compliance"]
+    else:
+        compliance = {
+            "regulations": [
+                {"name": "REACH", "reference": "EC 1907/2006", "status": "compliant"},
+                {"name": "BIS", "reference": "Indian Standards", "status": "compliant"},
+                {"name": "CBAM declaration ready", "reference": "(EU) 2023/956", "status": "pending"},
+            ],
+            "certifications": [
+                {"name": "ISO 9001:2015", "status": "compliant"},
+                {"name": "ISO 14001:2015", "status": "compliant"},
+                {"name": "ISO 45001:2018", "status": "compliant"},
+            ],
+        }
+
+    # ── assemble ─────────────────────────────────────────────────────────
     dpp: dict[str, Any] = {
         "schemaVersion": "1.0.0",
-        "dppVersion": "1.0",
-        "upi": {
-            "castNumber": cast_number,
-            "gtin": gtin,
-            "itemSerial": item_serial,
-            "digitalLinkUrl": digital_link,
-            "taricCode": "7601.10",
-            "hsCode": "7601",
-            "esprProductCategory": "Aluminium intermediate product",
-        },
-        "identification": {
-            "alloyEn": cast["alloyEn"],
-            "alloyAa": cast.get("alloyAa", _aa_for(cast["alloyEn"])),
-            "designationNumber": _designation_for(cast["alloyEn"]),
-            "temper": cast.get("temper", "F"),
-            "productionRoute": _route_for(cast["brand"]),
-            "brand": cast["brand"],
+        "passportType": "DPP",
+        "materialId": material_id,
+        "identification": _strip_none({
+            "metal": cast["metal"],
+            "gradeCode": preset["gradeCode"] if preset else cast["gradeCode"],
+            "purityPercent": preset["purityPercent"] if preset else 99.0,
+            "designation": preset.get("label") if preset else cast["gradeCode"],
             "form": cast["form"],
-            "applicableStandards": ["EN 573-3", "EN 1559-3"],
-        },
-        "producer": {
-            "uoi": "0814406063810",
-            "name": "Emirates Global Aluminium PJSC",
-            "trademark": "EGA",
-            "registeredAddress": "P.O. Box 111023, Abu Dhabi, UAE",
-            "regulatoryContact": {"team": "EGA Regulatory Affairs"},
-        },
+            "tradeName": preset.get("tradeName") if preset else None,
+            "applicableStandards": (preset or {}).get(
+                "applicableStandards", ["IS 209:1992"] if cast["metal"] == "zinc" else ["IS 27:2023"]
+            ),
+        }),
+        "producer": _producer_block(),
         "origin": {
-            "country": "AE",
-            "meltAndPourCountry": "AE",
+            "country": "IN",
+            "subdivision": "IN-RJ" if site_bpns != bpn.PANTNAGAR_BPNS else "IN-UT",
             "manufacturingDate": now.date().isoformat(),
-            "facilities": [
+            "manufacturingBatch": cast["castNumber"],
+            "sites": [
                 {
-                    "ufi": cast["casthouseUfi"],
-                    "name": "Al Taweelah Casthouse",
-                    "role": "casthouse",
-                    "country": "AE",
-                },
-                {
-                    "ufi": cast.get("smelterUfi", "0814406063800"),
-                    "name": "Al Taweelah Smelter",
-                    "role": "smelter",
-                    "country": "AE",
-                },
+                    "bpns": site_bpns,
+                    "name": site_name,
+                    "function": site_fn,
+                    "country": "IN",
+                }
             ],
         },
         "product": {
-            "name": preset["label"] if preset else f"{cast['brand']} {cast['form']}",
-            "purposeStatement": preset["summary"]
-            if preset
-            else "Premium aluminium intermediate product.",
-            "intendedMarket": ["automotive", "construction", "packaging"],
+            "name": preset["label"] if preset else f"HZL {cast['metal'].title()} {cast['gradeCode']}",
+            "purposeStatement": preset["summary"] if preset else "HZL refined non-ferrous metal product.",
+            "intendedMarkets": (preset or {}).get("intendedMarkets", []),
+            "intendedRegions": (preset or {}).get("intendedRegions", []),
         },
-        "physical": {
-            "netWeightKg": cast["weightKg"],
-            **{k: cast[k] for k in ("diameterMm", "lengthMm", "widthMm", "thicknessMm") if k in cast},
-        },
-        "chemistry": {"purityGrade": cast.get("purityGrade", "P1020A")},
-        "carbon": {
-            "valueKgCo2ePerTonne": carbon["valueKgCo2ePerTonne"],
-            "declaredUnit": "1000 kg of aluminium ingot (factory gate)",
-            "systemBoundary": "cradle_to_gate",
-            "methodology": "ISO 14067:2018 + IAI Carbon Footprint Methodology v2.0 + PCR 2022:08 v1.0",
-            "reportingPeriod": carbon["reportingPeriod"],
-            "verifier": {
-                "did": carbon["verifierDid"],
-                "name": carbon["verifierName"],
+        "physical": _strip_none(physical),
+        "chemistry": chemistry,
+        "sustainability": sustainability,
+        "recycledContent": (preset or {}).get(
+            "recycledContent",
+            {"totalPercent": 0, "chainOfCustodyModel": "mass_balance"},
+        ),
+        "compliance": compliance,
+        "circularity": (preset or {}).get(
+            "circularity",
+            {
+                "recyclabilityIndicator": f"{cast['metal'].title()} is fully recyclable.",
+                "materialRecoveryPotential": "Recovered via authorised non-ferrous metal recyclers.",
+                "reuseInformation": "Process scrap re-melted internally.",
+                "recyclingInformation": "Refer to IZA / ILA / LBMA recycling guidance.",
+                "disposalInformation": "Never landfill — return for recycling.",
             },
-            "verificationStatementRef": carbon["verificationStatementRef"],
-            "assuranceLevel": carbon["assuranceLevel"],
-            "industryAverageKgCo2ePerTonne": carbon.get("industryAverageKgCo2ePerTonne", 14600),
-        },
-        "recycledContent": {
-            "totalPercent": recycled["totalPercent"],
-            "chainOfCustodyModel": recycled["chainOfCustodyModel"],
-            "verifier": {
-                "did": recycled["verifierDid"],
-                "name": recycled["verifierName"],
+        ),
+        "espr": (preset or {}).get(
+            "espr",
+            {
+                "durability": "Stable refined metal product.",
+                "reliability": "Conforms to applicable BIS / ISO standards.",
+                "reusability": "Infinitely recyclable.",
+                "energyEfficiency": "Smelter operates under ISO 50001 energy management.",
+                "resourceEfficiency": "High in-process scrap recovery.",
             },
-            "asiCertificateRef": recycled["asiCertificateRef"],
-        },
-        "compliance": compliance_override or _compliance_block(),
-        "circularity": {
-            "recyclabilityIndicator": "100% — aluminium is infinitely recyclable",
-            "materialRecoveryPotential": "100% — closed-loop within EGA casthouse for run-around",
-            "endOfLifeUrl": f"{settings.dpp_resolver_base_url}/eol-guidance",
-            "reuseInformation": "Scrap aluminium re-melted internally.",
-            "recyclingInformation": "100% process scrap recycled internally.",
-            "disposalInformation": "Aluminium waste should never be landfilled — recycle.",
-            "treatmentFacilityInfo": "Internal casthouses & external recycling operations.",
-        },
-        "espr": {
-            "durability": "Aluminium is durable; specific products designed for permanent use.",
-            "reliability": "Per applicable product standards.",
-            "reusability": "Aluminium scrap reused/recycled internally (100%).",
-            "energyEfficiency": "Solar-powered for CelestiAL; ISO 50001 certified."
-            if cast["brand"].startswith("CelestiAL")
-            else "ISO 50001 certified.",
-            "resourceEfficiency": "High scrap utilisation and recycling loops.",
-        },
-        "sustainability": {
-            "sustainablePurchasing": "Responsible sourcing programme (OECD-aligned).",
-            "handling": "ESG policies; emergency response systems.",
-        },
-        "soc": {"summaryStatement": "no_svhc_above_threshold"},
-        "useAndLife": {
-            "safetyInformation": "ISO 45001-certified OH&S system.",
-        },
-        # `documentation.documents` carries the verification statement plus
-        # the bundled per-cert/per-reg evidence list. Each entry now has an
-        # `id` so the public viewer can resolve `documentId` references on
-        # cert/reg rows to a concrete download.
-        "documentation": {
-            "documents": [
-                {
-                    "id": "doc-cfp",
-                    "title": carbon["verificationStatementRef"],
-                    "url": "/dpp-assets/docs/certs/doc-cfp.pdf",
-                    "type": "verification_statement",
-                    "issuer": "DNV AS",
-                    "sizeKb": 1430,
-                },
-                *_bundled_documents(),
-            ]
-        },
+        ),
+        "soc": (preset or {}).get("soc", {"summaryStatement": "no_svhc_above_threshold"}),
+        "useAndLife": (preset or {}).get(
+            "useAndLife",
+            {"safetyInformation": "Refer to SDS for safe handling and storage."},
+        ),
+        "documentation": {"documents": _bundled_documents(preset)},
         "meta": {
             "createdAt": now.isoformat(),
             "lastUpdated": now.isoformat(),
             "expiresAt": expires_at.isoformat(),
+            "lciaValidUntil": lcia_valid_until.date().isoformat(),
             "lifecycleState": "draft",
-            "languages": ["en", "ar", "de"],
-            "issuerDid": settings.dpp_issuer_did,
+            "languages": ["en", "hi"],
+            "issuerDid": issuer_did,
             "accessRights": {
                 "model": "three_tier_vc_gated",
                 "publicFields": [
-                    "upi",
+                    "materialId",
                     "identification",
                     "producer",
                     "origin",
                     "product",
                     "physical",
-                    "carbon",
+                    "sustainability",
                     "recycledContent",
                     "compliance",
                     "circularity",
                     "espr",
-                    "sustainability",
                     "meta",
                 ],
             },
@@ -212,193 +362,76 @@ def build_dpp_from_cast_event(
         },
     }
 
-    # Drop empty optional blocks before validation; the schema requires keys but
-    # not nested values, and we want a clean canonical form.
     validate_against("dpp/v1.0.0", dpp)
     return dpp
 
 
-def _gtin_for(brand: str, form: str) -> str:
-    """Stable mock GTIN by (brand, form). Real GTINs come from GS1 UAE allocation."""
-    brand_part = {"CelestiAL": "01", "CelestiAL-R": "02", "Standard": "03"}.get(brand, "09")
-    form_part = {"extrusion_billet": "10", "sheet_ingot": "20", "sow": "30"}.get(form, "99")
-    base = f"0814406{brand_part}{form_part}"
-    base13 = base.ljust(13, "0")[:13]
-    return base13 + _gtin_check_digit(base13)
+def _strip_none(d: dict[str, Any]) -> dict[str, Any]:
+    """Recursively drop dict entries whose value is None — schema is
+    `additionalProperties: false` and many fields are optional."""
+    if not isinstance(d, dict):
+        return d
+    out = {}
+    for k, v in d.items():
+        if v is None:
+            continue
+        if isinstance(v, dict):
+            cleaned = _strip_none(v)
+            if cleaned:
+                out[k] = cleaned
+        else:
+            out[k] = v
+    return out
 
 
-def _gtin_check_digit(base13: str) -> str:
-    digits = [int(c) for c in base13]
-    weighted = sum(d * (3 if i % 2 == 0 else 1) for i, d in enumerate(reversed(digits)))
-    return str((10 - (weighted % 10)) % 10)
-
-
-def _aa_for(en: str) -> str:
-    if "EN AW-" in en:
-        return f"AA {en.split('-')[1]}"
-    return "AA 1020"
-
-
-def _designation_for(en: str) -> str:
-    return {
-        "EN AW-6063": "EN AW-6063 (AlMg0.7Si)",
-        "EN AW-5754": "EN AW-5754 (AlMg3)",
-        "EN AC-46000": "EN AC-46000 (AlSi9Cu3(Fe))",
-    }.get(en, en)
-
-
-def _route_for(brand: str) -> str:
-    return {
-        "CelestiAL": "primary_solar",
-        "CelestiAL-R": "secondary",
-        "Standard": "primary_grid",
-    }.get(brand, "primary_grid")
-
-
-def _carbon_from_reference(ref: CfpReference) -> dict[str, Any]:
-    return {
-        "valueKgCo2ePerTonne": ref.value_kg_co2e_per_tonne,
-        "industryAverageKgCo2ePerTonne": ref.industry_average,
-        "verifierDid": ref.verifier_did,
-        "verifierName": ref.verifier_name,
-        "verificationStatementRef": ref.statement_ref,
-        "assuranceLevel": ref.assurance_level,
-        "reportingPeriod": {"from": ref.period_from, "to": ref.period_to},
-    }
-
-
-def _default_carbon(brand: str) -> dict[str, Any]:
-    return {
-        "valueKgCo2ePerTonne": 4273 if brand == "CelestiAL" else 10545,
-        "verifierDid": "did:web:dnv.com:cfp",
-        "verifierName": "DNV AS – Abu Dhabi Branch",
-        "verificationStatementRef": "DNV-PROVISIONAL",
-        "assuranceLevel": "limited",
-        "reportingPeriod": {"from": "2023-01-01", "to": "2023-12-31"},
-        "industryAverageKgCo2ePerTonne": 14600,
-    }
-
-
-def _default_recycled() -> dict[str, Any]:
-    return {
-        "totalPercent": 0,
-        "chainOfCustodyModel": "mass_balance",
-        "verifierDid": "did:web:aluminium-stewardship.org:coc",
-        "verifierName": "ASI accredited firm",
-        "asiCertificateRef": "ASI CoC #428",
-    }
-
-
-def _compliance_block() -> dict[str, Any]:
-    # Every cert + reg carries a `documentId` so the public viewer can
-    # render a downloadable evidence link beside it. Document URLs are
-    # bundled at apps/<app>/public/dpp-assets/docs/.
-    return {
-        "regulations": [
+def _bundled_documents(preset: dict[str, Any] | None) -> list[dict[str, Any]]:
+    """Per-issuance bundled documents. The EPD reference always rides along
+    when the preset declares one."""
+    docs: list[dict[str, Any]] = []
+    if preset and "sustainability" in preset and "epd" in preset["sustainability"]:
+        epd = preset["sustainability"]["epd"]
+        docs.append(
             {
-                "name": "REACH",
-                "reference": "EC 1907/2006",
-                "status": "compliant",
-                "documentId": "doc-reg-reach",
+                "id": "doc-epd",
+                "title": f"{epd['programOperator']} — {epd['registrationNumber']}",
+                "url": epd.get("url", "https://www.environdec.com/library/epd6472"),
+                "type": "epd",
+                "issuer": epd.get("programOperator", "International EPD System"),
+            }
+        )
+    docs.extend(
+        [
+            {
+                "id": "doc-iso-9001",
+                "title": "ISO 9001:2015 Quality Management",
+                "url": "/dpp-assets/docs/certs/doc-iso-9001.pdf",
+                "type": "certificate",
+                "issuer": "TÜV / RINA",
             },
             {
-                "name": "RoHS 2",
-                "reference": "2011/65/EU",
-                "status": "compliant",
-                "documentId": "doc-reg-rohs",
+                "id": "doc-iso-14001",
+                "title": "ISO 14001:2015 Environmental Management",
+                "url": "/dpp-assets/docs/certs/doc-iso-14001.pdf",
+                "type": "certificate",
+                "issuer": "TÜV / RINA",
             },
             {
-                "name": "TSCA",
-                "reference": "US TSCA",
-                "status": "compliant",
-                "documentId": "doc-reg-tsca",
+                "id": "doc-iso-45001",
+                "title": "ISO 45001:2018 OH&S",
+                "url": "/dpp-assets/docs/certs/doc-iso-45001.pdf",
+                "type": "certificate",
+                "issuer": "TÜV / RINA",
             },
             {
-                "name": "Conflict Minerals",
-                "reference": "Reg (EU) 2017/821",
-                "status": "compliant",
-                "documentId": "doc-reg-3tg",
+                "id": "doc-icmm",
+                "title": "ICMM Mining Principles — Member since 2025-08-13",
+                "url": "https://www.icmm.com/en-gb/our-members",
+                "type": "certificate",
+                "issuer": "ICMM",
             },
-            {
-                "name": "PFAS",
-                "reference": "REACH PFAS restriction",
-                "status": "compliant",
-                "documentId": "doc-reg-pfas",
-            },
-        ],
-        "certifications": [
-            {
-                "name": "ASI Performance",
-                "reference": "ASI Performance V3.1",
-                "status": "compliant",
-                "certificateRef": "ASI Performance #27",
-                "issuer": "ASI",
-                "documentId": "doc-asi-perf",
-            },
-            {
-                "name": "ASI Chain of Custody",
-                "reference": "ASI CoC V2.1",
-                "status": "compliant",
-                "certificateRef": "ASI CoC #428",
-                "issuer": "ASI",
-                "documentId": "doc-asi-coc",
-            },
-            {
-                "name": "ISO 9001",
-                "reference": "ISO 9001:2015",
-                "status": "compliant",
-                "documentId": "doc-iso-9001",
-            },
-            {
-                "name": "ISO 14001",
-                "reference": "ISO 14001:2015",
-                "status": "compliant",
-                "documentId": "doc-iso-14001",
-            },
-            {
-                "name": "ISO 45001",
-                "reference": "ISO 45001:2018",
-                "status": "compliant",
-                "documentId": "doc-iso-45001",
-            },
-        ],
-    }
-
-
-# Bundled documents · always shipped on every API-issued DPP body so the
-# public viewer can resolve the per-cert/reg `documentId` references above
-# to a real downloadable URL.
-def _bundled_documents() -> list[dict[str, Any]]:
-    docs: list[tuple[str, str, str, int]] = [
-        ("doc-asi-perf", "ASI Performance V3.1 · Certificate", "ASI", 980),
-        ("doc-asi-coc", "ASI Chain of Custody V2.1 · Certificate", "ASI", 1102),
-        ("doc-iso-9001", "ISO 9001:2015 Quality Management", "BSI", 612),
-        ("doc-iso-14001", "ISO 14001:2015 Environmental Management", "BSI", 605),
-        ("doc-iso-45001", "ISO 45001:2018 Occupational Health & Safety", "BSI", 590),
-        ("doc-iso-50001", "ISO 50001:2018 Energy Management", "BSI", 624),
-        ("doc-iso-17025", "ISO/IEC 17025:2017 Lab Accreditation", "EIAC", 540),
-        ("doc-reg-reach", "REACH · Article 33(1) declaration", "EGA Compliance", 220),
-        ("doc-reg-rohs", "RoHS 2 · Directive 2011/65/EU declaration", "EGA Compliance", 198),
-        ("doc-reg-tsca", "US TSCA · Section 8(b) declaration", "EGA Compliance", 184),
-        ("doc-reg-3tg", "Conflict Minerals · 3TG due-diligence statement", "EGA Compliance", 188),
-        ("doc-reg-pfas", "PFAS · REACH Annex XVII statement", "EGA Compliance", 240),
-        ("doc-reg-cbam", "EU CBAM · embedded-emissions declaration evidence", "EGA Compliance", 1480),
-        ("doc-reg-espr", "EU ESPR · DPP conformity statement", "EGA Compliance", 612),
-    ]
-    return [
-        {
-            "id": doc_id,
-            "title": label,
-            "issuer": issuer,
-            "type": "certificate",
-            "sizeKb": size,
-            # One distinct PDF per documentId, generated by
-            # scripts/build_cert_pdfs.py and bundled under
-            # apps/<app>/public/dpp-assets/docs/certs/.
-            "url": f"/dpp-assets/docs/certs/{doc_id}.pdf",
-        }
-        for doc_id, label, issuer, size in docs
-    ]
+        ]
+    )
+    return docs
 
 
 def new_tracking_id() -> str:

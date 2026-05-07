@@ -1,0 +1,214 @@
+{
+  "id": "zinc-cgg-jumbo",
+  "label": "CGG Zinc Jumbo — Continuous Galvanising Grade",
+  "summary": "Aluminium-alloyed zinc jumbo for continuous hot-dip galvanising lines. ASTM B852-grade Al control (0.25–0.80%) gives the strip its ductile coating. The high-volume workhorse of HZL's zinc portfolio, supplied to Tata Steel and other galvanised-flat-steel producers.",
+  "metal": "zinc",
+  "gradeCode": "CGG",
+  "purityPercent": 99.0,
+  "form": "jumbo_1t",
+  "applicableStandards": ["ASTM B852-13", "BS EN 1179:2003", "BIS"],
+
+  "physical": {
+    "unitMassKg": 950,
+    "unitMassToleranceKg": 50,
+    "bundleMassKg": 1000,
+    "bundleMassToleranceKg": 50,
+    "unitsPerBundle": 1,
+    "dimensions": {
+      "lengthMm": 1020,
+      "widthMm": 398,
+      "heightMm": 420,
+      "tolerance": "±5"
+    },
+    "bundleDimensions": {
+      "lengthMm": 1255,
+      "widthMm": 510,
+      "heightMm": 300,
+      "tolerance": "±10"
+    },
+    "packaging": {
+      "strapMaterial": "PET strapping",
+      "palletised": true,
+      "markings": "vedanta CGG / suspension hook for crane lift"
+    }
+  },
+
+  "chemistry": {
+    "composition": [
+      { "element": "Zn", "casNumber": "7440-66-6",  "role": "primary",  "guaranteedMinPercent": 99.00, "method": "ICP-OES" },
+      { "element": "Al", "casNumber": "7429-90-5",  "role": "alloying", "guaranteedMaxPercent": 0.80,  "guaranteedMinPercent": 0.25, "method": "ICP-OES — characteristic CGG bath-alloy" },
+      { "element": "Fe", "casNumber": "7439-89-6",  "role": "impurity", "guaranteedMaxPercent": 0.0075, "method": "ICP-OES" },
+      { "element": "Pb", "casNumber": "7439-92-1",  "role": "impurity", "guaranteedMaxPercent": 0.0070, "method": "ICP-OES" },
+      { "element": "Sn", "casNumber": "7440-31-5",  "role": "impurity", "guaranteedMaxPercent": 0.0010, "method": "ICP-OES" },
+      { "element": "Cd", "casNumber": "7440-43-9",  "role": "impurity", "guaranteedMaxPercent": 0.0005, "method": "ICP-OES" },
+      { "element": "Cu", "casNumber": "7440-50-8",  "role": "impurity", "guaranteedMaxPercent": 0.0010, "method": "ICP-OES" }
+    ]
+  },
+
+  "speakingCodes": {
+    "casNumber": "7440-66-6",
+    "ecNumber": "231-175-3",
+    "hsnCode": "79012000",
+    "bisStandard": "Conforms to ASTM B852; BIS Standard Mark across HZL zinc portfolio"
+  },
+
+  "producingSiteTag": "CHA",
+
+  "sustainability": {
+    "pcf": {
+      "value": 3.4,
+      "unit": "kg CO2e/kg",
+      "declaredUnit": "1 kg of unpackaged CGG zinc jumbo at factory gate, Chanderiya, India",
+      "systemBoundary": "cradle_to_gate",
+      "method": {
+        "framework": "IPCC_AR6",
+        "version": "GWP100y",
+        "characterizationModel": "ISO 14067:2018 + IPCC AR6 GWP100y; physical allocation"
+      },
+      "referenceYear": 2024,
+      "reportingPeriod": { "from": "2024-01-01", "to": "2024-12-31" },
+      "primaryDataSharePercent": 70,
+      "dataQualityRating": { "overall": 2, "technological": 2, "geographical": 1, "temporal": 2 },
+      "cutOffPercent": 3,
+      "allocationMethod": "physical_allocation",
+      "lciDatabase": { "name": "ecoinvent", "version": "3.10" },
+      "assuranceLevel": "limited",
+      "industryAverage": { "value": 3.7, "unit": "kg CO2e/kg", "source": "IZA global SHG average", "year": 2023 }
+    },
+    "pcfBreakdown": {
+      "miningKgCo2e": 0.42,
+      "concentrationKgCo2e": 0.38,
+      "smeltingKgCo2e": 1.55,
+      "refiningKgCo2e": 0.42,
+      "castingKgCo2e": 0.18,
+      "electricityKgCo2e": 0.20,
+      "thermalEnergyKgCo2e": 0.15,
+      "transportInboundKgCo2e": 0.10
+    },
+    "resourceUseFossil": {
+      "value": 38.4,
+      "unit": "MJ/kg",
+      "declaredUnit": "1 kg CGG zinc at factory gate",
+      "systemBoundary": "cradle_to_gate",
+      "method": { "framework": "EF_3.1", "version": "3.1", "characterizationModel": "Van Oers et al. 2002 — LHV-based" },
+      "referenceYear": 2024,
+      "primaryDataSharePercent": 70,
+      "dataQualityRating": { "overall": 2, "technological": 2, "geographical": 1, "temporal": 2 },
+      "cutOffPercent": 3,
+      "lciDatabase": { "name": "ecoinvent", "version": "3.10" }
+    },
+    "waterScarcity": {
+      "value": 7.6,
+      "unit": "m3 world eq/kg",
+      "declaredUnit": "1 kg CGG zinc at factory gate",
+      "systemBoundary": "cradle_to_gate",
+      "method": { "framework": "EF_3.1", "version": "3.1", "characterizationModel": "AWARE (Boulay et al. 2018)" },
+      "referenceYear": 2024,
+      "primaryDataSharePercent": 60,
+      "dataQualityRating": { "overall": 2, "technological": 2, "geographical": 1, "temporal": 2 },
+      "cutOffPercent": 5,
+      "lciDatabase": { "name": "ecoinvent", "version": "3.10" }
+    },
+    "acidification": {
+      "value": 0.078,
+      "unit": "mol H+ eq/kg",
+      "declaredUnit": "1 kg CGG zinc at factory gate",
+      "systemBoundary": "cradle_to_gate",
+      "method": { "framework": "EF_3.1", "version": "3.1", "characterizationModel": "Accumulated Exceedance (Seppälä 2006)" },
+      "referenceYear": 2024,
+      "primaryDataSharePercent": 65,
+      "dataQualityRating": { "overall": 2, "technological": 2, "geographical": 2, "temporal": 2 },
+      "cutOffPercent": 3,
+      "lciDatabase": { "name": "ecoinvent", "version": "3.10" }
+    },
+    "ozoneDepletion": {
+      "value": 2.4e-9,
+      "unit": "kg CFC-11 eq/kg",
+      "declaredUnit": "1 kg CGG zinc at factory gate",
+      "systemBoundary": "cradle_to_gate",
+      "method": { "framework": "EF_3.1", "version": "3.1", "characterizationModel": "WMO 2014 ODP factors" },
+      "referenceYear": 2024,
+      "primaryDataSharePercent": 50,
+      "dataQualityRating": { "overall": 3, "technological": 3, "geographical": 2, "temporal": 3 },
+      "cutOffPercent": 3,
+      "lciDatabase": { "name": "ecoinvent", "version": "3.10" }
+    },
+    "photochemicalOzone": {
+      "value": 0.018,
+      "unit": "kg NMVOC eq/kg",
+      "declaredUnit": "1 kg CGG zinc at factory gate",
+      "systemBoundary": "cradle_to_gate",
+      "method": { "framework": "EF_3.1", "version": "3.1", "characterizationModel": "LOTOS-EUROS" },
+      "referenceYear": 2024,
+      "primaryDataSharePercent": 65,
+      "dataQualityRating": { "overall": 2, "technological": 2, "geographical": 2, "temporal": 2 },
+      "cutOffPercent": 3,
+      "lciDatabase": { "name": "ecoinvent", "version": "3.10" }
+    },
+    "renewableElectricityPercent": 38,
+    "epd": {
+      "registrationNumber": "EPD-IES-0006472:001",
+      "programOperator": "International EPD System",
+      "publicationDate": "2023-01-16",
+      "validUntil": "2028-01-15",
+      "url": "https://www.environdec.com/library/epd6472",
+      "pcr": "PCR 2019:14 Construction products (EN 15804+A2), v1.3.4"
+    }
+  },
+
+  "recycledContent": {
+    "totalPercent": 0,
+    "preConsumerPercent": 0,
+    "postConsumerPercent": 0,
+    "chainOfCustodyModel": "mass_balance"
+  },
+
+  "compliance": {
+    "regulations": [
+      { "name": "REACH", "reference": "EC 1907/2006 — Zinc (CAS 7440-66-6) and Al (CAS 7429-90-5)", "status": "compliant", "issuer": "ECHA" },
+      { "name": "RoHS / ELV", "reference": "Cd <0.01%, Pb <0.1%", "status": "compliant", "issuer": "EU" },
+      { "name": "BIS — HZL Standard Mark", "reference": "BIS QCO regime", "status": "compliant", "issuer": "Bureau of Indian Standards" }
+    ],
+    "certifications": [
+      { "name": "ISO 9001:2015", "status": "compliant", "issuer": "verify" },
+      { "name": "ISO 14001:2015", "status": "compliant", "issuer": "verify" },
+      { "name": "ISO 45001:2018", "status": "compliant", "issuer": "verify" },
+      { "name": "ASTM B852 conformance", "status": "compliant", "issuer": "ASTM International" }
+    ]
+  },
+
+  "circularity": {
+    "recyclabilityIndicator": "100% — galvanising-bath skimmings and dross are recovered in HZL's smelter circuits.",
+    "materialRecoveryPotential": "Top-of-bath dross collected and re-melted; bottom dross sold for secondary processing.",
+    "reuseInformation": "Spent CGG bath returned to HZL for refining and re-casting where logistics permit.",
+    "recyclingInformation": "Galvanised steel scrap is recycled in EAF; zinc is captured as EAF dust and recovered via Waelz kiln route.",
+    "disposalInformation": "Never landfill — return for recycling.",
+    "treatmentFacilityInfo": "Chanderiya RLE smelter handles returns."
+  },
+
+  "espr": {
+    "durability": "Provides 25–60 year corrosion protection on galvanised steel depending on coating thickness and atmosphere (ISO 9223 categorisation).",
+    "reliability": "Composition tightly controlled to ASTM B852 to ensure uniform coating weight across the strip.",
+    "reusability": "Zinc fully reusable through repeated re-melting.",
+    "energyEfficiency": "Hydro-route smelter with ISO 50001 energy management.",
+    "resourceEfficiency": "Bath chemistry monitoring minimises Al consumption per tonne of strip coated."
+  },
+
+  "soc": {
+    "summaryStatement": "no_svhc_above_threshold",
+    "entries": [
+      { "iupacName": "Lead", "casNumber": "7439-92-1", "locationInProduct": "homogeneous", "value": 0.0070, "unit": "wt%", "concentrationDescriptor": "below 0.1% SVHC threshold" },
+      { "iupacName": "Cadmium", "casNumber": "7440-43-9", "locationInProduct": "homogeneous", "value": 0.0005, "unit": "wt%" }
+    ]
+  },
+
+  "useAndLife": {
+    "storageInstructions": "Indoor storage; jumbos handled by overhead crane via integrated lifting hooks.",
+    "handlingInstructions": "Crane lift only — single-jumbo weight up to 1 t.",
+    "safetyInformation": "Aluminium-alloyed zinc; molten bath at 460°C — see SDS for thermal hazard and zinc-oxide fume control.",
+    "sdsUrl": "https://www.hzlindia.com/wp-content/uploads/SDS-Zinc-CGG.pdf"
+  },
+
+  "intendedMarkets": ["continuous_hot_dip_galvanising", "automotive_body_sheet", "white_goods", "construction_steel"],
+  "intendedRegions": ["IN", "AE", "TH", "VN", "ID", "EG"]
+}

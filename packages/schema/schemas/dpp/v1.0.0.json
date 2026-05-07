@@ -1,26 +1,25 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://schemas.dpp.ega.ae/dpp/v1.0.0.json",
-  "title": "EGA Aluminium Digital Product Passport",
-  "description": "Canonical DPP record schema. Implements ESPR Annex III mandatory subset, JRC Steel DPP §7 methodology adapted for aluminium, ASI Performance V3.1 + CoC V2.1, IAI v2.0, ISO 14067:2018. 106 attributes total — see EGA_DPP_Version_Manifests.xlsx for per-attribute provenance.",
+  "$id": "https://schemas.passport.hzlindia.com/dpp/v1.0.0.json",
+  "title": "Vedanta — Hindustan Zinc Digital Material/Product Passport",
+  "description": "Canonical DMP/DPP record schema for HZL zinc, lead and silver products. Aligns with: Chem-X Sustainability Guideline v1.0 (six EF 3.1 LCIA categories with DQR/PDS), Chem-X Business Identity / BPDM Guideline v1.0 (CX-0010 BPN identifiers), Chem-X Material Identifier Guideline v1.0 (did:web), TfS PCF Guideline v3.0, ISO 14067:2018 (carbon footprint), ISO 14025 EPD, ISO 14040/44 (LCA), ISO 22095 (chain of custody), ISO/IEC 6523 (organisation identification), W3C Decentralized Identifiers v1.0, ESPR Annex III (mandatory subset), India BIS IS 209 (zinc) / IS 27 (lead), REACH, RoHS. The 18 top-level sections mirror the prior aluminium schema topology so downstream services remain structurally compatible.",
   "type": "object",
   "additionalProperties": false,
   "required": [
     "schemaVersion",
-    "dppVersion",
-    "upi",
+    "passportType",
+    "materialId",
     "identification",
     "producer",
     "origin",
     "product",
     "physical",
     "chemistry",
-    "carbon",
+    "sustainability",
     "recycledContent",
     "compliance",
     "circularity",
     "espr",
-    "sustainability",
     "soc",
     "useAndLife",
     "documentation",
@@ -30,26 +29,25 @@
     "schemaVersion": {
       "type": "string",
       "const": "1.0.0",
-      "description": "Semver of this canonical schema. Pinned per record so historical DPPs remain readable as the schema evolves."
+      "description": "Semver of this canonical schema. Pinned per record so historical passports remain readable as the schema evolves."
     },
-    "dppVersion": {
+    "passportType": {
       "type": "string",
-      "enum": ["1.0", "1.5", "2", "3", "4"],
-      "description": "Tenant-selected manifest version. v1.0 is the trust-building foundation."
+      "enum": ["DMP", "DPP"],
+      "description": "Per Chem-X §1.4: DMP = Digital Material Passport for intermediate B2B materials (one-up/one-down sharing). DPP = Digital Product Passport for regulated end products (public-facing)."
     },
-    "upi": { "$ref": "#/$defs/UPI" },
+    "materialId": { "$ref": "#/$defs/MaterialId" },
     "identification": { "$ref": "#/$defs/Identification" },
     "producer": { "$ref": "#/$defs/Producer" },
     "origin": { "$ref": "#/$defs/Origin" },
     "product": { "$ref": "#/$defs/Product" },
     "physical": { "$ref": "#/$defs/Physical" },
     "chemistry": { "$ref": "#/$defs/Chemistry" },
-    "carbon": { "$ref": "#/$defs/Carbon" },
+    "sustainability": { "$ref": "#/$defs/Sustainability" },
     "recycledContent": { "$ref": "#/$defs/RecycledContent" },
     "compliance": { "$ref": "#/$defs/Compliance" },
     "circularity": { "$ref": "#/$defs/Circularity" },
     "espr": { "$ref": "#/$defs/EsprAspects" },
-    "sustainability": { "$ref": "#/$defs/Sustainability" },
     "soc": { "$ref": "#/$defs/SubstancesOfConcern" },
     "useAndLife": { "$ref": "#/$defs/UseAndLife" },
     "documentation": { "$ref": "#/$defs/Documentation" },
@@ -76,26 +74,60 @@
       "pattern": "^[A-Z]{2}$",
       "description": "ISO 3166-1 alpha-2 country code"
     },
+    "Iso3166Subdivision": {
+      "type": "string",
+      "pattern": "^[A-Z]{2}-[A-Z0-9]{1,3}$",
+      "description": "ISO 3166-2 country subdivision code, e.g. IN-RJ for Rajasthan"
+    },
     "Did": {
       "type": "string",
-      "pattern": "^did:[a-z0-9]+:[a-zA-Z0-9._:%-]+$",
-      "description": "W3C Decentralized Identifier (did:web, did:key, etc.)"
+      "pattern": "^did:[a-z0-9]+:[a-zA-Z0-9._:%/-]+(\\?[A-Za-z0-9._=&%/:-]+)?$",
+      "description": "W3C Decentralised Identifier per Chem-X Material ID Guideline §A. Method MUST be did:web for HZL passports."
     },
-    "Gtin": {
+    "DidWeb": {
       "type": "string",
-      "pattern": "^[0-9]{14}$",
-      "description": "GS1 GTIN-14"
+      "pattern": "^did:web:[a-zA-Z0-9.%-]+(:[a-zA-Z0-9._-]+)*(\\?[A-Za-z0-9._=&%/:-]+)?$",
+      "description": "did:web subset. The DID Document is the legal entity's; the per-material query parameter (?dpp=<uuid> or ?dmp=<uuid>) selects the passport. See Chem-X Material ID Guideline §5.4."
     },
-    "Gln": {
+    "Bpn": {
       "type": "string",
-      "pattern": "^[0-9]{13}$",
-      "description": "GS1 GLN-13"
+      "pattern": "^BPN[LSA][A-Z0-9]{10}[A-Z0-9]{2}$",
+      "description": "Catena-X CX-0010 Business Partner Number. 16 chars: 'BPN' + type (L=Legal entity, S=Site, A=Address) + 10 entity chars + 2 ISO/IEC 7064 MOD 1271-36 check chars. Globally unique, stable, time-dependent, registered as ISO/IEC 6523 organisation identification scheme."
     },
-    "GsDigitalLink": {
+    "Bpnl": {
       "type": "string",
-      "format": "uri",
-      "pattern": "^https?://[^/]+/01/[0-9]{14}(/10/[^/]+)?(/21/[^/]+)?(\\?.*)?$",
-      "description": "GS1 Digital Link 1.4 URL"
+      "pattern": "^BPNL[A-Z0-9]{10}[A-Z0-9]{2}$",
+      "description": "BPN for a legal entity (CX-0010)."
+    },
+    "Bpns": {
+      "type": "string",
+      "pattern": "^BPNS[A-Z0-9]{10}[A-Z0-9]{2}$",
+      "description": "BPN for a site (CX-0010)."
+    },
+    "Bpna": {
+      "type": "string",
+      "pattern": "^BPNA[A-Z0-9]{10}[A-Z0-9]{2}$",
+      "description": "BPN for an address (CX-0010)."
+    },
+    "Lei": {
+      "type": "string",
+      "pattern": "^[A-Z0-9]{18}[0-9]{2}$",
+      "description": "ISO 17442 Legal Entity Identifier issued by GLEIF."
+    },
+    "CasNumber": {
+      "type": "string",
+      "pattern": "^[0-9]{2,7}-[0-9]{2}-[0-9]$",
+      "description": "Chemical Abstracts Service registry number."
+    },
+    "EcNumber": {
+      "type": "string",
+      "pattern": "^[0-9]{3}-[0-9]{3}-[0-9]$",
+      "description": "European Community number (EINECS / ELINCS / NLP)."
+    },
+    "ReachRegistration": {
+      "type": "string",
+      "pattern": "^01-[0-9]{10}-[0-9]{2}-[0-9]{4}$",
+      "description": "REACH registration number issued by ECHA."
     },
     "Url": { "type": "string", "format": "uri" },
     "Percent": {
@@ -117,21 +149,28 @@
     "AccessTier": {
       "type": "string",
       "enum": ["public", "legitimate", "authority"],
-      "description": "Per-field access tier per ESPR Article 9(2)(f)"
-    },
-    "Granularity": {
-      "type": "string",
-      "enum": ["operator", "facility", "model", "batch", "item"],
-      "description": "Per-field granularity per JRC §9.1"
+      "description": "Per-field access tier per ESPR Article 9(2)(f). 'legitimate' = one-up/one-down value-chain partners (DMP). 'authority' = customs and market-surveillance authorities."
     },
     "ComplianceStatus": {
       "type": "string",
       "enum": ["compliant", "non_compliant", "n_a", "pending"]
     },
+    "DqrLevel": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 5,
+      "description": "Chem-X / TfS PCF v3.0 §3.10 representativeness scale. 1 = optimum (very good representativeness); 5 = very poor."
+    },
+    "Tolerance": {
+      "type": "string",
+      "pattern": "^[±+-]?[0-9]+(\\.[0-9]+)?(/[±+-]?[0-9]+(\\.[0-9]+)?)?$",
+      "description": "Dimensional tolerance string, e.g. '±2', '+10/-5'."
+    },
     "VerifierReference": {
       "type": "object",
       "additionalProperties": false,
       "required": ["did", "name"],
+      "description": "Third-party verifier of a sustainability metric or certification.",
       "properties": {
         "did": { "$ref": "#/$defs/Did" },
         "name": { "type": "string", "minLength": 1 },
@@ -140,100 +179,118 @@
         "validUntil": { "$ref": "#/$defs/Iso8601Date" }
       }
     },
-    "UPI": {
+    "MaterialId": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["castNumber", "gtin", "digitalLinkUrl"],
-      "description": "Unique Product Identifier — GS1 Digital Link composite",
+      "required": ["did", "uuid", "resolverUrl", "passportClass"],
+      "description": "Chem-X Material ID Guideline §6 — identifies the chemical product. The DID is the legal entity's did:web; the UUID is the per-material assetId; the resolverUrl is the human-readable deep link encoded in the QR code on physical packaging.",
       "properties": {
-        "castNumber": {
-          "type": "string",
-          "minLength": 3,
-          "maxLength": 64,
-          "description": "Heat / cast number from casthouse MES (Annex III(b))"
+        "did": {
+          "$ref": "#/$defs/DidWeb",
+          "description": "Full DID URL of the form did:web:<host>:<bpnl>?<dmp|dpp>=<uuid>"
         },
-        "gtin": { "$ref": "#/$defs/Gtin" },
-        "lotNumber": { "type": "string", "maxLength": 64 },
-        "itemSerial": { "type": "string", "maxLength": 64 },
-        "digitalLinkUrl": { "$ref": "#/$defs/GsDigitalLink" },
-        "taricCode": { "type": "string", "pattern": "^[0-9]{4}\\.[0-9]{2}$" },
-        "hsCode": { "type": "string", "pattern": "^[0-9]{4,8}$" },
-        "esprProductCategory": { "type": "string" }
+        "uuid": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+          "description": "RFC 4122 v4 UUID — the company-owned non-speaking material identifier."
+        },
+        "resolverUrl": {
+          "$ref": "#/$defs/Url",
+          "description": "HTTPS URL the QR code resolves to, e.g. https://passport.hzlindia.com/dpp/<bpnl>/<uuid>"
+        },
+        "passportClass": {
+          "type": "string",
+          "enum": ["dpp", "dmp"],
+          "description": "Lower-case form mirrored from passportType for URL/query convenience."
+        },
+        "speakingCodes": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Legacy speaking codes preserved for compatibility with existing supply-chain processes (Chem-X §1.1). NOT used for identification — only for reference and search.",
+          "properties": {
+            "casNumber": { "$ref": "#/$defs/CasNumber" },
+            "ecNumber": { "$ref": "#/$defs/EcNumber" },
+            "reachRegistration": { "$ref": "#/$defs/ReachRegistration" },
+            "hsnCode": { "type": "string", "pattern": "^[0-9]{4,8}$", "description": "India HSN classification" },
+            "lmeBrandName": { "type": "string", "description": "London Metal Exchange registered brand name, where applicable" },
+            "lbmaBrandName": { "type": "string", "description": "London Bullion Market Association registered brand, where applicable (silver only)" },
+            "bisStandard": { "type": "string", "description": "Indian standard reference, e.g. IS 209 for zinc, IS 27 for lead" }
+          }
+        }
       }
     },
     "Identification": {
       "type": "object",
       "additionalProperties": false,
-      "required": [
-        "alloyEn",
-        "alloyAa",
-        "designationNumber",
-        "productionRoute",
-        "brand",
-        "form",
-        "applicableStandards"
-      ],
+      "required": ["metal", "gradeCode", "purityPercent", "form", "applicableStandards"],
+      "description": "Product-line identification independent of any physical batch.",
       "properties": {
-        "alloyEn": {
+        "metal": {
           "type": "string",
-          "pattern": "^EN A[WC]-[0-9]{4,5}[A-Z]?$",
-          "description": "EN 573-3 (wrought, 4 digit) or EN 1780/EN 1706 (casting, 5 digit) alloy designation, e.g. EN AW-6063 or EN AC-46000"
+          "enum": ["zinc", "lead", "silver"]
         },
-        "alloyAa": {
+        "gradeCode": {
           "type": "string",
-          "pattern": "^AA [0-9]{4}[A-Z]?$",
-          "description": "AA Teal Sheets registered designation, e.g. AA 6063"
+          "description": "Internal HZL grade code, e.g. SHG-99.995, EcoZen-SHG, CGG, HG, PW, HZDA3, HZDA5, Lead-99.99, Silver-9999"
         },
-        "designationNumber": {
-          "type": "string",
-          "description": "Full alloy chemical designation, e.g. EN AW-6063 (AlMg0.7Si)"
+        "purityPercent": {
+          "type": "number",
+          "minimum": 90,
+          "maximum": 99.9999,
+          "description": "Headline purity, e.g. 99.995 for SHG zinc, 99.99 for refined lead, 99.9 for silver bullion."
         },
-        "temper": {
+        "designation": {
           "type": "string",
-          "pattern": "^(F|O|H[0-9]{2,3}|T[0-9]{1,2})$",
-          "description": "EN 515 temper designation"
-        },
-        "productionRoute": {
-          "type": "string",
-          "enum": ["primary_solar", "primary_grid", "secondary", "mixed"],
-          "description": "IAI v2.0 production route classification"
-        },
-        "brand": {
-          "type": "string",
-          "enum": ["CelestiAL", "CelestiAL-R", "Standard", "High-Purity", "Foundry Alloy"]
+          "description": "Long-form chemical designation, e.g. 'Special High Grade Zinc 99.995% (Zn 99.995, Pb 0.003 max, Cd 0.003 max, Fe 0.003 max)'"
         },
         "form": {
           "type": "string",
           "enum": [
-            "extrusion_billet",
-            "sheet_ingot",
-            "foundry_ingot",
-            "t_bar",
-            "sow",
-            "standard_ingot",
-            "properzi",
-            "hdc_small",
-            "b_ingot"
+            "ingot_25kg",
+            "ingot_9kg",
+            "jumbo_1t",
+            "bar_30kg",
+            "bar_1kg",
+            "powder",
+            "dust",
+            "oxide"
           ]
+        },
+        "tradeName": {
+          "type": "string",
+          "description": "Marketing name where used, e.g. 'EcoZen', 'Pantnagar Silver'"
         },
         "applicableStandards": {
           "type": "array",
           "items": { "type": "string" },
           "minItems": 1,
           "uniqueItems": true,
-          "description": "EN/AA/ASTM standards the product conforms to"
+          "description": "Standards the product conforms to, e.g. 'IS 209:1992', 'ASTM B6-18', 'BS EN 1179:2003'"
         }
       }
     },
     "Producer": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["uoi", "name", "registeredAddress", "trademark"],
+      "required": ["bpnl", "legalName", "legalForm", "registeredAddressBpna", "country", "identifiers"],
+      "description": "Producer legal entity — Chem-X Business Identity Guideline §11/§15. References the BPDM legal_entity record by BPNL; identifiers[] mirrors the CX-0010 identifier-type taxonomy.",
       "properties": {
-        "uoi": { "$ref": "#/$defs/Gln", "description": "Unique Operator Identifier (GLN)" },
-        "name": { "type": "string", "minLength": 1 },
-        "trademark": { "type": "string", "minLength": 1 },
-        "registeredAddress": { "type": "string", "minLength": 1 },
+        "bpnl": { "$ref": "#/$defs/Bpnl" },
+        "legalName": { "type": "string", "minLength": 1 },
+        "legalForm": {
+          "type": "string",
+          "description": "ISO 20275 entity legal form, e.g. 'Public Limited Company' (India)"
+        },
+        "shortName": { "type": "string" },
+        "tradeName": { "type": "string" },
+        "registeredAddressBpna": { "$ref": "#/$defs/Bpna" },
+        "country": { "$ref": "#/$defs/Iso3166Country" },
+        "identifiers": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/LegalEntityIdentifier" },
+          "description": "VAT/TIN/NBR/IBR/OTH identifiers per Chem-X §13/§14."
+        },
         "regulatoryContact": {
           "type": "object",
           "additionalProperties": false,
@@ -243,42 +300,81 @@
             "phone": { "type": "string" }
           }
         },
-        "authorisedRepresentative": {
+        "authorisedRepresentativeEU": {
           "type": "object",
           "additionalProperties": false,
+          "description": "ESPR Art. 4 representative for non-EU producers placing products on the EU market.",
           "properties": {
             "name": { "type": "string" },
-            "address": { "type": "string" }
+            "address": { "type": "string" },
+            "bpnl": { "$ref": "#/$defs/Bpnl" }
           }
         }
+      }
+    },
+    "LegalEntityIdentifier": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["category", "type", "value"],
+      "properties": {
+        "category": {
+          "type": "string",
+          "enum": ["VAT", "TIN", "NBR", "IBR", "OTH"],
+          "description": "Chem-X §14 identifier-type category. VAT = value-added tax; TIN = taxpayer identification; NBR = national business registration; IBR = international business registration (LEI, EORI); OTH = other (DUNS, GLN)."
+        },
+        "type": {
+          "type": "string",
+          "description": "Specific identifier type, e.g. 'GSTIN', 'PAN', 'CIN', 'LEI', 'EORI', 'DUNS', 'GS1_GLN'"
+        },
+        "value": { "type": "string", "minLength": 1 },
+        "issuingCountry": { "$ref": "#/$defs/Iso3166Country" },
+        "issuingBody": { "type": "string" }
       }
     },
     "Origin": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["country", "meltAndPourCountry", "manufacturingDate", "facilities"],
+      "required": ["country", "manufacturingDate", "sites"],
+      "description": "Origin / production-site references. Sites resolve into BPDM site records by BPNS.",
       "properties": {
         "country": { "$ref": "#/$defs/Iso3166Country" },
-        "meltAndPourCountry": { "$ref": "#/$defs/Iso3166Country" },
+        "subdivision": {
+          "$ref": "#/$defs/Iso3166Subdivision",
+          "description": "ISO 3166-2 region (e.g. IN-RJ for Rajasthan)."
+        },
         "manufacturingDate": { "$ref": "#/$defs/Iso8601Date" },
-        "facilities": {
+        "manufacturingBatch": { "type": "string", "description": "HZL internal batch / heat / cast number." },
+        "sites": {
           "type": "array",
           "minItems": 1,
-          "items": {
-            "type": "object",
-            "additionalProperties": false,
-            "required": ["ufi", "name", "role"],
-            "properties": {
-              "ufi": { "$ref": "#/$defs/Gln" },
-              "name": { "type": "string" },
-              "role": {
-                "type": "string",
-                "enum": ["mine", "refinery", "smelter", "casthouse", "rolling_mill"]
-              },
-              "country": { "$ref": "#/$defs/Iso3166Country" }
-            }
-          }
+          "items": { "$ref": "#/$defs/SiteReference" }
         }
+      }
+    },
+    "SiteReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["bpns", "name", "function"],
+      "properties": {
+        "bpns": { "$ref": "#/$defs/Bpns" },
+        "name": { "type": "string" },
+        "function": {
+          "type": "string",
+          "enum": [
+            "mine",
+            "concentrator",
+            "smelter_hydro",
+            "smelter_pyro",
+            "refinery",
+            "casthouse",
+            "rolling_mill",
+            "powder_atomiser",
+            "warehouse",
+            "depot"
+          ]
+        },
+        "country": { "$ref": "#/$defs/Iso3166Country" },
+        "addressBpna": { "$ref": "#/$defs/Bpna" }
       }
     },
     "Product": {
@@ -288,110 +384,288 @@
       "properties": {
         "name": { "type": "string", "minLength": 1 },
         "purposeStatement": { "type": "string" },
-        "intendedMarket": {
+        "intendedMarkets": {
           "type": "array",
           "items": { "type": "string" },
-          "description": "e.g. automotive, packaging, aerospace, construction"
+          "description": "End-use sectors, e.g. galvanising, die-casting, batteries, solar cells, electronics, brass, oxide, dust."
+        },
+        "intendedRegions": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/Iso3166Country" }
         }
       }
     },
     "Physical": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["netWeightKg"],
+      "required": ["unitMassKg", "bundleMassKg"],
+      "description": "Per-unit and per-bundle physical characteristics. Tolerances follow HZL spec sheets.",
       "properties": {
-        "netWeightKg": { "$ref": "#/$defs/MassKg" },
-        "diameterMm": { "$ref": "#/$defs/LengthMm" },
-        "lengthMm": { "$ref": "#/$defs/LengthMm" },
-        "widthMm": { "$ref": "#/$defs/LengthMm" },
-        "thicknessMm": { "$ref": "#/$defs/LengthMm" },
-        "tolerances": {
+        "unitMassKg": { "$ref": "#/$defs/MassKg", "description": "Mass of a single ingot / bar / unit" },
+        "unitMassToleranceKg": { "type": "number", "minimum": 0 },
+        "bundleMassKg": { "$ref": "#/$defs/MassKg", "description": "Mass of one shipping bundle" },
+        "bundleMassToleranceKg": { "type": "number", "minimum": 0 },
+        "unitsPerBundle": { "type": "integer", "minimum": 1 },
+        "dimensions": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Dimensions of a single unit (ingot/bar). Bundle dimensions go in bundleDimensions.",
+          "properties": {
+            "lengthMm": { "$ref": "#/$defs/LengthMm" },
+            "widthMm": { "$ref": "#/$defs/LengthMm" },
+            "heightMm": { "$ref": "#/$defs/LengthMm" },
+            "diameterMm": { "$ref": "#/$defs/LengthMm" },
+            "tolerance": { "$ref": "#/$defs/Tolerance" }
+          }
+        },
+        "bundleDimensions": {
           "type": "object",
           "additionalProperties": false,
           "properties": {
-            "diameter": { "type": "string" },
-            "lengthBow": { "type": "string" },
-            "squareness": { "type": "string" }
+            "lengthMm": { "$ref": "#/$defs/LengthMm" },
+            "widthMm": { "$ref": "#/$defs/LengthMm" },
+            "heightMm": { "$ref": "#/$defs/LengthMm" },
+            "tolerance": { "$ref": "#/$defs/Tolerance" }
+          }
+        },
+        "packaging": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "strapMaterial": { "type": "string" },
+            "palletised": { "type": "boolean" },
+            "markings": { "type": "string", "description": "Cast-marks on the ingot, e.g. 'vedanta SHG 99.995'" }
           }
         }
+      }
+    },
+    "ChemistryComponent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["element", "casNumber"],
+      "description": "Single element / impurity row from the spec sheet. Mirrors the 'Components | Guaranteed Content | HZL Typical' columns from vedantametalbazaar.com product pages.",
+      "properties": {
+        "element": {
+          "type": "string",
+          "description": "Element symbol or name, e.g. 'Zn', 'Pb', 'Cd', 'Fe', 'Cu', 'Sn', 'Al', 'Sb', 'As', 'Bi', 'Ag'"
+        },
+        "casNumber": { "$ref": "#/$defs/CasNumber" },
+        "role": {
+          "type": "string",
+          "enum": ["primary", "alloying", "impurity"],
+          "default": "impurity"
+        },
+        "guaranteedMaxPercent": { "type": "number", "minimum": 0, "maximum": 100 },
+        "guaranteedMinPercent": { "type": "number", "minimum": 0, "maximum": 100, "description": "For the primary metal: lower bound on purity." },
+        "typicalAssayPercent": { "type": "number", "minimum": 0, "maximum": 100 },
+        "method": { "type": "string", "description": "Analytical method, e.g. 'ICP-OES per ASTM E536', 'AAS', 'XRF', 'NABL-accredited internal lab'" }
       }
     },
     "Chemistry": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["purityGrade"],
-      "description": "v1.0 declares only headline purity grade. Full elemental breakdown is introduced at v1.5.",
+      "required": ["composition"],
+      "description": "Full elemental composition table. The first entry MUST be the primary metal with role='primary' and guaranteedMinPercent set.",
       "properties": {
-        "purityGrade": {
+        "composition": {
+          "type": "array",
+          "minItems": 2,
+          "items": { "$ref": "#/$defs/ChemistryComponent" }
+        },
+        "labCertificateRef": { "type": "string", "description": "HZL lab certificate / mill test certificate ID" },
+        "labBpns": { "$ref": "#/$defs/Bpns", "description": "BPN of the testing lab if NABL-accredited site." }
+      }
+    },
+    "LciaMethodReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["framework", "version"],
+      "description": "Reference to the LCIA characterisation framework. Chem-X anchors all six categories on EF 3.1.",
+      "properties": {
+        "framework": {
           "type": "string",
-          "description": "AA registered grade, e.g. P1020, P0507A"
+          "enum": ["EF_3.1", "EF_3.0", "ReCiPe_2016", "CML_IA", "TRACI_2.1", "ImpactWorld+", "IPCC_AR6"]
+        },
+        "version": { "type": "string" },
+        "characterizationModel": {
+          "type": "string",
+          "description": "Underlying characterisation model, e.g. 'AWARE' for water, 'Accumulated Exceedance (Seppälä 2006)' for acidification, 'LOTOS-EUROS' for POCP, 'Van Oers et al. 2002' for fossil resource."
         }
       }
     },
-    "Carbon": {
+    "DataQualityRating": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["overall", "technological", "geographical", "temporal"],
+      "description": "Chem-X §3.10 / TfS PCF v3.0 — three-axis representativeness rating. Overall = average of the three.",
+      "properties": {
+        "overall": { "$ref": "#/$defs/DqrLevel" },
+        "technological": { "$ref": "#/$defs/DqrLevel" },
+        "geographical": { "$ref": "#/$defs/DqrLevel" },
+        "temporal": { "$ref": "#/$defs/DqrLevel" }
+      }
+    },
+    "ReportingPeriod": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["from", "to"],
+      "properties": {
+        "from": { "$ref": "#/$defs/Iso8601Date" },
+        "to": { "$ref": "#/$defs/Iso8601Date" }
+      }
+    },
+    "LciaCategory": {
       "type": "object",
       "additionalProperties": false,
       "required": [
-        "valueKgCo2ePerTonne",
+        "value",
+        "unit",
         "declaredUnit",
         "systemBoundary",
-        "methodology",
-        "reportingPeriod",
-        "verifier",
-        "assuranceLevel"
+        "method",
+        "referenceYear",
+        "primaryDataSharePercent",
+        "dataQualityRating"
       ],
-      "description": "Product Carbon Footprint per ISO 14067:2018, IAI v2.0, PCR 2022:08 v1.0",
+      "description": "Single LCIA category result with full Chem-X provenance: declared unit, system boundary, method, reference year, primary-data share (PDS), and data-quality rating (DQR with TeR/GeR/TiR breakdown).",
       "properties": {
-        "valueKgCo2ePerTonne": { "type": "number", "minimum": 0 },
+        "value": { "type": "number" },
+        "unit": { "type": "string", "description": "e.g. 'kg CO2e/kg', 'MJ/kg', 'm3 world eq/kg', 'mol H+ eq/kg', 'kg CFC-11 eq/kg', 'kg NMVOC eq/kg'" },
         "declaredUnit": {
           "type": "string",
-          "default": "1000 kg of aluminium ingot (factory gate)"
+          "description": "Per Chem-X §3.3, e.g. '1 kg of unpackaged zinc ingot at factory gate'"
         },
         "systemBoundary": {
           "type": "string",
-          "enum": ["cradle_to_gate", "cradle_to_grave", "gate_to_gate"]
+          "enum": ["cradle_to_gate", "cradle_to_grave", "gate_to_gate"],
+          "description": "Chem-X / TfS PCF defaults to cradle-to-gate."
         },
-        "methodology": { "type": "string" },
-        "reportingPeriod": {
+        "method": { "$ref": "#/$defs/LciaMethodReference" },
+        "reportingPeriod": { "$ref": "#/$defs/ReportingPeriod" },
+        "referenceYear": { "type": "integer", "minimum": 2000, "maximum": 2100 },
+        "primaryDataSharePercent": { "$ref": "#/$defs/Percent" },
+        "dataQualityRating": { "$ref": "#/$defs/DataQualityRating" },
+        "cutOffPercent": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Cut-off threshold applied (Chem-X §3.5 — 3% default for non-water categories)."
+        },
+        "allocationMethod": {
+          "type": "string",
+          "enum": ["subdivision", "system_expansion", "physical_allocation", "economic_allocation", "not_applicable"]
+        },
+        "lciDatabase": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["from", "to"],
           "properties": {
-            "from": { "$ref": "#/$defs/Iso8601Date" },
-            "to": { "$ref": "#/$defs/Iso8601Date" }
+            "name": { "type": "string", "description": "e.g. 'ecoinvent', 'Sphera MLC', 'Carbon Minds cm.chemicals'" },
+            "version": { "type": "string" }
           }
         },
         "verifier": { "$ref": "#/$defs/VerifierReference" },
-        "verificationStatementRef": {
-          "type": "string",
-          "description": "Verifier statement ID, e.g. DNV-2024-ASR-C730945-CelestiAL"
-        },
+        "verificationStatementRef": { "type": "string" },
         "assuranceLevel": {
           "type": "string",
-          "enum": ["limited", "reasonable"]
+          "enum": ["limited", "reasonable", "self_declared"]
         },
-        "industryAverageKgCo2ePerTonne": {
-          "type": "number",
-          "description": "IAI 2024 global industry baseline for context (~14600 kg CO2e/t)"
+        "industryAverage": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Optional benchmark for context (e.g. global zinc PCF average).",
+          "properties": {
+            "value": { "type": "number" },
+            "unit": { "type": "string" },
+            "source": { "type": "string" },
+            "year": { "type": "integer" }
+          }
+        }
+      }
+    },
+    "Sustainability": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "pcf",
+        "resourceUseFossil",
+        "waterScarcity",
+        "acidification",
+        "ozoneDepletion",
+        "photochemicalOzone"
+      ],
+      "description": "Six LCIA categories per Chem-X Sustainability Guideline v1.0: PCF (GWP100, ISO 14067), Resource Use Fossil (EF 3.1, MJ via LHV), Water Scarcity (EF 3.1 / AWARE), Acidification (EF 3.1 Accumulated Exceedance), Ozone Depletion (EF 3.1, WMO 2014), Photochemical Ozone Creation (EF 3.1, LOTOS-EUROS). Additional EPD-style indicators allowed in extras{}.",
+      "properties": {
+        "pcf": {
+          "allOf": [
+            { "$ref": "#/$defs/LciaCategory" }
+          ],
+          "description": "Product Carbon Footprint per ISO 14067:2018 with IPCC AR6 GWP100y. Includes biogenic CO2 removals/emissions per ISO 14067 (separately reported in pcfBreakdown)."
+        },
+        "pcfBreakdown": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Optional decomposition of PCF — useful for hotspot analysis on the public viewer.",
+          "properties": {
+            "miningKgCo2e": { "type": "number" },
+            "concentrationKgCo2e": { "type": "number" },
+            "smeltingKgCo2e": { "type": "number" },
+            "refiningKgCo2e": { "type": "number" },
+            "castingKgCo2e": { "type": "number" },
+            "electricityKgCo2e": { "type": "number" },
+            "thermalEnergyKgCo2e": { "type": "number" },
+            "transportInboundKgCo2e": { "type": "number" },
+            "biogenicRemovalKgCo2e": { "type": "number" },
+            "biogenicEmissionKgCo2e": { "type": "number" }
+          }
+        },
+        "resourceUseFossil": { "$ref": "#/$defs/LciaCategory" },
+        "waterScarcity": { "$ref": "#/$defs/LciaCategory" },
+        "acidification": { "$ref": "#/$defs/LciaCategory" },
+        "ozoneDepletion": { "$ref": "#/$defs/LciaCategory" },
+        "photochemicalOzone": { "$ref": "#/$defs/LciaCategory" },
+        "renewableElectricityPercent": {
+          "$ref": "#/$defs/Percent",
+          "description": "Share of electricity from renewable sources at the producing site over the reporting period."
+        },
+        "epd": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "ISO 14025 Environmental Product Declaration reference. HZL publishes EPDs for several products.",
+          "properties": {
+            "registrationNumber": { "type": "string" },
+            "programOperator": { "type": "string", "description": "e.g. 'EPD International', 'EPD Norge', 'IBU'" },
+            "publicationDate": { "$ref": "#/$defs/Iso8601Date" },
+            "validUntil": { "$ref": "#/$defs/Iso8601Date" },
+            "url": { "$ref": "#/$defs/Url" },
+            "pcr": { "type": "string", "description": "Product Category Rules reference, e.g. 'PCR 2019:14 v1.11 — Basic and precious metals'" }
+          }
+        },
+        "extras": {
+          "type": "object",
+          "additionalProperties": { "$ref": "#/$defs/LciaCategory" },
+          "description": "Future LCIA categories (eutrophication marine/freshwater/terrestrial, toxicity, land use) keyed by Chem-X identifier."
         }
       }
     },
     "RecycledContent": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["totalPercent", "chainOfCustodyModel", "verifier"],
-      "description": "Recycled content per ISO 14021:2016, EN 45557:2020, ASI CoC V2.1",
+      "required": ["totalPercent", "chainOfCustodyModel"],
+      "description": "Recycled content per ISO 14021:2016, EN 45557:2020, ISO 22095 chain of custody (Chem-X §3.9).",
       "properties": {
         "totalPercent": { "$ref": "#/$defs/Percent" },
+        "preConsumerPercent": { "$ref": "#/$defs/Percent" },
+        "postConsumerPercent": { "$ref": "#/$defs/Percent" },
         "chainOfCustodyModel": {
           "type": "string",
-          "enum": ["mass_balance", "controlled_blending", "physical_segregation", "book_and_claim"]
+          "enum": ["mass_balance", "controlled_blending", "physical_segregation", "book_and_claim", "not_applicable"]
+        },
+        "certificationScheme": {
+          "type": "string",
+          "description": "e.g. 'ISCC PLUS', 'RSB Advanced Materials', 'TÜV Rheinland Recycled Content', 'IZA Zinc Mark recycled' — leave blank for primary-route products."
         },
         "verifier": { "$ref": "#/$defs/VerifierReference" },
-        "asiCertificateRef": {
-          "type": "string",
-          "description": "e.g. ASI CoC #428"
-        }
+        "certificateRef": { "type": "string" }
       }
     },
     "ComplianceEntry": {
@@ -400,39 +674,41 @@
       "required": ["name", "status"],
       "properties": {
         "name": { "type": "string", "minLength": 1 },
-        "reference": { "type": "string", "description": "e.g. EC 1907/2006, ISO 9001:2015" },
+        "reference": { "type": "string", "description": "Regulation / standard reference, e.g. 'EC 1907/2006', 'IS 209:1992', 'ISO 9001:2015'" },
         "status": { "$ref": "#/$defs/ComplianceStatus" },
         "issuer": { "type": "string" },
         "certificateRef": { "type": "string" },
         "validFrom": { "$ref": "#/$defs/Iso8601Date" },
         "validUntil": { "$ref": "#/$defs/Iso8601Date" },
-        "documentId": {
-          "type": "string",
-          "description": "ID of a DocumentRef in documentation.documents whose URL is the downloadable evidence for this entry."
-        },
-        "evidenceRef": {
-          "type": "string",
-          "description": "Internal evidence reference identifier (e.g. CBAM-EGA-2026-Q1)."
-        }
+        "documentId": { "type": "string", "description": "ID of a DocumentRef in documentation.documents." },
+        "evidenceRef": { "type": "string" }
       }
     },
     "Compliance": {
       "type": "object",
       "additionalProperties": false,
       "required": ["regulations", "certifications"],
-      "description": "Minimum 14 entries per the Definition of Done in §8.5",
+      "description": "Regulatory + voluntary compliance pack. Minimum entries: REACH, RoHS/ELV, BIS, CBAM (if EU export); ISO 9001/14001/45001, EPD, NABL, ICMM (HZL is a member since 2025).",
       "properties": {
         "regulations": {
           "type": "array",
-          "minItems": 5,
-          "items": { "$ref": "#/$defs/ComplianceEntry" },
-          "description": "REACH, RoHS, TSCA, Conflict Minerals, PFAS minimum"
+          "minItems": 3,
+          "items": { "$ref": "#/$defs/ComplianceEntry" }
         },
         "certifications": {
           "type": "array",
-          "minItems": 5,
-          "items": { "$ref": "#/$defs/ComplianceEntry" },
-          "description": "ASI Performance, ASI CoC, ISO 9001/14001/45001 minimum"
+          "minItems": 3,
+          "items": { "$ref": "#/$defs/ComplianceEntry" }
+        },
+        "lmeRegisteredBrand": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "London Metal Exchange approved-brand listing, where applicable.",
+          "properties": {
+            "brandName": { "type": "string" },
+            "registrationDate": { "$ref": "#/$defs/Iso8601Date" },
+            "url": { "$ref": "#/$defs/Url" }
+          }
         },
         "complianceDocumentationUrl": { "$ref": "#/$defs/Url" }
       }
@@ -450,7 +726,7 @@
       "properties": {
         "recyclabilityIndicator": {
           "type": "string",
-          "default": "100% — aluminium is infinitely recyclable"
+          "description": "e.g. '100% — zinc is infinitely recyclable without loss of properties (IZA)'"
         },
         "materialRecoveryPotential": { "type": "string" },
         "endOfLifeUrl": { "$ref": "#/$defs/Url" },
@@ -471,7 +747,7 @@
         "energyEfficiency",
         "resourceEfficiency"
       ],
-      "description": "ESPR Article 5(1) product-aspect declarations",
+      "description": "ESPR Article 5(1) product-aspect declarations. Mandatory subset.",
       "properties": {
         "durability": { "type": "string" },
         "reliability": { "type": "string" },
@@ -483,16 +759,6 @@
         "resourceEfficiency": { "type": "string" }
       }
     },
-    "Sustainability": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["sustainablePurchasing", "handling"],
-      "properties": {
-        "sustainablePurchasing": { "type": "string" },
-        "handling": { "type": "string" },
-        "esgProgramUrl": { "$ref": "#/$defs/Url" }
-      }
-    },
     "SocEntry": {
       "type": "object",
       "additionalProperties": false,
@@ -500,8 +766,8 @@
       "properties": {
         "iupacName": { "type": "string" },
         "otherNames": { "type": "array", "items": { "type": "string" } },
-        "ecNumber": { "type": "string", "pattern": "^[0-9]{3}-[0-9]{3}-[0-9]$" },
-        "casNumber": { "type": "string", "pattern": "^[0-9]{2,7}-[0-9]{2}-[0-9]$" },
+        "ecNumber": { "$ref": "#/$defs/EcNumber" },
+        "casNumber": { "$ref": "#/$defs/CasNumber" },
         "locationInProduct": {
           "type": "string",
           "enum": ["homogeneous", "coating", "core", "interface"]
@@ -511,14 +777,14 @@
         "unit": { "type": "string", "default": "wt%" },
         "safeUseInstructions": { "type": "string" },
         "endOfLifeInstructions": { "type": "string" },
-        "scipNotificationId": { "type": "string" }
+        "scipNotificationId": { "type": "string", "description": "ECHA SCIP database notification ID (Article 9(1)(i) WFD)." }
       }
     },
     "SubstancesOfConcern": {
       "type": "object",
       "additionalProperties": false,
       "required": ["summaryStatement"],
-      "description": "ESPR Article 7(5) substances-of-concern declaration",
+      "description": "ESPR Article 7(5) declaration. For zinc, cadmium and lead impurities are the relevant disclosures (food-contact and automotive RoHS exemptions).",
       "properties": {
         "summaryStatement": {
           "type": "string",
@@ -537,10 +803,16 @@
       "properties": {
         "installationInformation": { "type": "string" },
         "useInstructions": { "type": "string" },
+        "storageInstructions": { "type": "string", "description": "Indoor, dry, away from direct sunlight, etc." },
+        "handlingInstructions": { "type": "string" },
         "maintenanceInformation": { "type": "string" },
         "repairInformation": { "type": "string" },
         "warnings": { "type": "string" },
-        "safetyInformation": { "type": "string" }
+        "safetyInformation": { "type": "string" },
+        "sdsUrl": {
+          "$ref": "#/$defs/Url",
+          "description": "Link to Safety Data Sheet per Regulation (EC) 1907/2006 / GHS / India MSDS."
+        }
       }
     },
     "DocumentRef": {
@@ -548,10 +820,7 @@
       "additionalProperties": false,
       "required": ["title", "url"],
       "properties": {
-        "id": {
-          "type": "string",
-          "description": "Stable identifier so a Compliance entry can reference its evidence document."
-        },
+        "id": { "type": "string" },
         "title": { "type": "string" },
         "url": { "$ref": "#/$defs/Url" },
         "type": {
@@ -559,22 +828,18 @@
           "enum": [
             "mtc",
             "lca_report",
+            "epd",
             "verification_statement",
             "certificate",
             "user_manual",
             "sds",
+            "spec_sheet",
+            "lab_certificate",
             "other"
           ]
         },
-        "issuer": {
-          "type": "string",
-          "description": "Issuing body (e.g. ASI, BSI, DNV, EGA Compliance)."
-        },
-        "sizeKb": {
-          "type": "integer",
-          "minimum": 0,
-          "description": "Approximate document size in KB (UI hint only)."
-        },
+        "issuer": { "type": "string" },
+        "sizeKb": { "type": "integer", "minimum": 0 },
         "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
       }
     },
@@ -605,7 +870,11 @@
         "lastUpdated": { "$ref": "#/$defs/Iso8601DateTime" },
         "expiresAt": {
           "$ref": "#/$defs/Iso8601DateTime",
-          "description": "createdAt + 10 years per ESPR Art 10(3)"
+          "description": "createdAt + 10 years per ESPR Art 10(3); LCIA values must be re-verified after 3 years per Chem-X §3.4."
+        },
+        "lciaValidUntil": {
+          "$ref": "#/$defs/Iso8601Date",
+          "description": "Date after which the sustainability values are deemed stale per Chem-X §3.4 (3-year max validity)."
         },
         "lifecycleState": {
           "type": "string",
@@ -616,7 +885,10 @@
           "minItems": 1,
           "items": { "$ref": "#/$defs/Iso639Lang" }
         },
-        "issuerDid": { "$ref": "#/$defs/Did" },
+        "issuerDid": {
+          "$ref": "#/$defs/DidWeb",
+          "description": "did:web of the issuing legal entity (Producer.bpnl maps to this DID)."
+        },
         "accessRights": {
           "type": "object",
           "additionalProperties": false,
@@ -624,7 +896,7 @@
           "properties": {
             "model": {
               "type": "string",
-              "enum": ["three_tier_vc_gated"]
+              "enum": ["three_tier_vc_gated", "public_only"]
             },
             "publicFields": {
               "type": "array",
@@ -633,7 +905,7 @@
           }
         },
         "tenantId": { "type": "integer", "minimum": 1 },
-        "revisionOf": { "type": "string", "description": "UPI of prior DPP if this is a revision" },
+        "revisionOf": { "type": "string", "description": "DID of prior passport if this is a revision" },
         "revisionReason": { "type": "string" }
       }
     }

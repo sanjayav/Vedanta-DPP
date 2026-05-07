@@ -51,10 +51,20 @@ export async function generateMetadata({ params, searchParams }: PageProps) {
   const audience = parseAudience(view)
   const dpp = await fetchDpp(upi.join('/'), audience)
   if (!dpp) return { title: 'Not found' }
-  const ident = dpp.dpp.identification as { brand?: string; alloyEn?: string } | undefined
-  const carbon = dpp.dpp.carbon as { valueKgCo2ePerTonne?: number } | undefined
+  const ident = dpp.dpp.identification as
+    | { metal?: string; gradeCode?: string; tradeName?: string; designation?: string }
+    | undefined
+  const sustain = dpp.dpp.sustainability as
+    | { pcf?: { value?: number; unit?: string } }
+    | undefined
+  const product = dpp.dpp.product as { name?: string } | undefined
+  const heading = ident?.tradeName
+    ? `${ident.tradeName} (${ident.gradeCode ?? ''})`.trim()
+    : product?.name ?? `${ident?.metal ?? 'HZL'} ${ident?.gradeCode ?? ''}`.trim()
+  const pcf = sustain?.pcf
+  const pcfStr = pcf?.value !== undefined ? `${pcf.value} ${pcf.unit ?? 'kg CO₂e/kg'}` : '—'
   return {
-    title: `${ident?.brand ?? 'DPP'} ${ident?.alloyEn ?? ''}`.trim(),
-    description: `Verified Digital Product Passport · ${carbon?.valueKgCo2ePerTonne ?? '?'} kg CO₂e/t cradle-to-gate.`,
+    title: `${heading} · Vedanta · Hindustan Zinc`,
+    description: `Verified Digital Product Passport · cradle-to-gate carbon footprint ${pcfStr}.`,
   }
 }

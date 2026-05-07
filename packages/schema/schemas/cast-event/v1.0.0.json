@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://schemas.dpp.ega.ae/cast-event/v1.0.0.json",
-  "title": "Canonical Cast Event",
-  "description": "The canonical event emitted by every ingestion source — simulator, public-data importer, manual entry, and (in v2) live MES. Every source produces an identical payload regardless of origin. The DPP generator consumes this to mint a canonical DPP record.",
+  "$id": "https://schemas.passport.hzlindia.com/cast-event/v1.0.0.json",
+  "title": "Canonical Cast / Production Event",
+  "description": "The canonical event emitted by every ingestion source — simulator, public-data importer, manual entry, and (in v2) live MES. The DPP generator consumes this to mint a canonical Vedanta zinc/lead/silver passport. The HZL term for a 'cast' is a smelter pour, refinery cast or alloying batch depending on the site function.",
   "type": "object",
   "additionalProperties": false,
   "required": ["schemaVersion", "trackingId", "source", "occurredAt", "tenantId", "cast"],
@@ -34,7 +34,7 @@
         "actor": { "type": "string", "description": "User or system that fired the event" },
         "presetId": {
           "type": "string",
-          "description": "If kind=simulator, the preset that was fired"
+          "description": "If kind=simulator, the preset that was fired (e.g. zinc-ecozen-shg-99-995, zinc-cgg-jumbo, lead-pure-99-99)"
         },
         "publicSourceUrl": {
           "type": "string",
@@ -52,53 +52,47 @@
     "cast": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["castNumber", "alloyEn", "brand", "form", "weightKg", "casthouseUfi"],
+      "required": ["castNumber", "metal", "gradeCode", "form", "unitMassKg", "siteBpns"],
       "properties": {
         "castNumber": {
           "type": "string",
           "minLength": 3,
           "maxLength": 64,
-          "description": "MES-issued heat/cast number"
+          "description": "MES-issued heat/cast/batch number"
         },
-        "alloyEn": {
+        "metal": {
           "type": "string",
-          "pattern": "^EN A[WC]-[0-9]{4,5}[A-Z]?$"
+          "enum": ["zinc", "lead", "silver"]
         },
-        "alloyAa": {
+        "gradeCode": {
           "type": "string",
-          "pattern": "^AA [0-9]{4}[A-Z]?$"
-        },
-        "brand": {
-          "type": "string",
-          "enum": ["CelestiAL", "CelestiAL-R", "Standard", "High-Purity", "Foundry Alloy"]
+          "description": "HZL grade code, e.g. EcoZen-SHG, CGG, Lead-99.99, SHG, HG, PW, HZDA3, HZDA5, Silver-9999"
         },
         "form": {
           "type": "string",
           "enum": [
-            "extrusion_billet",
-            "sheet_ingot",
-            "foundry_ingot",
-            "t_bar",
-            "sow",
-            "standard_ingot",
-            "properzi",
-            "hdc_small",
-            "b_ingot"
+            "ingot_25kg",
+            "ingot_9kg",
+            "jumbo_1t",
+            "bar_30kg",
+            "bar_1kg",
+            "powder",
+            "dust",
+            "oxide"
           ]
         },
-        "temper": { "type": "string", "pattern": "^(F|O|H[0-9]{2,3}|T[0-9]{1,2})$" },
-        "weightKg": { "type": "number", "exclusiveMinimum": 0 },
-        "diameterMm": { "type": "number", "exclusiveMinimum": 0 },
+        "unitMassKg": { "type": "number", "exclusiveMinimum": 0, "description": "Mass of one unit (ingot/bar/jumbo)" },
+        "bundleMassKg": { "type": "number", "exclusiveMinimum": 0, "description": "Mass of the shipping bundle. If omitted, defaults to 1000 kg or single-unit mass for jumbos." },
         "lengthMm": { "type": "number", "exclusiveMinimum": 0 },
-        "widthMm": { "type": "number", "exclusiveMinimum": 0 },
-        "thicknessMm": { "type": "number", "exclusiveMinimum": 0 },
-        "casthouseUfi": {
+        "widthMm":  { "type": "number", "exclusiveMinimum": 0 },
+        "heightMm": { "type": "number", "exclusiveMinimum": 0 },
+        "siteBpns": {
           "type": "string",
-          "pattern": "^[0-9]{13}$",
-          "description": "GLN of the casthouse that produced the cast"
+          "pattern": "^BPNS[A-Z0-9]{10}[A-Z0-9]{2}$",
+          "description": "BPNS of the producing site (Chanderiya / Dariba / Debari / Pantnagar)"
         },
-        "smelterUfi": { "type": "string", "pattern": "^[0-9]{13}$" },
-        "purityGrade": { "type": "string" },
+        "lotNumber":   { "type": "string", "maxLength": 64 },
+        "itemSerial":  { "type": "string", "maxLength": 64 },
         "customerReference": {
           "type": "string",
           "description": "Optional shipment / order reference"

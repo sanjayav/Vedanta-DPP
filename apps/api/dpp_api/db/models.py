@@ -879,3 +879,221 @@ class DataSource(Base):
             "product_id", "process_step_id", name="uq_data_source_product_step"
         ),
     )
+
+
+# ── BPDM tables (Chem-X Business Identity Guideline) ──────────────────────
+# Three tightly-coupled tables: legal_entities (BPNL), sites (BPNS),
+# addresses (BPNA), plus a one-to-many identifiers table for the
+# CX-0010 §13/§14 identifier-type taxonomy. Created in migration 0007.
+
+# Common SQL CHECK fragment for BPN syntax validation in Postgres.
+_BPN_SQL_CHECK = "{col} ~ '^BPN[LSA][A-Z0-9]{{10}}[A-Z0-9]{{2}}$'"
+
+
+class LegalEntity(Base):
+    """Chem-X / CX-0010 legal entity. Globally identified by BPNL."""
+
+    __tablename__ = "legal_entities"
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, init=False)
+    tenant_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("tenants.id", ondelete="RESTRICT"), nullable=False
+    )
+    bpnl: Mapped[str] = mapped_column(String(16), nullable=False)
+    legal_name: Mapped[str] = mapped_column(String(512), nullable=False)
+    legal_form: Mapped[str | None] = mapped_column(String(128), nullable=True, default=None)
+    short_name: Mapped[str | None] = mapped_column(String(128), nullable=True, default=None)
+    trade_name: Mapped[str | None] = mapped_column(String(256), nullable=True, default=None)
+    country: Mapped[str] = mapped_column(String(2), nullable=False)
+    subdivision: Mapped[str | None] = mapped_column(String(8), nullable=True, default=None)
+    registered_address_bpna: Mapped[str | None] = mapped_column(
+        String(16), ForeignKey("addresses.bpna", ondelete="RESTRICT"), nullable=True, default=None
+    )
+    did: Mapped[str | None] = mapped_column(String(512), nullable=True, default=None)
+    state: Mapped[str] = mapped_column(
+        String(16), nullable=False, default="active", server_default="active"
+    )
+    valid_from: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=False), nullable=True, default=None
+    )
+    valid_until: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=False), nullable=True, default=None
+    )
+    incorporated_on: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=False), nullable=True, default=None
+    )
+    metadata_json: Mapped[dict[str, Any]] = mapped_column(
+        "metadata",  # column name in DB; rename Python attr to avoid clash with SA Base.metadata
+        JSONB,
+        nullable=False,
+        default_factory=dict,
+        server_default="{}",
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        default_factory=_utcnow,
+        server_default=func.now(),
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        default_factory=_utcnow,
+        server_default=func.now(),
+    )
+
+    __table_args__ = (
+        UniqueConstraint("bpnl", name="uq_legal_entities_bpnl"),
+        UniqueConstraint("tenant_id", "legal_name", name="uq_legal_entities_tenant_name"),
+        CheckConstraint(_BPN_SQL_CHECK.format(col="bpnl"), name="ck_legal_entities_bpnl_syntax"),
+        CheckConstraint("country ~ '^[A-Z]{2}$'", name="ck_legal_entities_country_iso"),
+        CheckConstraint("state IN ('active','inactive')", name="ck_legal_entities_state"),
+    )
+
+
+class Address(Base):
+    """Chem-X / CX-0010 address. Globally identified by BPNA, owned by a BPNL."""
+
+    __tablename__ = "addresses"
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, init=False)
+    tenant_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("tenants.id", ondelete="RESTRICT"), nullable=False
+    )
+    bpna: Mapped[str] = mapped_column(String(16), nullable=False)
+    owner_bpnl: Mapped[str] = mapped_column(String(16), nullable=False)
+    name: Mapped[str | None] = mapped_column(String(256), nullable=True, default=None)
+    address_type: Mapped[str] = mapped_column(String(32), nullable=False)
+    country: Mapped[str] = mapped_column(String(2), nullable=False)
+    subdivision: Mapped[str | None] = mapped_column(String(8), nullable=True, default=None)
+    admin_area_level_2: Mapped[str | None] = mapped_column(
+        String(128), nullable=True, default=None
+    )
+    city: Mapped[str] = mapped_column(String(128), nullable=False)
+    postal_code: Mapped[str | None] = mapped_column(String(32), nullable=True, default=None)
+    street: Mapped[str | None] = mapped_column(String(256), nullable=True, default=None)
+    house_number: Mapped[str | None] = mapped_column(String(32), nullable=True, default=None)
+    address_line2: Mapped[str | None] = mapped_column(String(256), nullable=True, default=None)
+    latitude: Mapped[float | None] = mapped_column(nullable=True, default=None)
+    longitude: Mapped[float | None] = mapped_column(nullable=True, default=None)
+    state: Mapped[str] = mapped_column(
+        String(16), nullable=False, default="active", server_default="active"
+    )
+    metadata_json: Mapped[dict[str, Any]] = mapped_column(
+        "metadata", JSONB, nullable=False, default_factory=dict, server_default="{}"
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        default_factory=_utcnow,
+        server_default=func.now(),
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        default_factory=_utcnow,
+        server_default=func.now(),
+    )
+
+    __table_args__ = (
+        UniqueConstraint("bpna", name="uq_addresses_bpna"),
+        CheckConstraint(_BPN_SQL_CHECK.format(col="bpna"), name="ck_addresses_bpna_syntax"),
+        CheckConstraint(
+            _BPN_SQL_CHECK.format(col="owner_bpnl"), name="ck_addresses_owner_bpnl_syntax"
+        ),
+        CheckConstraint("country ~ '^[A-Z]{2}$'", name="ck_addresses_country_iso"),
+        CheckConstraint(
+            "address_type IN ('legal_address','site_main_address','legal_and_site_main_address','additional_address')",
+            name="ck_addresses_type",
+        ),
+        CheckConstraint("state IN ('active','inactive')", name="ck_addresses_state"),
+    )
+
+
+class Site(Base):
+    """Chem-X / CX-0010 site. Globally identified by BPNS, owned by a BPNL."""
+
+    __tablename__ = "sites"
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, init=False)
+    tenant_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("tenants.id", ondelete="RESTRICT"), nullable=False
+    )
+    bpns: Mapped[str] = mapped_column(String(16), nullable=False)
+    owner_bpnl: Mapped[str] = mapped_column(String(16), nullable=False)
+    name: Mapped[str] = mapped_column(String(256), nullable=False)
+    function: Mapped[str] = mapped_column(String(32), nullable=False)
+    main_address_bpna: Mapped[str] = mapped_column(
+        String(16), ForeignKey("addresses.bpna", ondelete="RESTRICT"), nullable=False
+    )
+    production_capacity: Mapped[dict[str, Any]] = mapped_column(
+        JSONB, nullable=False, default_factory=dict, server_default="{}"
+    )
+    state: Mapped[str] = mapped_column(
+        String(16), nullable=False, default="active", server_default="active"
+    )
+    commissioned_on: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=False), nullable=True, default=None
+    )
+    metadata_json: Mapped[dict[str, Any]] = mapped_column(
+        "metadata", JSONB, nullable=False, default_factory=dict, server_default="{}"
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        default_factory=_utcnow,
+        server_default=func.now(),
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        default_factory=_utcnow,
+        server_default=func.now(),
+    )
+
+    __table_args__ = (
+        UniqueConstraint("bpns", name="uq_sites_bpns"),
+        CheckConstraint(_BPN_SQL_CHECK.format(col="bpns"), name="ck_sites_bpns_syntax"),
+        CheckConstraint(_BPN_SQL_CHECK.format(col="owner_bpnl"), name="ck_sites_owner_bpnl_syntax"),
+        CheckConstraint(
+            "function IN ('mine','concentrator','smelter_hydro','smelter_pyro','refinery','casthouse','rolling_mill','powder_atomiser','warehouse','depot')",
+            name="ck_sites_function",
+        ),
+        CheckConstraint("state IN ('active','inactive')", name="ck_sites_state"),
+    )
+
+
+class LegalEntityIdentifier(Base):
+    """One identifier (VAT/TIN/NBR/IBR/OTH) for a legal entity."""
+
+    __tablename__ = "legal_entity_identifiers"
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, init=False)
+    tenant_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("tenants.id", ondelete="RESTRICT"), nullable=False
+    )
+    bpnl: Mapped[str] = mapped_column(
+        String(16), ForeignKey("legal_entities.bpnl", ondelete="CASCADE"), nullable=False
+    )
+    category: Mapped[str] = mapped_column(String(8), nullable=False)
+    type: Mapped[str] = mapped_column(String(64), nullable=False)
+    value: Mapped[str] = mapped_column(String(128), nullable=False)
+    issuing_country: Mapped[str | None] = mapped_column(String(2), nullable=True, default=None)
+    issuing_body: Mapped[str | None] = mapped_column(String(128), nullable=True, default=None)
+    metadata_json: Mapped[dict[str, Any]] = mapped_column(
+        "metadata", JSONB, nullable=False, default_factory=dict, server_default="{}"
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        default_factory=_utcnow,
+        server_default=func.now(),
+    )
+
+    __table_args__ = (
+        UniqueConstraint("bpnl", "type", "value", name="uq_legal_entity_identifiers_unique"),
+        CheckConstraint(
+            "category IN ('VAT','TIN','NBR','IBR','OTH')",
+            name="ck_legal_entity_identifiers_category",
+        ),
+    )
