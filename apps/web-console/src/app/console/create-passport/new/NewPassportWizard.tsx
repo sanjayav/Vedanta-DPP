@@ -599,12 +599,13 @@ function ProcessStepView({
         </p>
       </div>
       <p className="mt-1 text-[13px] text-[var(--fg-muted)]">
-        Click any stage to focus it. The pipeline flows left-to-right from concentrate at the
-        mine to your customer&rsquo;s door · each stage feeds attributes into the passport you
+        Every ingot has a lineage. Click any stage to focus its branch — mining and power
+        converge into smelting, casting feeds packaging through QC, and verification sits as a
+        side-branch validating the dispatch. Each node feeds attributes into the passport you
         author in step 5.
       </p>
 
-      <ProcessFlowDiagram
+      <ProcessGenealogyTree
         chain={chain}
         focusedId={focused?.stepId ?? null}
         onFocus={setFocusedId}
@@ -626,11 +627,115 @@ function ProcessStepView({
 }
 
 /**
- * Interactive process-flow visualisation. Renders the production chain
- * as a horizontal pipeline with an animated gradient flow line, tier
- * grouping bands, and stage cards that lift on hover / focus.
+ * Genealogy-tree topology for the canonical 11-stage HZL production
+ * chain. Slugs map to (col, row, parentSlugs); columns are 0..2 in a
+ * 3-column grid, rows grow downward. The tree shows branching inputs
+ * (mining concentrate + power both feed smelting), the main trunk
+ * through smelting → alloying → casting → packaging, and side
+ * branches (lab QC validating casting, third-party verification
+ * validating packaging).
  */
-function ProcessFlowDiagram({
+const TREE_TOPOLOGY: Record<
+  string,
+  { col: number; row: number; parentSlugs: string[] }
+> = {
+  mining:           { col: 0, row: 0, parentSlugs: [] },
+  power_generation: { col: 2, row: 0, parentSlugs: [] },
+  concentration:    { col: 0, row: 1, parentSlugs: ['mining'] },
+  beneficiation:    { col: 0, row: 1, parentSlugs: ['mining'] },
+  roasting:         { col: 0, row: 2, parentSlugs: ['concentration', 'beneficiation'] },
+  refining:         { col: 0, row: 2, parentSlugs: ['concentration', 'beneficiation'] },
+  smelting:         { col: 1, row: 3, parentSlugs: ['roasting', 'refining', 'power_generation'] },
+  alloying:         { col: 1, row: 4, parentSlugs: ['smelting'] },
+  casting:          { col: 1, row: 5, parentSlugs: ['alloying', 'smelting'] },
+  homogenisation:   { col: 1, row: 5, parentSlugs: ['alloying', 'smelting'] },
+  lab_qc:           { col: 2, row: 5, parentSlugs: ['casting', 'homogenisation'] },
+  semis:            { col: 1, row: 6, parentSlugs: ['casting', 'homogenisation'] },
+  packaging:        { col: 1, row: 6, parentSlugs: ['casting', 'homogenisation', 'lab_qc'] },
+  verification:     { col: 2, row: 6, parentSlugs: ['packaging'] },
+  customer:         { col: 1, row: 7, parentSlugs: ['packaging', 'verification'] },
+}
+
+interface PositionedNode {
+  step: ProductChainStep
+  col: number
+  row: number
+  cx: number
+  cy: number
+  parents: number[]
+}
+
+const TREE_COL_W = 240
+const TREE_ROW_H = 152
+const TREE_NODE_W = 196
+const TREE_NODE_H = 122
+const TREE_PAD_X = 24
+const TREE_PAD_Y = 16
+
+function buildTree(chain: ProductChainStep[]): {
+  nodes: PositionedNode[]
+  edges: { fromId: number; toId: number }[]
+  width: number
+  height: number
+} {
+  const slugById = new Map(chain.map((c) => [c.stepId, c.slug]))
+  const idBySlug = new Map(chain.map((c) => [c.slug, c.stepId]))
+
+  // Resolve each chain step to a tree position. If the slug isn't in the
+  // topology, fall back to a flat row at the bottom (safety net).
+  const positioned: PositionedNode[] = chain.map((step, i) => {
+    const t = TREE_TOPOLOGY[step.slug]
+    const fallbackRow = 8
+    const fallbackCol = i % 3
+    const col = t?.col ?? fallbackCol
+    const row = t?.row ?? fallbackRow
+    return {
+      step,
+      col,
+      row,
+      cx: TREE_PAD_X + col * TREE_COL_W + TREE_NODE_W / 2,
+      cy: TREE_PAD_Y + row * TREE_ROW_H + TREE_NODE_H / 2,
+      parents: (t?.parentSlugs ?? [])
+        .map((s) => idBySlug.get(s))
+        .filter((id): id is number => typeof id === 'number'),
+    }
+  })
+
+  const edges: { fromId: number; toId: number }[] = []
+  for (const node of positioned) {
+    for (const parentId of node.parents) {
+      if (slugById.has(parentId)) {
+        edges.push({ fromId: parentId, toId: node.step.stepId })
+      }
+    }
+  }
+
+  const maxCol = Math.max(...positioned.map((p) => p.col))
+  const maxRow = Math.max(...positioned.map((p) => p.row))
+  const width = TREE_PAD_X * 2 + (maxCol + 1) * TREE_COL_W
+  const height = TREE_PAD_Y * 2 + (maxRow + 1) * TREE_ROW_H
+  return { nodes: positioned, edges, width, height }
+}
+
+function tierAccent(tier: string): string {
+  return tier === 'upstream'
+    ? '#D4A574'
+    : tier === 'production'
+      ? '#3B82F6'
+      : tier === 'downstream'
+        ? '#16a34a'
+        : tier === 'verification'
+          ? '#7C3AED'
+          : '#94a3b8'
+}
+
+/**
+ * Genealogy-style tree visualisation. Mining + power converge into
+ * smelting; the production trunk runs vertically; QC and third-party
+ * verification branch off as validation gates. Each node is a card,
+ * connected by curved bezier paths with an animated dashed flow.
+ */
+function ProcessGenealogyTree({
   chain,
   focusedId,
   onFocus,
@@ -643,125 +748,194 @@ function ProcessFlowDiagram({
   attrCountByStep: Map<number, number>
   dataSourcesByStep: Map<number, DataSource[]>
 }) {
-  // Group consecutive same-tier stages so we can paint tier lanes spanning
-  // multiple columns (e.g. the four upstream stages collapse into one band).
-  const tierGroups = useMemo(() => {
-    const groups: { tier: string; from: number; span: number }[] = []
-    chain.forEach((c) => {
-      const last = groups[groups.length - 1]
-      if (last && last.tier === c.tier) last.span += 1
-      else groups.push({ tier: c.tier, from: groups.length === 0 ? 0 : last!.from + last!.span, span: 1 })
-    })
-    return groups
-  }, [chain])
+  const tree = useMemo(() => buildTree(chain), [chain])
+  const nodeById = useMemo(
+    () => new Map(tree.nodes.map((n) => [n.step.stepId, n])),
+    [tree.nodes],
+  )
 
-  const focusedIndex = chain.findIndex((c) => c.stepId === focusedId)
-  const focusedPct = chain.length > 1
-    ? (focusedIndex >= 0 ? focusedIndex : 0) / (chain.length - 1)
-    : 0
+  // Highlight the genealogy of the focused stage: every ancestor edge AND
+  // every descendant edge that branches from the focused node.
+  const highlightedEdges = useMemo(() => {
+    if (focusedId == null) return new Set<string>()
+    const hi = new Set<string>()
+    const visitParents = (id: number) => {
+      const node = nodeById.get(id)
+      if (!node) return
+      for (const p of node.parents) {
+        const key = `${p}-${id}`
+        if (hi.has(key)) continue
+        hi.add(key)
+        visitParents(p)
+      }
+    }
+    const visitChildren = (id: number) => {
+      tree.edges
+        .filter((e) => e.fromId === id)
+        .forEach((e) => {
+          const key = `${e.fromId}-${e.toId}`
+          if (hi.has(key)) return
+          hi.add(key)
+          visitChildren(e.toId)
+        })
+    }
+    visitParents(focusedId)
+    visitChildren(focusedId)
+    return hi
+  }, [focusedId, nodeById, tree.edges])
+
+  // Smooth vertical bezier between two centers · we route the curve so it
+  // hugs the source's bottom edge and the target's top edge.
+  const edgePath = (fromId: number, toId: number): string => {
+    const a = nodeById.get(fromId)
+    const b = nodeById.get(toId)
+    if (!a || !b) return ''
+    const sx = a.cx
+    const sy = a.cy + TREE_NODE_H / 2
+    const ex = b.cx
+    const ey = b.cy - TREE_NODE_H / 2
+    // Control points: vertical first, then ease into the target column.
+    const dy = Math.max(40, (ey - sy) / 2)
+    return `M ${sx} ${sy} C ${sx} ${sy + dy}, ${ex} ${ey - dy}, ${ex} ${ey}`
+  }
 
   return (
-    <div
-      className="pf-wrap"
-      role="region"
-      aria-label="Production chain flow"
-      style={{ ['--n' as string]: chain.length }}
-    >
-      {/* Tier lane bands — sit under the pipeline and span same-tier groups. */}
-      <div className="pf-tier-row">
-        {tierGroups.map((g, i) => {
-          const t = tierStyle(g.tier)
-          return (
-            <div
-              key={`${g.tier}-${i}`}
-              className={`pf-tier-band tier-${g.tier}`}
-              style={{ gridColumn: `${g.from + 1} / span ${g.span}` }}
-            >
-              <span>{t.label}</span>
-            </div>
-          )
-        })}
-      </div>
+    <div className="tree-wrap" role="region" aria-label="Production genealogy tree">
+      <div
+        className="tree-canvas"
+        style={{
+          width: tree.width,
+          height: tree.height,
+        }}
+      >
+        {/* Vertical tier lanes painted as background gradients */}
+        <div className="tree-lanes" aria-hidden>
+          <span className="tree-lane tier-upstream" style={{ top: 0, height: TREE_ROW_H * 3 }}>
+            <em>Upstream</em>
+          </span>
+          <span
+            className="tree-lane tier-production"
+            style={{ top: TREE_ROW_H * 3, height: TREE_ROW_H * 2.5 }}
+          >
+            <em>Production</em>
+          </span>
+          <span
+            className="tree-lane tier-downstream"
+            style={{ top: TREE_ROW_H * 5.5, height: TREE_ROW_H * 1.5 }}
+          >
+            <em>Downstream</em>
+          </span>
+          <span
+            className="tree-lane tier-verification"
+            style={{ top: TREE_ROW_H * 7, height: TREE_ROW_H }}
+          >
+            <em>Customer</em>
+          </span>
+        </div>
 
-      {/* Pipeline rail with animated gradient flow + travelling pulse */}
-      <div className="pf-rail-wrap" aria-hidden>
-        <svg className="pf-rail-svg" viewBox="0 0 100 8" preserveAspectRatio="none">
+        {/* SVG layer · curved bezier connectors with animated dashes */}
+        <svg
+          className="tree-svg"
+          width={tree.width}
+          height={tree.height}
+          viewBox={`0 0 ${tree.width} ${tree.height}`}
+          aria-hidden
+        >
           <defs>
-            <linearGradient id="pf-flow-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+            <linearGradient id="tree-edge-grad" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stopColor="#94a3b8" stopOpacity="0.45" />
+              <stop offset="100%" stopColor="#94a3b8" stopOpacity="0.85" />
+            </linearGradient>
+            <linearGradient id="tree-edge-active" x1="0%" y1="0%" x2="0%" y2="100%">
               <stop offset="0%" stopColor="#D4A574" />
-              <stop offset="35%" stopColor="#3B82F6" />
-              <stop offset="70%" stopColor="#16a34a" />
+              <stop offset="40%" stopColor="#3B82F6" />
+              <stop offset="80%" stopColor="#16a34a" />
               <stop offset="100%" stopColor="#7C3AED" />
             </linearGradient>
           </defs>
-          <line x1="0" y1="4" x2="100" y2="4" className="pf-rail-bg" />
-          <line x1="0" y1="4" x2="100" y2="4" className="pf-rail-flow" />
+          {tree.edges.map(({ fromId, toId }) => {
+            const key = `${fromId}-${toId}`
+            const isHi = highlightedEdges.has(key)
+            return (
+              <g key={key}>
+                <path
+                  d={edgePath(fromId, toId)}
+                  className="tree-edge-bg"
+                  fill="none"
+                />
+                <path
+                  d={edgePath(fromId, toId)}
+                  className={`tree-edge-flow ${isHi ? 'is-active' : ''}`}
+                  fill="none"
+                />
+              </g>
+            )
+          })}
         </svg>
-        <span
-          className="pf-rail-pulse"
-          style={{ ['--pulse-x' as string]: `${focusedPct * 100}%` }}
-          aria-hidden
-        />
-      </div>
 
-      {/* Stage cards */}
-      <ol className="pf-stages">
-        {chain.map((c, i) => {
-          const Icon = stepIcon(c.slug)
-          const attrCount = attrCountByStep.get(c.stepId) ?? 0
-          const sources = dataSourcesByStep.get(c.stepId) ?? []
-          const isFocused = c.stepId === focusedId
+        {/* Node cards · positioned absolutely on the canvas */}
+        {tree.nodes.map((n, i) => {
+          const Icon = stepIcon(n.step.slug)
+          const attrCount = attrCountByStep.get(n.step.stepId) ?? 0
+          const sources = dataSourcesByStep.get(n.step.stepId) ?? []
+          const isFocused = n.step.stepId === focusedId
+          const accent = tierAccent(n.step.tier)
           return (
-            <li
-              key={c.stepId}
-              className={`pf-stage tier-${c.tier} ${isFocused ? 'is-focused' : ''}`}
-              style={{ ['--i' as string]: i }}
+            <button
+              key={n.step.stepId}
+              type="button"
+              onClick={() => onFocus(n.step.stepId)}
+              aria-pressed={isFocused}
+              aria-label={`Stage ${n.step.ordinal}: ${n.step.name}`}
+              className={`tree-node tier-${n.step.tier} ${isFocused ? 'is-focused' : ''}`}
+              style={{
+                left: n.cx - TREE_NODE_W / 2,
+                top: n.cy - TREE_NODE_H / 2,
+                width: TREE_NODE_W,
+                height: TREE_NODE_H,
+                ['--accent' as string]: accent,
+                ['--i' as string]: i,
+              }}
             >
-              <button
-                type="button"
-                className="pf-stage-btn"
-                onClick={() => onFocus(c.stepId)}
-                aria-pressed={isFocused}
-                aria-label={`Stage ${c.ordinal}: ${c.name}`}
-              >
-                <span className="pf-stage-num">{String(c.ordinal).padStart(2, '0')}</span>
-                <span className="pf-stage-icon">
+              <span className="tree-node-head">
+                <span className="tree-node-num">{String(n.step.ordinal).padStart(2, '0')}</span>
+                <span className="tree-node-tier">{tierStyle(n.step.tier).label}</span>
+              </span>
+              <span className="tree-node-icon-row">
+                <span className="tree-node-icon">
                   <Icon className="h-4 w-4" />
                 </span>
-                <span className="pf-stage-name">{c.name}</span>
-                <span className="pf-stage-meta">
-                  <span className="pf-stage-attrs" title={`${attrCount} attributes`}>
-                    {attrCount > 0 ? `${attrCount} attr` : '—'}
-                  </span>
-                  <span
-                    className="pf-stage-dots"
-                    aria-label={`${sources.length} data source${sources.length === 1 ? '' : 's'}`}
-                  >
-                    {sources.length === 0 ? (
-                      <span className="pf-stage-dot is-empty" title="No data source connected" />
-                    ) : (
-                      sources.slice(0, 3).map((s) => (
-                        <span
-                          key={s.id}
-                          className={`pf-stage-dot is-${monitorTone(s)}`}
-                          title={`${connectorLabel(s)} · ${s.lastSyncStatus ?? 'never synced'}`}
-                        />
-                      ))
-                    )}
-                  </span>
+                <span className="tree-node-name">{n.step.name}</span>
+              </span>
+              <span className="tree-node-meta">
+                <span className="tree-node-attrs">
+                  {attrCount > 0 ? `${attrCount} attr` : '— attr'}
                 </span>
-              </button>
-            </li>
+                <span className="tree-node-dots">
+                  {sources.length === 0 ? (
+                    <span className="tree-node-dot is-empty" title="No data source" />
+                  ) : (
+                    sources.slice(0, 3).map((s) => (
+                      <span
+                        key={s.id}
+                        className={`tree-node-dot is-${monitorTone(s)}`}
+                        title={`${connectorLabel(s)} · ${s.lastSyncStatus ?? 'never synced'}`}
+                      />
+                    ))
+                  )}
+                </span>
+              </span>
+            </button>
           )
         })}
-      </ol>
+      </div>
 
-      {/* Tier legend */}
-      <div className="pf-legend" aria-hidden>
-        <span className="pf-legend-item tier-upstream"><i /> Upstream</span>
-        <span className="pf-legend-item tier-production"><i /> Production</span>
-        <span className="pf-legend-item tier-downstream"><i /> Downstream</span>
-        <span className="pf-legend-item tier-verification"><i /> Verification</span>
+      {/* Tier legend pill below the canvas */}
+      <div className="tree-legend" aria-hidden>
+        <span className="tree-legend-item tier-upstream"><i /> Upstream</span>
+        <span className="tree-legend-item tier-production"><i /> Production</span>
+        <span className="tree-legend-item tier-downstream"><i /> Downstream</span>
+        <span className="tree-legend-item tier-verification"><i /> Verification</span>
       </div>
     </div>
   )
@@ -1102,242 +1276,232 @@ const PROCESS_3D_CSS = `
   .proc3d-detail { animation: none; }
 }
 
-/* ── Interactive process flow diagram ──────────────────────────────────
- * Horizontal pipeline with: tier lane bands at top, an animated gradient
- * rail line in the middle, stage cards below, and a tier legend at the
- * bottom. Scrolls horizontally on small screens. */
+/* ── Genealogy tree visualisation ──────────────────────────────────────
+ * Two-dimensional tree where mining + power converge into smelting,
+ * the production trunk runs vertically, and lab QC + third-party
+ * verification branch off as side-validators. Curved bezier connectors
+ * carry an animated dashed flow; the focused node lights up its full
+ * ancestor + descendant lineage. */
 
-.pf-wrap {
+.tree-wrap {
   margin-top: 24px;
-  padding: 8px 0 4px;
+  padding: 6px 0 4px;
+}
+.tree-canvas {
   position: relative;
-  --col-width: 124px;
-  --rail-y: 110px;
+  margin: 0 auto;
+  border-radius: 18px;
+  background:
+    radial-gradient(ellipse at 20% 0%, rgba(212,165,116,0.10) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 0%, rgba(59,130,246,0.10) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 100%, rgba(124,58,237,0.10) 0%, transparent 60%),
+    linear-gradient(180deg, #fbfcfe 0%, #f4f6fa 100%);
+  border: 1px solid var(--surface-border);
+  overflow: hidden;
 }
 
-.pf-tier-row,
-.pf-stages {
-  display: grid;
-  grid-template-columns: repeat(var(--n, 11), minmax(0, 1fr));
-  gap: 8px;
-  list-style: none;
-  padding: 0;
-  margin: 0;
+/* Vertical tier lanes painted as soft horizontal bands */
+.tree-lanes {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
 }
-
-.pf-tier-row {
-  margin: 0 0 14px;
-  height: 22px;
-}
-.pf-tier-band {
+.tree-lane {
+  position: absolute;
+  left: 0; right: 0;
   display: flex;
   align-items: center;
-  justify-content: center;
-  border-radius: 999px;
+  justify-content: flex-end;
+  padding-right: 18px;
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: 10px;
   font-weight: 700;
-  letter-spacing: 0.18em;
+  letter-spacing: 0.22em;
   text-transform: uppercase;
-  white-space: nowrap;
-  height: 22px;
-  padding: 0 12px;
-  border: 1px solid transparent;
+  border-top: 1px dashed transparent;
 }
-.pf-tier-band.tier-upstream {
-  background: linear-gradient(90deg, #FBE9CB, #F3D29A);
-  color: #8B5A1A;
-  border-color: rgba(212, 165, 116, 0.4);
+.tree-lane em {
+  font-style: normal;
+  padding: 4px 12px;
+  border-radius: 9999px;
+  background: rgba(255,255,255,0.85);
+  border: 1px solid var(--surface-border);
 }
-.pf-tier-band.tier-production {
-  background: linear-gradient(90deg, #DBEAFE, #93C5FD);
-  color: #1E40AF;
-  border-color: rgba(59, 130, 246, 0.35);
-}
-.pf-tier-band.tier-downstream {
-  background: linear-gradient(90deg, #DCFCE7, #86EFAC);
-  color: #14532D;
-  border-color: rgba(22, 163, 74, 0.35);
-}
-.pf-tier-band.tier-verification {
-  background: linear-gradient(90deg, #EDE9FE, #C4B5FD);
-  color: #5B21B6;
-  border-color: rgba(124, 58, 237, 0.35);
-}
+.tree-lane.tier-upstream     { background: linear-gradient(90deg, rgba(245,233,217,0.55), rgba(245,233,217,0.10) 80%); color: #8B5A1A; }
+.tree-lane.tier-production   { background: linear-gradient(90deg, rgba(219,234,254,0.55), rgba(219,234,254,0.10) 80%); color: #1E40AF; border-top-color: rgba(59,130,246,0.30); }
+.tree-lane.tier-downstream   { background: linear-gradient(90deg, rgba(220,252,231,0.55), rgba(220,252,231,0.10) 80%); color: #14532D; border-top-color: rgba(22,163,74,0.30); }
+.tree-lane.tier-verification { background: linear-gradient(90deg, rgba(237,233,254,0.55), rgba(237,233,254,0.10) 80%); color: #5B21B6; border-top-color: rgba(124,58,237,0.30); }
 
-/* The rail sits between the tier band row and the stages. */
-.pf-rail-wrap {
-  position: relative;
-  height: 28px;
-  margin: 4px 6px 6px;
-}
-.pf-rail-svg {
-  width: 100%;
-  height: 100%;
+/* SVG layer for the curved bezier connectors */
+.tree-svg {
+  position: absolute;
+  top: 0; left: 0;
+  z-index: 1;
+  pointer-events: none;
   overflow: visible;
 }
-.pf-rail-bg {
-  stroke: var(--surface-border);
-  stroke-width: 1.2;
+.tree-edge-bg {
+  stroke: rgba(148,163,184,0.45);
+  stroke-width: 1.5;
+  fill: none;
   stroke-linecap: round;
-  vector-effect: non-scaling-stroke;
 }
-.pf-rail-flow {
-  stroke: url(#pf-flow-grad);
-  stroke-width: 2.2;
+.tree-edge-flow {
+  stroke: rgba(148,163,184,0.85);
+  stroke-width: 1.5;
+  fill: none;
   stroke-linecap: round;
-  vector-effect: non-scaling-stroke;
-  stroke-dasharray: 5 6;
-  animation: pf-flow-dash 2.4s linear infinite;
+  stroke-dasharray: 4 7;
+  animation: tree-edge-march 5s linear infinite;
+  transition: stroke 220ms ease, stroke-width 220ms ease, opacity 220ms ease;
+  opacity: 0.7;
 }
-@keyframes pf-flow-dash {
-  to { stroke-dashoffset: -22; }
+.tree-edge-flow.is-active {
+  stroke: url(#tree-edge-active);
+  stroke-width: 2.6;
+  stroke-dasharray: 5 5;
+  animation: tree-edge-march 1.6s linear infinite;
+  opacity: 1;
+  filter: drop-shadow(0 0 6px rgba(59,130,246,0.45));
+}
+@keyframes tree-edge-march {
+  to { stroke-dashoffset: -120; }
 }
 
-/* The travelling pulse marks where the focused stage sits along the rail. */
-.pf-rail-pulse {
+/* Node cards */
+.tree-node {
   position: absolute;
-  top: 50%;
-  left: var(--pulse-x, 50%);
-  width: 14px; height: 14px;
-  margin-top: -7px;
-  margin-left: -7px;
-  border-radius: 9999px;
-  background: var(--color-accent, #0F4C81);
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px 14px 10px;
+  border-radius: 14px;
+  border: 1px solid var(--surface-border);
+  background: linear-gradient(180deg, #ffffff 0%, #f8f9fc 100%);
+  text-align: left;
+  cursor: pointer;
+  --accent: #94a3b8;
   box-shadow:
-    0 0 0 4px rgba(15,76,129,0.18),
-    0 0 16px 2px rgba(15,76,129,0.45);
-  transition: left 420ms cubic-bezier(0.16, 1, 0.3, 1);
+    0 4px 12px -10px rgba(15,23,42,0.20),
+    0 1px 2px rgba(15,23,42,0.04);
+  transition: transform 220ms ease, border-color 220ms ease, box-shadow 220ms ease,
+    background 220ms ease;
+  animation: tree-node-rise 480ms cubic-bezier(0.16, 1, 0.3, 1) backwards;
+  animation-delay: calc(var(--i, 0) * 36ms);
 }
-.pf-rail-pulse::after {
-  content: "";
-  position: absolute;
-  inset: -6px;
-  border-radius: 9999px;
-  background: rgba(15,76,129,0.20);
-  animation: pf-pulse 1.6s ease-out infinite;
-}
-@keyframes pf-pulse {
-  from { transform: scale(0.6); opacity: 1; }
-  to   { transform: scale(2.2); opacity: 0; }
-}
-
-/* Stage cards */
-.pf-stage {
-  --tier-accent: var(--surface-border);
-  --tier-soft: rgba(15,23,42,0.04);
-  animation: pf-rise 480ms cubic-bezier(0.16, 1, 0.3, 1) backwards;
-  animation-delay: calc(var(--i, 0) * 38ms);
-  position: relative;
-  min-width: 0;
-}
-.pf-stage.tier-upstream     { --tier-accent: #D4A574; --tier-soft: rgba(245, 233, 217, 0.55); }
-.pf-stage.tier-production   { --tier-accent: #3B82F6; --tier-soft: rgba(219, 234, 254, 0.55); }
-.pf-stage.tier-downstream   { --tier-accent: #16a34a; --tier-soft: rgba(220, 252, 231, 0.55); }
-.pf-stage.tier-verification { --tier-accent: #7C3AED; --tier-soft: rgba(237, 233, 254, 0.55); }
-
-@keyframes pf-rise {
+@keyframes tree-node-rise {
   from { opacity: 0; transform: translateY(10px); }
   to   { opacity: 1; }
 }
+.tree-node::before {
+  /* Tier-coloured leading bar on the left edge */
+  content: "";
+  position: absolute;
+  top: 14px; bottom: 14px; left: 0;
+  width: 3px;
+  background: var(--accent);
+  border-radius: 0 4px 4px 0;
+  opacity: 0.9;
+}
+.tree-node:hover {
+  transform: translateY(-2px);
+  border-color: var(--accent);
+  box-shadow: 0 12px 26px -14px rgba(15,23,42,0.28);
+}
+.tree-node.is-focused {
+  transform: translateY(-3px) scale(1.02);
+  border-color: var(--accent);
+  background: linear-gradient(180deg, #ffffff 0%,
+    color-mix(in srgb, var(--accent) 9%, #ffffff) 100%);
+  box-shadow:
+    0 18px 32px -16px color-mix(in srgb, var(--accent) 60%, transparent),
+    0 0 0 1px color-mix(in srgb, var(--accent) 50%, transparent) inset;
+}
+.tree-node.is-focused::before { width: 4px; }
+.tree-node.is-focused::after {
+  content: "";
+  position: absolute;
+  inset: -6px;
+  border-radius: 18px;
+  border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
+  pointer-events: none;
+  animation: tree-node-pulse 2.2s ease-out infinite;
+}
+@keyframes tree-node-pulse {
+  0%   { transform: scale(0.98); opacity: 0.85; }
+  70%  { transform: scale(1.06); opacity: 0; }
+  100% { transform: scale(1.06); opacity: 0; }
+}
 
-.pf-stage-btn {
+.tree-node-head {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 6px;
-  width: 100%;
-  min-height: 142px;
-  padding: 14px 10px 12px;
-  border-radius: 14px;
-  border: 1px solid var(--surface-border);
-  background: linear-gradient(180deg, #ffffff 0%, #f7f8fb 100%);
-  text-align: center;
-  cursor: pointer;
-  position: relative;
-  transition: transform 200ms ease, border-color 200ms ease, box-shadow 200ms ease, background 200ms ease;
+  justify-content: space-between;
+  gap: 8px;
 }
-.pf-stage-btn::before {
-  /* Tier-coloured top accent strip */
-  content: "";
-  position: absolute;
-  top: 0; left: 14px; right: 14px;
-  height: 3px;
-  border-radius: 0 0 4px 4px;
-  background: var(--tier-accent);
-  opacity: 0.85;
-}
-.pf-stage-btn::after {
-  /* Connector tick that meets the rail above */
-  content: "";
-  position: absolute;
-  top: -16px;
-  left: 50%;
-  width: 2px;
-  height: 14px;
-  background: var(--tier-accent);
-  transform: translateX(-50%);
-  opacity: 0.45;
-  border-radius: 2px;
-}
-.pf-stage-btn:hover {
-  transform: translateY(-3px);
-  border-color: var(--tier-accent);
-  box-shadow: 0 14px 24px -16px rgba(15,23,42,0.22);
-}
-.pf-stage.is-focused .pf-stage-btn {
-  transform: translateY(-4px);
-  border-color: var(--tier-accent);
-  background: linear-gradient(180deg, #ffffff 0%, var(--tier-soft) 100%);
-  box-shadow: 0 18px 30px -16px rgba(15,23,42,0.28);
-}
-.pf-stage.is-focused .pf-stage-btn::before { opacity: 1; height: 4px; }
-.pf-stage.is-focused .pf-stage-btn::after { opacity: 1; height: 18px; top: -20px; }
-
-.pf-stage-num {
+.tree-node-num {
   font-family: var(--font-mono);
   font-size: 9px;
   font-weight: 700;
   letter-spacing: 0.22em;
   color: var(--fg-subtle);
-  text-transform: uppercase;
 }
-.pf-stage-icon {
+.tree-node-tier {
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  padding: 2px 7px;
+  border-radius: 9999px;
+  color: color-mix(in srgb, var(--accent) 75%, #1e293b);
+  background: color-mix(in srgb, var(--accent) 14%, #ffffff);
+  border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
+}
+
+.tree-node-icon-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 2px;
+}
+.tree-node-icon {
   display: grid;
   place-items: center;
-  width: 36px; height: 36px;
+  flex-shrink: 0;
+  width: 32px; height: 32px;
   border-radius: 9999px;
   background: #ffffff;
-  border: 2px solid var(--tier-accent);
+  border: 2px solid var(--accent);
   color: var(--fg-default);
   box-shadow: 0 2px 6px rgba(15,23,42,0.06);
-  transition: background 200ms ease, color 200ms ease, transform 200ms ease;
+  transition: background 220ms ease, color 220ms ease, transform 220ms ease;
 }
-.pf-stage.is-focused .pf-stage-icon {
-  background: var(--tier-accent);
+.tree-node.is-focused .tree-node-icon {
+  background: var(--accent);
   color: #ffffff;
-  transform: scale(1.08);
+  transform: scale(1.06);
 }
-.pf-stage-name {
-  font-size: 11.5px;
+.tree-node-name {
+  font-size: 12.5px;
   font-weight: 600;
   color: var(--fg-default);
-  line-height: 1.3;
+  line-height: 1.25;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
-  margin-top: 2px;
-  min-height: 30px;
 }
-.pf-stage-meta {
+
+.tree-node-meta {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 4px;
+  gap: 6px;
   margin-top: auto;
   padding-top: 8px;
-  width: 100%;
   font-family: var(--font-mono);
   font-size: 9.5px;
   color: var(--fg-subtle);
@@ -1345,37 +1509,39 @@ const PROCESS_3D_CSS = `
   text-transform: uppercase;
   border-top: 1px dashed var(--surface-border);
 }
-.pf-stage-attrs { font-weight: 700; }
-.pf-stage-dots { display: inline-flex; gap: 3px; align-items: center; }
-.pf-stage-dot {
+.tree-node-attrs { font-weight: 700; }
+.tree-node-dots {
+  display: inline-flex;
+  gap: 3px;
+  align-items: center;
+}
+.tree-node-dot {
   display: inline-block;
   width: 6px; height: 6px;
   border-radius: 9999px;
   background: var(--fg-subtle);
 }
-.pf-stage-dot.is-ok    { background: var(--color-green, #16a34a); }
-.pf-stage-dot.is-warn  { background: var(--color-amber, #d97706); }
-.pf-stage-dot.is-error { background: var(--color-red, #dc2626); }
-.pf-stage-dot.is-idle  { background: var(--fg-subtle); }
-.pf-stage-dot.is-empty {
-  background: transparent;
-  border: 1px dashed var(--fg-subtle);
-}
+.tree-node-dot.is-ok    { background: var(--color-green, #16a34a); }
+.tree-node-dot.is-warn  { background: var(--color-amber, #d97706); }
+.tree-node-dot.is-error { background: var(--color-red, #dc2626); }
+.tree-node-dot.is-idle  { background: var(--fg-subtle); }
+.tree-node-dot.is-empty { background: transparent; border: 1px dashed var(--fg-subtle); }
 
-/* Legend at the bottom of the diagram */
-.pf-legend {
+/* Legend pill below the canvas */
+.tree-legend {
   display: flex;
   flex-wrap: wrap;
   gap: 14px;
   align-items: center;
-  margin-top: 14px;
-  padding: 8px 12px;
+  justify-content: center;
+  margin: 14px auto 0;
+  padding: 8px 14px;
   border-radius: 9999px;
   border: 1px solid var(--surface-border);
   background: #fff;
   width: fit-content;
 }
-.pf-legend-item {
+.tree-legend-item {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -1386,46 +1552,33 @@ const PROCESS_3D_CSS = `
   text-transform: uppercase;
   color: var(--fg-muted);
 }
-.pf-legend-item i {
+.tree-legend-item i {
   display: inline-block;
   width: 10px; height: 10px;
   border-radius: 9999px;
   border: 2px solid var(--fg-subtle);
   background: #fff;
 }
-.pf-legend-item.tier-upstream     i { border-color: #D4A574; }
-.pf-legend-item.tier-production   i { border-color: #3B82F6; }
-.pf-legend-item.tier-downstream   i { border-color: #16a34a; }
-.pf-legend-item.tier-verification i { border-color: #7C3AED; }
+.tree-legend-item.tier-upstream     i { border-color: #D4A574; }
+.tree-legend-item.tier-production   i { border-color: #3B82F6; }
+.tree-legend-item.tier-downstream   i { border-color: #16a34a; }
+.tree-legend-item.tier-verification i { border-color: #7C3AED; }
 
-/* Horizontal scroll on narrow viewports — preserves the linear pipeline read. */
-@media (max-width: 1100px) {
-  .pf-wrap {
+/* Horizontal scroll on narrow viewports — keeps the tree intact. */
+@media (max-width: 880px) {
+  .tree-wrap {
     overflow-x: auto;
-    overflow-y: visible;
     padding-bottom: 12px;
     scrollbar-width: thin;
   }
-  .pf-tier-row,
-  .pf-stages {
-    grid-template-columns: repeat(var(--n, 11), 132px);
-    min-width: max-content;
-  }
-  .pf-rail-wrap { min-width: max-content; }
-}
-@media (max-width: 600px) {
-  .pf-tier-row,
-  .pf-stages { grid-template-columns: repeat(var(--n, 11), 108px); gap: 6px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .pf-stage { animation: none; }
-  .pf-stage-btn { transition: none; }
-  .pf-stage-btn:hover, .pf-stage.is-focused .pf-stage-btn,
-  .pf-stage.is-focused .pf-stage-icon { transform: none; }
-  .pf-rail-flow { animation: none; }
-  .pf-rail-pulse::after { animation: none; }
-  .pf-rail-pulse { transition: none; }
+  .tree-node { animation: none; }
+  .tree-node, .tree-node-icon { transition: none; }
+  .tree-node:hover, .tree-node.is-focused, .tree-node.is-focused .tree-node-icon { transform: none; }
+  .tree-edge-flow, .tree-edge-flow.is-active { animation: none; }
+  .tree-node.is-focused::after { animation: none; }
 }
 `
 
