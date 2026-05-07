@@ -1,18 +1,23 @@
 /* ──────────────────────────────────────────────────────────────────────────
-   EGA DPP design tokens
+   C6 Trail · Vedanta · Hindustan Zinc — design tokens
    --------------------------------------------------------------------------
-   Two distinct themes:
-     [data-theme='enterprise'] — Stripe / Linear / Notion restraint, signature
-                                  blue accent. Used by all six authenticated
-                                  surfaces (Tenant Console, DPP Mgmt, Customer
-                                  Portal, Authority, Verifier, Super Admin).
-     [data-theme='editorial']  — Apple Environmental Report aesthetic, Fraunces
-                                  serif + desert-sun gold. Used exclusively by
-                                  the Public Viewer (apps/web-public).
-   Switch themes via <html data-theme="enterprise"> at the document root.
+   Active themes:
+     [data-theme='c6trail-enterprise'] — operator/customer/authority/verifier/
+                                          admin surfaces. Vedanta-green primary,
+                                          HZL-navy authority accent, zinc-silver
+                                          chrome, trail-amber for waypoints.
+     [data-theme='c6trail-editorial']  — public viewer. Recycled-paper warmth,
+                                          Fraunces display, trail-amber accent.
+
+   Legacy themes (kept for reference, do not extend):
+     [data-theme='enterprise'] — original EGA aluminium dashboards.
+     [data-theme='editorial']  — original EGA aluminium public viewer.
+
+   Switch themes via <html data-theme="c6trail-enterprise"> at the document root.
    --------------------------------------------------------------------------
    Spec sources:
-     §4 (Design System), §10 (Public Viewer Implementation), §13 (Surface Map)
+     §4 (Design System), §10 (Public Viewer), §13 (Surface Map),
+     C6 Trail brief §4 (Visual identity), §5 (Three screens), §6 (Voice).
    ────────────────────────────────────────────────────────────────────────── */
 
 :root,
@@ -154,6 +159,175 @@
 
 [data-theme='editorial'] ::selection {
   background: var(--color-gold);
+  color: var(--color-ink);
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   C6 TRAIL · ENTERPRISE
+   ──────────────────────────────────────────────────────────────────────────
+   Five authenticated surfaces (console / portal / authority / verifier /
+   admin). Vedanta green primary, HZL navy as authority accent, zinc silver
+   for chrome, trail amber for waypoints/provenance markers.
+   ══════════════════════════════════════════════════════════════════════════ */
+[data-theme='c6trail-enterprise'] {
+  /* Brand palette — see C6 Trail brief §4 */
+  --color-ink: #0e1721;             /* near-black, calmer than pure ink */
+  --color-ink-soft: #2a3441;
+  --color-graphite: #4a5867;
+  --color-silver: #b8c4cc;          /* the metal — silver-blue */
+  --color-fog: #eaecef;
+  --color-paper: #ffffff;
+  --color-cream: #fafaf6;           /* warm paper, not ice white */
+
+  --color-vedanta-green: #0e7c5a;   /* parent brand primary */
+  --color-vedanta-green-soft: #d6efe4;
+  --color-hzl-navy: #0b2545;        /* authority surfaces & headlines */
+  --color-zinc: #b8c4cc;
+  --color-trail-amber: #d9a441;     /* waypoint accent */
+  --color-trail-amber-soft: #f7e6c2;
+  --color-verified: #2e8b57;        /* "verified" status */
+  --color-low-carbon: #5fad56;      /* EcoZen highlight */
+  --color-warn: #c47a2b;
+  --color-error: #c0392b;
+
+  /* Compatibility aliases so generic components keep working */
+  --color-accent: var(--color-vedanta-green);
+  --color-accent-soft: var(--color-vedanta-green-soft);
+  --color-green: var(--color-verified);
+  --color-amber: var(--color-trail-amber);
+  --color-red: var(--color-error);
+
+  /* Surfaces */
+  --surface-page: var(--color-cream);
+  --surface-canvas: var(--color-paper);
+  --surface-recessed: #f2f1ea;
+  --surface-hover: var(--color-fog);
+  --surface-selected: var(--color-trail-amber-soft);
+  --surface-overlay: rgba(11, 37, 69, 0.4);
+  --surface-border: var(--color-silver);
+  --surface-divider: rgba(11, 37, 69, 0.06);
+  --surface-trail: linear-gradient(180deg, #fafaf6 0%, #f2f1ea 100%);
+
+  /* Foreground */
+  --fg-default: var(--color-ink);
+  --fg-muted: var(--color-ink-soft);
+  --fg-subtle: var(--color-graphite);
+  --fg-on-accent: var(--color-paper);
+  --fg-link: var(--color-vedanta-green);
+  --fg-headline: var(--color-hzl-navy);
+
+  /* Type — Inter for UI; JetBrains Mono for every BPN/DID/hash */
+  --font-display: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-body: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+
+  /* Radii */
+  --radius-xs: 2px;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
+  --radius-pill: 9999px;
+
+  --shadow-focus: 0 0 0 2px var(--color-paper), 0 0 0 4px var(--color-vedanta-green);
+  --shadow-overlay: 0 12px 32px -8px rgba(11, 37, 69, 0.16),
+    0 4px 8px -4px rgba(11, 37, 69, 0.08);
+  --shadow-popover: 0 8px 24px -6px rgba(11, 37, 69, 0.12),
+    0 2px 6px -2px rgba(11, 37, 69, 0.06);
+
+  /* Motion */
+  --motion-fast: 150ms;
+  --motion-base: 240ms;
+  --motion-hero: 480ms;
+  --ease-standard: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-decelerate: cubic-bezier(0, 0, 0.2, 1);
+
+  /* Layout */
+  --container-max: 1280px;
+  --rail-collapsed: 64px;
+  --rail-expanded: 240px;
+  --topbar-height: 56px;
+  --right-rail-width: 320px;
+  --grid-gutter-desktop: 24px;
+  --grid-gutter-tablet: 16px;
+  --grid-gutter-mobile: 12px;
+}
+
+[data-theme='c6trail-enterprise'] ::selection {
+  background: var(--color-trail-amber-soft);
+  color: var(--color-ink);
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   C6 TRAIL · EDITORIAL
+   ──────────────────────────────────────────────────────────────────────────
+   Public viewer. Reads as a published sustainability report, not a SaaS app.
+   Recycled-paper warmth, Fraunces display, trail-amber accent. The QR scan
+   destination — every public touchpoint sees this.
+   ══════════════════════════════════════════════════════════════════════════ */
+[data-theme='c6trail-editorial'] {
+  /* Palette */
+  --color-ink: #0b1117;
+  --color-ink-soft: #1f2a35;
+  --color-graphite: #6b7682;
+  --color-paper: #f4f1e8;            /* recycled-paper warmth */
+  --color-paper-soft: #ede6d6;
+  --color-paper-muted: #ddd3bd;
+  --color-card: #ffffff;             /* white cards float on the paper */
+  --color-trail-amber: #d9a441;
+  --color-trail-amber-deep: #b8895a;
+  --color-trail-amber-soft: #f7e6c2;
+  --color-hzl-navy: #0b2545;
+  --color-vedanta-green: #0e7c5a;
+  --color-low-carbon: #5fad56;
+  --color-verified: #2e8b57;
+  --color-line: rgba(11, 37, 69, 0.12);
+  --color-line-soft: rgba(11, 37, 69, 0.06);
+
+  --color-accent: var(--color-trail-amber);
+  --color-accent-soft: var(--color-trail-amber-soft);
+  --color-green: var(--color-verified);
+
+  /* Surfaces */
+  --surface-page: var(--color-paper);
+  --surface-canvas: var(--color-paper-soft);
+  --surface-recessed: var(--color-paper-soft);
+  --surface-card: var(--color-card);
+  --surface-hover: var(--color-paper-muted);
+  --surface-selected: var(--color-trail-amber-soft);
+  --surface-overlay: rgba(11, 37, 69, 0.6);
+  --surface-border: var(--color-line);
+  --surface-divider: var(--color-line-soft);
+
+  /* Foreground */
+  --fg-default: var(--color-ink);
+  --fg-muted: var(--color-ink-soft);
+  --fg-subtle: var(--color-graphite);
+  --fg-on-accent: var(--color-paper);
+  --fg-link: var(--color-trail-amber-deep);
+  --fg-headline: var(--color-hzl-navy);
+
+  /* Three-font system */
+  --font-display: 'Fraunces', ui-serif, Georgia, 'Times New Roman', serif;
+  --font-body: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+
+  /* Motion — orchestrated, longer durations */
+  --motion-fast: 200ms;
+  --motion-base: 400ms;
+  --motion-hero: 1200ms;
+  --motion-bar-fill: 1600ms;
+  --motion-orchestrated: 3000ms;
+  --ease-standard: cubic-bezier(0.16, 1, 0.3, 1);
+
+  --shadow-focus: 0 0 0 2px var(--color-paper), 0 0 0 4px var(--color-trail-amber);
+  --shadow-overlay: 0 24px 64px -16px rgba(11, 37, 69, 0.24),
+    0 8px 16px -8px rgba(11, 37, 69, 0.12);
+  --shadow-card: 0 1px 0 rgba(11, 37, 69, 0.04), 0 8px 24px -8px rgba(11, 37, 69, 0.08);
+}
+
+[data-theme='c6trail-editorial'] ::selection {
+  background: var(--color-trail-amber);
   color: var(--color-ink);
 }
 

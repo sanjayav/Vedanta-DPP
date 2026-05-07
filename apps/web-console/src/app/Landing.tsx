@@ -121,9 +121,9 @@ export function Landing() {
           </span>
           <span className="al-land__brand-text">
             <span className="al-land__brand-name">
-              AL <span className="al-land__brand-name-accent">trail</span>
+              C6 <span className="al-land__brand-name-accent">Trail</span>
             </span>
-            <span className="al-land__brand-by">by Aeiforo</span>
+            <span className="al-land__brand-by">Vedanta · Hindustan Zinc</span>
           </span>
         </div>
         <nav className="al-land__topnav">
@@ -165,9 +165,10 @@ export function Landing() {
             transition={{ duration: 0.7, delay: 0.3, ease: EASE }}
             className="al-land__lede"
           >
-            AL trail anchors every cast to a signed Digital Product Passport · chemistry, carbon,
-            recycled content, ASI certification, and chain of custody · issued in line with the
-            EU&apos;s ESPR &amp; CBAM frameworks.
+            C6 Trail anchors every cast to a signed Digital Product Passport · chemistry, six
+            EF&nbsp;3.1 sustainability metrics, recycled content, BIS / REACH / EPD compliance,
+            and chain of custody · issued in line with the Chem-X v1.0 standards and the EU&apos;s
+            ESPR &amp; CBAM frameworks.
           </motion.p>
 
           {/* CTA row */}
@@ -181,8 +182,8 @@ export function Landing() {
               Sign in to console
               <ArrowRight className="h-3.5 w-3.5" />
             </a>
-            <a href="/dpp/sample/celestial" className="al-land__btn al-land__btn--ghost">
-              View a sample passport
+            <a href="/dpp/sample/ecozen" className="al-land__btn al-land__btn--ghost">
+              View an EcoZen passport
               <ChevronRight className="h-3.5 w-3.5" />
             </a>
           </motion.div>
@@ -247,9 +248,10 @@ export function Landing() {
               {[
                 'EU ESPR · Ecodesign for Sustainable Products Regulation 2024/1781',
                 'EU CBAM · Carbon Border Adjustment Mechanism 2023/956',
-                'EU Aluminium Delegated Act · site-specific CFP',
-                'ISO 14067 · Cradle-to-gate carbon footprint',
-                'ASI Performance V3 + Chain of Custody V2.1',
+                'Chem-X Sustainability Guideline v1.0 · six EF 3.1 LCIA metrics',
+                'Chem-X Business Identity (CX-0010) · BPDM with ISO 7064 BPN',
+                'ISO 14067:2018 · cradle-to-gate carbon footprint',
+                'ISO 14025 EPD · IS 209/IS 27 · BIS conformance',
                 'W3C Verifiable Credentials 2.0 · Ed25519Signature2020',
                 'GS1 Digital Link · open resolver standard',
               ].map((item) => (
@@ -273,7 +275,7 @@ export function Landing() {
             <span className="al-land__title-grad">in three deliberate steps.</span>
           </h2>
           <p className="al-land__lede">
-            AL trail keeps the operator in the seat. Software fills what software can fill; humans
+            C6 Trail keeps the operator in the seat. Software fills what software can fill; humans
             confirm what humans must confirm. Every step writes to the same hash-chained audit log.
           </p>
         </div>
@@ -359,12 +361,12 @@ export function Landing() {
             tone="public"
             who="Public buyer"
             value="Phone scan"
-            desc="Phone scan of the GS1 QR opens an editorial passport. Brand story, headline carbon, ASI certification, EoL guidance. No login."
+            desc="Phone scan of the GS1 QR opens an editorial passport. Brand story, headline carbon, EPD certification, EoL guidance. No login."
             stack="Story · Carbon · Certificates"
           />
           <SurfaceCard
             tone="customer"
-            who="Customer (BMW, Audi)"
+            who="Customer (Tata Steel, JSW)"
             value="VC-gated portal"
             desc="OEM presents a Verifiable Credential, gets the spec view. Chemistry, mill test, supply chain map, scorecard exports."
             stack="Chemistry · MTC · Compliance"
@@ -468,14 +470,14 @@ export function Landing() {
       <footer className="al-land__footer">
         <div className="al-land__footer-brand">
           <BrandMark small />
-          <span>AL trail · by Aeiforo</span>
+          <span>C6 Trail · Vedanta · Hindustan Zinc</span>
         </div>
         <div className="al-land__footer-meta">
           <span>EU Deadline 18 Feb 2027</span>
           <span>·</span>
           <span>Schema v1.0</span>
           <span>·</span>
-          <a href="/dpp/sample/celestial">Sample passport ↗</a>
+          <a href="/dpp/sample/ecozen">Sample passport ↗</a>
         </div>
       </footer>
     </main>
@@ -534,8 +536,8 @@ function IngotVisual({ reduceMotion }: { reduceMotion: boolean }) {
         <span className="al-land__ingot-face al-land__ingot-face--top" />
         <span className="al-land__ingot-face al-land__ingot-face--bottom" />
         <div className="al-land__ingot-stamp">
-          <span>EGA</span>
-          <span>EN AW-6063</span>
+          <span>HZL</span>
+          <span>SHG 99.995</span>
         </div>
       </motion.div>
 
@@ -556,8 +558,8 @@ function IngotVisual({ reduceMotion }: { reduceMotion: boolean }) {
         delay={0.6}
         position="top"
         title="Carbon Footprint"
-        primary="4,273 kg"
-        secondary="CO₂e per tonne · ISO 14067"
+        primary="0.95 kg"
+        secondary="CO₂e per kg · ISO 14067"
         tone="ok"
       />
       <FloatingCard
@@ -565,15 +567,15 @@ function IngotVisual({ reduceMotion }: { reduceMotion: boolean }) {
         position="right"
         title="Verifiable Credential"
         primary="Ed25519"
-        secondary="Signed by EGA · DNV-attested"
+        secondary="Signed by HZL · DNV-attested"
         tone="info"
       />
       <FloatingCard
         delay={1.2}
         position="bottom"
         title="Recycled Content"
-        primary="80%"
-        secondary="ASI CoC #428 · mass balance"
+        primary="35%"
+        secondary="EPD-IES-0006472 · mass balance"
         tone="success"
       />
     </motion.div>
@@ -755,26 +757,34 @@ function CredentialChip() {
 }
 
 function BrandMark({ small }: { small?: boolean }) {
+  // Hexagon = six EF 3.1 LCIA categories. The trail line traces the
+  // ingot → cast → audit chain. Colours track c6trail-enterprise tokens.
   return (
     <svg viewBox="0 0 32 32" fill="none" aria-hidden className={small ? 'h-5 w-5' : 'h-9 w-9'}>
       <defs>
-        <linearGradient id="al-land-mark-fill" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#1e6abf" />
-          <stop offset="100%" stopColor="#0f4c81" />
+        <linearGradient id="c6-mark-fill" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#0e7c5a" />
+          <stop offset="100%" stopColor="#0b2545" />
         </linearGradient>
-        <linearGradient id="al-land-mark-glow" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#ffffff" stopOpacity="0.9" />
+        <linearGradient id="c6-mark-glow" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#ffffff" stopOpacity="0.85" />
           <stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
         </linearGradient>
       </defs>
       <path
         d="M16 3.5 L26.5 9.5 L26.5 22.5 L16 28.5 L5.5 22.5 L5.5 9.5 Z"
-        fill="url(#al-land-mark-fill)"
+        fill="url(#c6-mark-fill)"
       />
-      <path d="M16 5 L24.5 9.7 L24.5 14 L16 9 L7.5 14 L7.5 9.7 Z" fill="url(#al-land-mark-glow)" />
-      <circle cx="11.5" cy="20" r="1.4" fill="#fff" opacity="0.92" />
-      <circle cx="16" cy="18" r="1.6" fill="#fff" />
-      <circle cx="20.5" cy="20" r="1.4" fill="#fff" opacity="0.92" />
+      <path d="M16 5 L24.5 9.7 L24.5 14 L16 9 L7.5 14 L7.5 9.7 Z" fill="url(#c6-mark-glow)" />
+      <path
+        d="M8.5 20 L13 17.5 L16 19 L19 17.5 L23.5 20"
+        stroke="#d9a441"
+        strokeWidth="1.4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        fill="none"
+      />
+      <circle cx="16" cy="14" r="1.4" fill="#fff" />
     </svg>
   )
 }

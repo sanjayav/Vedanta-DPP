@@ -2,14 +2,15 @@ import type { Metadata } from 'next'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: { default: 'AL trail · by Aeiforo', template: '%s · AL trail' },
-  description: 'AL trail by Aeiforo · Digital Product Passport platform for aluminium.',
+  title: { default: 'C6 Trail · Vedanta · Hindustan Zinc', template: '%s · C6 Trail' },
+  description:
+    'C6 Trail — Chem-X-aligned Digital Product Passport platform for Vedanta · Hindustan Zinc. Six EF 3.1 sustainability metrics, CX-0010 BPN identity, did:web verifiable.',
   robots: { index: false, follow: false },
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" data-theme="enterprise">
+    <html lang="en" data-theme="c6trail-enterprise">
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
