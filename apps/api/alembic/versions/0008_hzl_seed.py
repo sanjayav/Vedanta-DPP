@@ -402,7 +402,7 @@ def upgrade() -> None:
            SET slug = 'hzl',
                legal_name = 'Hindustan Zinc Limited',
                issuer_did = :did,
-               branding = :branding,
+               branding = CAST(:branding AS jsonb),
                status = 'active',
                tier = 'production'
          WHERE id = 1;
@@ -427,7 +427,8 @@ def upgrade() -> None:
         bind,
         """
         INSERT INTO tenants (id, slug, legal_name, issuer_did, status, tier, branding)
-        VALUES (1, 'hzl', 'Hindustan Zinc Limited', :did, 'active', 'production', :branding)
+        VALUES (1, 'hzl', 'Hindustan Zinc Limited', :did,
+                'active', 'production', CAST(:branding AS jsonb))
         ON CONFLICT (id) DO NOTHING;
         """,
         {
@@ -461,7 +462,7 @@ def upgrade() -> None:
         VALUES
             (1, :bpna, :owner, :name, 'legal_address',
              'IN', 'IN-RJ', 'Udaipur', 'Udaipur', '313004',
-             'Yashad Bhawan, Yashadgarh', NULL, NULL, 'active', :meta)
+             'Yashad Bhawan, Yashadgarh', NULL, NULL, 'active', CAST(:meta AS jsonb))
         ON CONFLICT (bpna) DO UPDATE SET
             tenant_id = EXCLUDED.tenant_id,
             owner_bpnl = EXCLUDED.owner_bpnl,
@@ -496,7 +497,7 @@ def upgrade() -> None:
             (1, :bpnl, 'Hindustan Zinc Limited', 'Public Limited Company', 'HZL',
              'Vedanta Hindustan Zinc',
              'IN', 'IN-RJ', :reg_bpna, :did,
-             'active', :inc_date, :meta)
+             'active', :inc_date, CAST(:meta AS jsonb))
         ON CONFLICT (bpnl) DO UPDATE SET
             tenant_id = EXCLUDED.tenant_id,
             legal_name = EXCLUDED.legal_name,
@@ -607,7 +608,7 @@ def upgrade() -> None:
                  main_address_bpna, production_capacity, state, metadata)
             VALUES
                 (1, :bpns, :owner, :name, :function,
-                 :addr, :capacity::jsonb, 'active', :meta::jsonb)
+                 :addr, CAST(:capacity AS jsonb), 'active', CAST(:meta AS jsonb))
             ON CONFLICT (bpns) DO UPDATE SET
                 tenant_id = EXCLUDED.tenant_id,
                 owner_bpnl = EXCLUDED.owner_bpnl,
