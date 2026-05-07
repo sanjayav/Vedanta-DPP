@@ -4,6 +4,7 @@ import { ArrowRight, Leaf, Recycle, ShieldCheck, TrendingDown } from 'lucide-rea
 
 import { Stat } from '@dpp/ui'
 
+import { AnimatedKpi } from '@/components/console/AnimatedKpi'
 import { LineChart } from '@/components/console/LineChart'
 import { Sparkline } from '@/components/console/Sparkline'
 import { listDpps, listVerifierRegistry } from '@/lib/api'
@@ -93,22 +94,22 @@ export default async function OverviewPage() {
           </a>
         </div>
         <div className="grid grid-cols-2 gap-x-6 gap-y-3 md:grid-cols-4 xl:grid-cols-7">
-          <AnchorStat label="Zinc production" value="827" unit="kt" />
-          <AnchorStat label="Lead production" value="225" unit="kt" />
-          <AnchorStat label="Silver production" value="687" unit="MT" />
-          <AnchorStat label="Refined capacity" value="1.123" unit="Mnt" />
-          <AnchorStat label="Captive power" value="625.16" unit="MW" />
-          <AnchorStat label="Renewable share" value="13" unit="%" hint="→ 70% by FY28" />
-          <AnchorStat label="Workforce" value="25,531" hint="incl. contractors" />
+          <AnimatedKpi label="Zinc production" value="827" unit="kt" delay={0.00} />
+          <AnimatedKpi label="Lead production" value="225" unit="kt" delay={0.05} />
+          <AnimatedKpi label="Silver production" value="687" unit="MT" delay={0.10} />
+          <AnimatedKpi label="Refined capacity" value="1.123" unit="Mnt" delay={0.15} />
+          <AnimatedKpi label="Captive power" value="625.16" unit="MW" delay={0.20} />
+          <AnimatedKpi label="Renewable share" value="13" unit="%" hint="→ 70% by FY28" delay={0.25} />
+          <AnimatedKpi label="Workforce" value="25,531" hint="incl. contractors" delay={0.30} />
         </div>
         <div className="mt-4 grid grid-cols-2 gap-x-6 gap-y-3 border-t border-[var(--surface-border)] pt-4 md:grid-cols-4 xl:grid-cols-7">
-          <AnchorStat label="GHG saved" value="0.67" unit="Mn tCO₂e" />
-          <AnchorStat label="Carbon intensity ↓" value="15" unit="%" hint="vs FY 2019-20" />
-          <AnchorStat label="Water positive" value="3.32" unit="x" />
-          <AnchorStat label="ZLD coverage" value="100" unit="%" />
-          <AnchorStat label="TRIFR" value="1.20" hint="↓ 55% vs FY20" />
-          <AnchorStat label="CSR spend" value="273.45" unit="₹ cr" />
-          <AnchorStat label="S&P CSA" value="#1" hint="Metals & Mining 2024" />
+          <AnimatedKpi label="GHG saved" value="0.67" unit="Mn tCO₂e" delay={0.35} />
+          <AnimatedKpi label="Carbon intensity ↓" value="15" unit="%" hint="vs FY 2019-20" delay={0.40} />
+          <AnimatedKpi label="Water positive" value="3.32" unit="x" delay={0.45} />
+          <AnimatedKpi label="ZLD coverage" value="100" unit="%" delay={0.50} />
+          <AnimatedKpi label="TRIFR" value="1.20" hint="↓ 55% vs FY20" delay={0.55} />
+          <AnimatedKpi label="CSR spend" value="273.45" unit="₹ cr" delay={0.60} />
+          <AnimatedKpi label="S&P CSA" value="#1" hint="Metals & Mining 2024" delay={0.65} />
         </div>
       </section>
 
@@ -327,35 +328,6 @@ export default async function OverviewPage() {
 }
 
 // ── Building blocks ──────────────────────────────────────────────────────
-
-/** Compact metric tile for the FY 2024-25 anchor strip · cited from
- *  Hindustan Zinc Sustainability Report (page numbers in HZL_DATA_DOSSIER.md). */
-function AnchorStat({
-  label,
-  value,
-  unit,
-  hint,
-}: {
-  label: string
-  value: string
-  unit?: string
-  hint?: string
-}) {
-  return (
-    <div className="flex flex-col">
-      <span className="font-mono text-[10px] uppercase tracking-[0.15em] text-[var(--fg-subtle)]">
-        {label}
-      </span>
-      <span className="mt-1 text-[18px] font-semibold leading-tight tracking-tight text-[var(--fg-default)]">
-        {value}
-        {unit && (
-          <span className="ml-1 text-[12px] font-normal text-[var(--fg-muted)]">{unit}</span>
-        )}
-      </span>
-      {hint && <span className="mt-0.5 text-[10px] text-[var(--fg-subtle)]">{hint}</span>}
-    </div>
-  )
-}
 
 function ChartCard({
   title,

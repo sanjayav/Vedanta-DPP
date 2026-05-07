@@ -3,11 +3,13 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import type { Route } from 'next'
+import { motion } from 'motion/react'
 import {
   Activity,
   Bell,
   ChevronRight,
   ClipboardList,
+  Command,
   Database,
   FileSearch,
   FileSpreadsheet,
@@ -28,6 +30,7 @@ import {
 } from 'lucide-react'
 
 import type { SessionUser } from '@/lib/auth'
+import { useCommandPalette } from './CommandPalette'
 
 type NavSection = 'workspace' | 'manage' | 'data' | 'admin'
 
@@ -157,6 +160,7 @@ export function ConsoleShell({
   rightRail?: React.ReactNode
 }) {
   const pathname = usePathname()
+  const palette = useCommandPalette()
   const visibleNav = NAV.filter((item) => !item.roles || item.roles.includes(user.role))
   const sections: NavSection[] = ['workspace', 'manage', 'data', 'admin']
 
@@ -180,12 +184,18 @@ export function ConsoleShell({
           <span className="al-brand-glow" aria-hidden />
         </Link>
 
-        {/* Search shortcut */}
-        <button type="button" className="al-search">
+        {/* Search shortcut · opens command palette */}
+        <motion.button
+          type="button"
+          onClick={palette.open}
+          whileHover={{ y: -1 }}
+          whileTap={{ scale: 0.98 }}
+          className="al-search"
+        >
           <Search className="h-3.5 w-3.5" />
           <span>Search…</span>
           <kbd>⌘K</kbd>
-        </button>
+        </motion.button>
 
         {/* Nav */}
         <nav className="al-nav">
@@ -205,7 +215,14 @@ export function ConsoleShell({
                           prefetch
                           className={`al-nav-link${isActive ? ' is-active' : ''}`}
                         >
-                          {isActive && <span className="al-nav-pill" aria-hidden />}
+                          {isActive && (
+                            <motion.span
+                              layoutId="al-nav-active-pill"
+                              className="al-nav-pill"
+                              aria-hidden
+                              transition={{ type: 'spring', stiffness: 500, damping: 36 }}
+                            />
+                          )}
                           <span className="al-nav-icon-wrap">
                             <item.icon className="h-4 w-4" />
                           </span>
@@ -252,15 +269,27 @@ export function ConsoleShell({
               </span>
             </div>
             <div className="al-topbar-actions">
-              <button type="button" className="al-topbar-search">
+              <motion.button
+                type="button"
+                onClick={palette.open}
+                whileHover={{ y: -1, boxShadow: '0 6px 16px -8px rgba(15,76,129,0.28)' }}
+                whileTap={{ scale: 0.98 }}
+                className="al-topbar-search"
+              >
                 <Search className="h-3.5 w-3.5" />
                 <span>Search products, casts…</span>
                 <kbd>⌘K</kbd>
-              </button>
-              <button type="button" className="al-topbar-bell" aria-label="Notifications">
+              </motion.button>
+              <motion.button
+                type="button"
+                whileHover={{ y: -1 }}
+                whileTap={{ scale: 0.94 }}
+                className="al-topbar-bell"
+                aria-label="Notifications"
+              >
                 <Bell className="h-4 w-4" />
                 <span className="al-topbar-bell-dot" />
-              </button>
+              </motion.button>
               <span className="al-topbar-rolepill">
                 <Sparkles className="h-3 w-3" />
                 {user.role.replace(/_/g, ' ')}
