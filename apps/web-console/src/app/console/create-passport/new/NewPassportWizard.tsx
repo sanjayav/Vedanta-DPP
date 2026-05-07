@@ -599,74 +599,18 @@ function ProcessStepView({
         </p>
       </div>
       <p className="mt-1 text-[13px] text-[var(--fg-muted)]">
-        Click any stage to focus it. The tiles flow left-to-right, top-to-bottom from raw bauxite
-        to your customer&rsquo;s door · the data each one carries feeds the passport in step 5.
+        Click any stage to focus it. The pipeline flows left-to-right from concentrate at the
+        mine to your customer&rsquo;s door · each stage feeds attributes into the passport you
+        author in step 5.
       </p>
 
-      {/* Stage grid — fits all stages in two readable rows. */}
-      <ol
-        className="proc-grid"
-        style={{ ['--cols' as string]: Math.min(6, chain.length) }}
-        role="region"
-        aria-label="Production chain stages"
-      >
-        {chain.map((c, i) => {
-          const t = tierStyle(c.tier)
-          const Icon = stepIcon(c.slug)
-          const isFocused = c.stepId === focused?.stepId
-          const sources = dataSourcesByStep.get(c.stepId) ?? []
-          const attrCount = attrCountByStep.get(c.stepId) ?? 0
-          return (
-            <li
-              key={c.stepId}
-              style={{ ['--i' as string]: i }}
-              className={[
-                'proc-tile',
-                isFocused ? 'is-focused' : '',
-                `tier-${c.tier}`,
-              ].join(' ')}
-            >
-              <button
-                type="button"
-                onClick={() => setFocusedId(c.stepId)}
-                aria-pressed={isFocused}
-                aria-label={`Stage ${c.ordinal}: ${c.name}`}
-                className="proc-tile-btn"
-              >
-                <span className="proc-tile-head">
-                  <span className={['proc-tile-icon', t.bg, t.ring].join(' ')}>
-                    <Icon className="h-4 w-4 text-[var(--fg-default)]" />
-                  </span>
-                  <span className="proc-tile-num">{String(c.ordinal).padStart(2, '0')}</span>
-                </span>
-                <span className="proc-tile-name">{c.name}</span>
-                <span className="proc-tile-meta">
-                  <span className="proc-tile-attrs" title={`${attrCount} attributes`}>
-                    {attrCount > 0 ? `${attrCount} attr` : '— attr'}
-                  </span>
-                  <span className="proc-tile-dots" aria-label={`${sources.length} data source${sources.length === 1 ? '' : 's'}`}>
-                    {sources.length === 0 ? (
-                      <span className="proc-tile-dot is-empty" title="No data source connected" />
-                    ) : (
-                      sources.slice(0, 4).map((s) => (
-                        <span
-                          key={s.id}
-                          className={`proc-tile-dot is-${monitorTone(s)}`}
-                          title={`${connectorLabel(s)} · ${s.lastSyncStatus ?? 'never synced'}`}
-                        />
-                      ))
-                    )}
-                    {sources.length > 4 && (
-                      <span className="proc-tile-dot-overflow">+{sources.length - 4}</span>
-                    )}
-                  </span>
-                </span>
-                <span className={['proc-tile-tier', t.bg].join(' ')}>{t.label}</span>
-              </button>
-            </li>
-          )
-        })}
-      </ol>
+      <ProcessFlowDiagram
+        chain={chain}
+        focusedId={focused?.stepId ?? null}
+        onFocus={setFocusedId}
+        attrCountByStep={attrCountByStep}
+        dataSourcesByStep={dataSourcesByStep}
+      />
 
       {/* Focused stage detail panel */}
       {focused && (
@@ -678,6 +622,148 @@ function ProcessStepView({
         />
       )}
     </section>
+  )
+}
+
+/**
+ * Interactive process-flow visualisation. Renders the production chain
+ * as a horizontal pipeline with an animated gradient flow line, tier
+ * grouping bands, and stage cards that lift on hover / focus.
+ */
+function ProcessFlowDiagram({
+  chain,
+  focusedId,
+  onFocus,
+  attrCountByStep,
+  dataSourcesByStep,
+}: {
+  chain: ProductChainStep[]
+  focusedId: number | null
+  onFocus: (id: number) => void
+  attrCountByStep: Map<number, number>
+  dataSourcesByStep: Map<number, DataSource[]>
+}) {
+  // Group consecutive same-tier stages so we can paint tier lanes spanning
+  // multiple columns (e.g. the four upstream stages collapse into one band).
+  const tierGroups = useMemo(() => {
+    const groups: { tier: string; from: number; span: number }[] = []
+    chain.forEach((c) => {
+      const last = groups[groups.length - 1]
+      if (last && last.tier === c.tier) last.span += 1
+      else groups.push({ tier: c.tier, from: groups.length === 0 ? 0 : last!.from + last!.span, span: 1 })
+    })
+    return groups
+  }, [chain])
+
+  const focusedIndex = chain.findIndex((c) => c.stepId === focusedId)
+  const focusedPct = chain.length > 1
+    ? (focusedIndex >= 0 ? focusedIndex : 0) / (chain.length - 1)
+    : 0
+
+  return (
+    <div
+      className="pf-wrap"
+      role="region"
+      aria-label="Production chain flow"
+      style={{ ['--n' as string]: chain.length }}
+    >
+      {/* Tier lane bands — sit under the pipeline and span same-tier groups. */}
+      <div className="pf-tier-row">
+        {tierGroups.map((g, i) => {
+          const t = tierStyle(g.tier)
+          return (
+            <div
+              key={`${g.tier}-${i}`}
+              className={`pf-tier-band tier-${g.tier}`}
+              style={{ gridColumn: `${g.from + 1} / span ${g.span}` }}
+            >
+              <span>{t.label}</span>
+            </div>
+          )
+        })}
+      </div>
+
+      {/* Pipeline rail with animated gradient flow + travelling pulse */}
+      <div className="pf-rail-wrap" aria-hidden>
+        <svg className="pf-rail-svg" viewBox="0 0 100 8" preserveAspectRatio="none">
+          <defs>
+            <linearGradient id="pf-flow-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stopColor="#D4A574" />
+              <stop offset="35%" stopColor="#3B82F6" />
+              <stop offset="70%" stopColor="#16a34a" />
+              <stop offset="100%" stopColor="#7C3AED" />
+            </linearGradient>
+          </defs>
+          <line x1="0" y1="4" x2="100" y2="4" className="pf-rail-bg" />
+          <line x1="0" y1="4" x2="100" y2="4" className="pf-rail-flow" />
+        </svg>
+        <span
+          className="pf-rail-pulse"
+          style={{ ['--pulse-x' as string]: `${focusedPct * 100}%` }}
+          aria-hidden
+        />
+      </div>
+
+      {/* Stage cards */}
+      <ol className="pf-stages">
+        {chain.map((c, i) => {
+          const Icon = stepIcon(c.slug)
+          const attrCount = attrCountByStep.get(c.stepId) ?? 0
+          const sources = dataSourcesByStep.get(c.stepId) ?? []
+          const isFocused = c.stepId === focusedId
+          return (
+            <li
+              key={c.stepId}
+              className={`pf-stage tier-${c.tier} ${isFocused ? 'is-focused' : ''}`}
+              style={{ ['--i' as string]: i }}
+            >
+              <button
+                type="button"
+                className="pf-stage-btn"
+                onClick={() => onFocus(c.stepId)}
+                aria-pressed={isFocused}
+                aria-label={`Stage ${c.ordinal}: ${c.name}`}
+              >
+                <span className="pf-stage-num">{String(c.ordinal).padStart(2, '0')}</span>
+                <span className="pf-stage-icon">
+                  <Icon className="h-4 w-4" />
+                </span>
+                <span className="pf-stage-name">{c.name}</span>
+                <span className="pf-stage-meta">
+                  <span className="pf-stage-attrs" title={`${attrCount} attributes`}>
+                    {attrCount > 0 ? `${attrCount} attr` : '—'}
+                  </span>
+                  <span
+                    className="pf-stage-dots"
+                    aria-label={`${sources.length} data source${sources.length === 1 ? '' : 's'}`}
+                  >
+                    {sources.length === 0 ? (
+                      <span className="pf-stage-dot is-empty" title="No data source connected" />
+                    ) : (
+                      sources.slice(0, 3).map((s) => (
+                        <span
+                          key={s.id}
+                          className={`pf-stage-dot is-${monitorTone(s)}`}
+                          title={`${connectorLabel(s)} · ${s.lastSyncStatus ?? 'never synced'}`}
+                        />
+                      ))
+                    )}
+                  </span>
+                </span>
+              </button>
+            </li>
+          )
+        })}
+      </ol>
+
+      {/* Tier legend */}
+      <div className="pf-legend" aria-hidden>
+        <span className="pf-legend-item tier-upstream"><i /> Upstream</span>
+        <span className="pf-legend-item tier-production"><i /> Production</span>
+        <span className="pf-legend-item tier-downstream"><i /> Downstream</span>
+        <span className="pf-legend-item tier-verification"><i /> Verification</span>
+      </div>
+    </div>
   )
 }
 
@@ -1014,6 +1100,332 @@ const PROCESS_3D_CSS = `
   .proc-tile-btn { transition: none; }
   .proc-tile-btn:hover, .proc-tile.is-focused .proc-tile-btn { transform: none; }
   .proc3d-detail { animation: none; }
+}
+
+/* ── Interactive process flow diagram ──────────────────────────────────
+ * Horizontal pipeline with: tier lane bands at top, an animated gradient
+ * rail line in the middle, stage cards below, and a tier legend at the
+ * bottom. Scrolls horizontally on small screens. */
+
+.pf-wrap {
+  margin-top: 24px;
+  padding: 8px 0 4px;
+  position: relative;
+  --col-width: 124px;
+  --rail-y: 110px;
+}
+
+.pf-tier-row,
+.pf-stages {
+  display: grid;
+  grid-template-columns: repeat(var(--n, 11), minmax(0, 1fr));
+  gap: 8px;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.pf-tier-row {
+  margin: 0 0 14px;
+  height: 22px;
+}
+.pf-tier-band {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  height: 22px;
+  padding: 0 12px;
+  border: 1px solid transparent;
+}
+.pf-tier-band.tier-upstream {
+  background: linear-gradient(90deg, #FBE9CB, #F3D29A);
+  color: #8B5A1A;
+  border-color: rgba(212, 165, 116, 0.4);
+}
+.pf-tier-band.tier-production {
+  background: linear-gradient(90deg, #DBEAFE, #93C5FD);
+  color: #1E40AF;
+  border-color: rgba(59, 130, 246, 0.35);
+}
+.pf-tier-band.tier-downstream {
+  background: linear-gradient(90deg, #DCFCE7, #86EFAC);
+  color: #14532D;
+  border-color: rgba(22, 163, 74, 0.35);
+}
+.pf-tier-band.tier-verification {
+  background: linear-gradient(90deg, #EDE9FE, #C4B5FD);
+  color: #5B21B6;
+  border-color: rgba(124, 58, 237, 0.35);
+}
+
+/* The rail sits between the tier band row and the stages. */
+.pf-rail-wrap {
+  position: relative;
+  height: 28px;
+  margin: 4px 6px 6px;
+}
+.pf-rail-svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.pf-rail-bg {
+  stroke: var(--surface-border);
+  stroke-width: 1.2;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+}
+.pf-rail-flow {
+  stroke: url(#pf-flow-grad);
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+  stroke-dasharray: 5 6;
+  animation: pf-flow-dash 2.4s linear infinite;
+}
+@keyframes pf-flow-dash {
+  to { stroke-dashoffset: -22; }
+}
+
+/* The travelling pulse marks where the focused stage sits along the rail. */
+.pf-rail-pulse {
+  position: absolute;
+  top: 50%;
+  left: var(--pulse-x, 50%);
+  width: 14px; height: 14px;
+  margin-top: -7px;
+  margin-left: -7px;
+  border-radius: 9999px;
+  background: var(--color-accent, #0F4C81);
+  box-shadow:
+    0 0 0 4px rgba(15,76,129,0.18),
+    0 0 16px 2px rgba(15,76,129,0.45);
+  transition: left 420ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.pf-rail-pulse::after {
+  content: "";
+  position: absolute;
+  inset: -6px;
+  border-radius: 9999px;
+  background: rgba(15,76,129,0.20);
+  animation: pf-pulse 1.6s ease-out infinite;
+}
+@keyframes pf-pulse {
+  from { transform: scale(0.6); opacity: 1; }
+  to   { transform: scale(2.2); opacity: 0; }
+}
+
+/* Stage cards */
+.pf-stage {
+  --tier-accent: var(--surface-border);
+  --tier-soft: rgba(15,23,42,0.04);
+  animation: pf-rise 480ms cubic-bezier(0.16, 1, 0.3, 1) backwards;
+  animation-delay: calc(var(--i, 0) * 38ms);
+  position: relative;
+  min-width: 0;
+}
+.pf-stage.tier-upstream     { --tier-accent: #D4A574; --tier-soft: rgba(245, 233, 217, 0.55); }
+.pf-stage.tier-production   { --tier-accent: #3B82F6; --tier-soft: rgba(219, 234, 254, 0.55); }
+.pf-stage.tier-downstream   { --tier-accent: #16a34a; --tier-soft: rgba(220, 252, 231, 0.55); }
+.pf-stage.tier-verification { --tier-accent: #7C3AED; --tier-soft: rgba(237, 233, 254, 0.55); }
+
+@keyframes pf-rise {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; }
+}
+
+.pf-stage-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  min-height: 142px;
+  padding: 14px 10px 12px;
+  border-radius: 14px;
+  border: 1px solid var(--surface-border);
+  background: linear-gradient(180deg, #ffffff 0%, #f7f8fb 100%);
+  text-align: center;
+  cursor: pointer;
+  position: relative;
+  transition: transform 200ms ease, border-color 200ms ease, box-shadow 200ms ease, background 200ms ease;
+}
+.pf-stage-btn::before {
+  /* Tier-coloured top accent strip */
+  content: "";
+  position: absolute;
+  top: 0; left: 14px; right: 14px;
+  height: 3px;
+  border-radius: 0 0 4px 4px;
+  background: var(--tier-accent);
+  opacity: 0.85;
+}
+.pf-stage-btn::after {
+  /* Connector tick that meets the rail above */
+  content: "";
+  position: absolute;
+  top: -16px;
+  left: 50%;
+  width: 2px;
+  height: 14px;
+  background: var(--tier-accent);
+  transform: translateX(-50%);
+  opacity: 0.45;
+  border-radius: 2px;
+}
+.pf-stage-btn:hover {
+  transform: translateY(-3px);
+  border-color: var(--tier-accent);
+  box-shadow: 0 14px 24px -16px rgba(15,23,42,0.22);
+}
+.pf-stage.is-focused .pf-stage-btn {
+  transform: translateY(-4px);
+  border-color: var(--tier-accent);
+  background: linear-gradient(180deg, #ffffff 0%, var(--tier-soft) 100%);
+  box-shadow: 0 18px 30px -16px rgba(15,23,42,0.28);
+}
+.pf-stage.is-focused .pf-stage-btn::before { opacity: 1; height: 4px; }
+.pf-stage.is-focused .pf-stage-btn::after { opacity: 1; height: 18px; top: -20px; }
+
+.pf-stage-num {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  color: var(--fg-subtle);
+  text-transform: uppercase;
+}
+.pf-stage-icon {
+  display: grid;
+  place-items: center;
+  width: 36px; height: 36px;
+  border-radius: 9999px;
+  background: #ffffff;
+  border: 2px solid var(--tier-accent);
+  color: var(--fg-default);
+  box-shadow: 0 2px 6px rgba(15,23,42,0.06);
+  transition: background 200ms ease, color 200ms ease, transform 200ms ease;
+}
+.pf-stage.is-focused .pf-stage-icon {
+  background: var(--tier-accent);
+  color: #ffffff;
+  transform: scale(1.08);
+}
+.pf-stage-name {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--fg-default);
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin-top: 2px;
+  min-height: 30px;
+}
+.pf-stage-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  margin-top: auto;
+  padding-top: 8px;
+  width: 100%;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  color: var(--fg-subtle);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border-top: 1px dashed var(--surface-border);
+}
+.pf-stage-attrs { font-weight: 700; }
+.pf-stage-dots { display: inline-flex; gap: 3px; align-items: center; }
+.pf-stage-dot {
+  display: inline-block;
+  width: 6px; height: 6px;
+  border-radius: 9999px;
+  background: var(--fg-subtle);
+}
+.pf-stage-dot.is-ok    { background: var(--color-green, #16a34a); }
+.pf-stage-dot.is-warn  { background: var(--color-amber, #d97706); }
+.pf-stage-dot.is-error { background: var(--color-red, #dc2626); }
+.pf-stage-dot.is-idle  { background: var(--fg-subtle); }
+.pf-stage-dot.is-empty {
+  background: transparent;
+  border: 1px dashed var(--fg-subtle);
+}
+
+/* Legend at the bottom of the diagram */
+.pf-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  align-items: center;
+  margin-top: 14px;
+  padding: 8px 12px;
+  border-radius: 9999px;
+  border: 1px solid var(--surface-border);
+  background: #fff;
+  width: fit-content;
+}
+.pf-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--fg-muted);
+}
+.pf-legend-item i {
+  display: inline-block;
+  width: 10px; height: 10px;
+  border-radius: 9999px;
+  border: 2px solid var(--fg-subtle);
+  background: #fff;
+}
+.pf-legend-item.tier-upstream     i { border-color: #D4A574; }
+.pf-legend-item.tier-production   i { border-color: #3B82F6; }
+.pf-legend-item.tier-downstream   i { border-color: #16a34a; }
+.pf-legend-item.tier-verification i { border-color: #7C3AED; }
+
+/* Horizontal scroll on narrow viewports — preserves the linear pipeline read. */
+@media (max-width: 1100px) {
+  .pf-wrap {
+    overflow-x: auto;
+    overflow-y: visible;
+    padding-bottom: 12px;
+    scrollbar-width: thin;
+  }
+  .pf-tier-row,
+  .pf-stages {
+    grid-template-columns: repeat(var(--n, 11), 132px);
+    min-width: max-content;
+  }
+  .pf-rail-wrap { min-width: max-content; }
+}
+@media (max-width: 600px) {
+  .pf-tier-row,
+  .pf-stages { grid-template-columns: repeat(var(--n, 11), 108px); gap: 6px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pf-stage { animation: none; }
+  .pf-stage-btn { transition: none; }
+  .pf-stage-btn:hover, .pf-stage.is-focused .pf-stage-btn,
+  .pf-stage.is-focused .pf-stage-icon { transform: none; }
+  .pf-rail-flow { animation: none; }
+  .pf-rail-pulse::after { animation: none; }
+  .pf-rail-pulse { transition: none; }
 }
 `
 
