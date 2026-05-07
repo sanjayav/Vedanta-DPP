@@ -44,13 +44,14 @@ export function buildCastEvent(opts: FireOptions): CastEvent {
   // Pre-minted Chanderiya BPNS — see apps/api/dpp_api/services/bpn.py.
   // Producer-tag → BPNS lookup is canonical there; the sim uses the most-cited
   // smelter as the default and lets opts.overrides set siteBpns explicitly.
-  const SITE_BY_TAG: Record<string, string> = {
+  const SITE_BY_TAG = {
     CHA: 'BPNSHZSCHA00012N',
     DAR: 'BPNSHZSDAR0001OU',
     DEB: 'BPNSHZSDEB00014X',
     PAN: 'BPNSHZSPAN0001TJ',
-  }
-  const siteBpns = SITE_BY_TAG[preset.producingSiteTag ?? 'CHA'] ?? SITE_BY_TAG.CHA
+  } as const
+  const tag: keyof typeof SITE_BY_TAG = preset.producingSiteTag ?? 'CHA'
+  const siteBpns: string = SITE_BY_TAG[tag]
 
   const dims = preset.physical.dimensions ?? {}
 
