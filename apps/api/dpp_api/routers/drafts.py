@@ -10,6 +10,7 @@ from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel, EmailStr, Field
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..auth import Principal
@@ -456,6 +457,18 @@ async def publish_endpoint(
         )
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except IntegrityError as exc:
+        # Almost always a (tenant_id, upi) collision: a draft built from
+        # autofilled placeholder identifiers tried to publish over an existing
+        # record. Surface as 409 so the wizard banner can prompt the operator
+        # to set a unique cast_number / itemSerial.
+        raise HTTPException(
+            status_code=409,
+            detail=(
+                "a passport with this UPI is already published — change the "
+                "cast number or item serial and try again"
+            ),
+        ) from exc
     except (KeyError, TypeError) as exc:
         # Most often: an autofill string that broke a numeric coercion or a
         # required body section missing. Surface a usable detail instead of a

@@ -534,13 +534,12 @@ function synthesizeAttrValue(attr: DraftAttribute): unknown {
   const path = attr.attributePath.toLowerCase()
   const label = attr.label.toLowerCase()
 
-  // Identifiers
-  if (path.endsWith('.castnumber'))
-    return `C-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-AUTO`
-  if (path.endsWith('.itemserial')) return 'HZL-AUTO-001'
+  // Identifiers · cast number / item serial / digital-link URL are owned by
+  // the draft row itself (publish derives them from draft.cast_number +
+  // draft.item_serial). Synthesizing placeholder values here causes UPI
+  // collisions on publish across multiple autofilled drafts, so leave them
+  // alone — the publish step always overrides them with the draft identity.
   if (path.endsWith('.gtin')) return '08901234500017'
-  if (path.endsWith('.digitallinkurl'))
-    return 'https://passport.hzlindia.com/01/08901234500017/21/HZL-AUTO-001'
   if (path.endsWith('.lotnumber')) return 'LOT-AUTO-2026-001'
   if (path.endsWith('.hscode')) return '7901.11'
   if (path.endsWith('.tariccode')) return '7901110000'

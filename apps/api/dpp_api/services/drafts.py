@@ -1318,9 +1318,13 @@ def _build_body(summary: dict[str, Any], product: Product, draft: DppDraft) -> d
                 continue
             _set_path(body, attr["attributePath"], attr["value"])
 
-    body.setdefault("identification", {}).setdefault("castNumber", draft.cast_number)
+    # Draft-identity fields are owned by the draft row itself, not by the
+    # attribute-value table. Overwrite (not setdefault) so an autofilled
+    # placeholder like "HZL-AUTO-001" can't override the real draft.cast_number
+    # and create UPI collisions across drafts.
+    body.setdefault("identification", {})["castNumber"] = draft.cast_number
     body.setdefault("upi", {})
-    body["upi"].setdefault("itemSerial", draft.item_serial or draft.cast_number)
+    body["upi"]["itemSerial"] = draft.item_serial or draft.cast_number
     body["upi"].setdefault("gtin", "08906029930012")
     # GS1 GTINs are 14 digits — coerce anything that doesn't match (synthesized
     # demo values, hand-typed variants) to keep the dpp_records.gtin VARCHAR(14)
@@ -1329,9 +1333,8 @@ def _build_body(summary: dict[str, Any], product: Product, draft: DppDraft) -> d
     gs1_gtin_digits = 14
     if not (gtin_raw.isdigit() and len(gtin_raw) == gs1_gtin_digits):
         body["upi"]["gtin"] = "08906029930012"
-    body["upi"].setdefault(
-        "digitalLinkUrl",
-        f"https://passport.hzlindia.com/01/{body['upi']['gtin']}/21/{body['upi']['itemSerial']}",
+    body["upi"]["digitalLinkUrl"] = (
+        f"https://passport.hzlindia.com/01/{body['upi']['gtin']}/21/{body['upi']['itemSerial']}"
     )
     body.setdefault("physical", {}).setdefault("form", product.form)
     body["physical"].setdefault(
