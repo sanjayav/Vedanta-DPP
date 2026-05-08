@@ -52,7 +52,7 @@ class Settings(BaseSettings):
     redis_url: str = Field(default="redis://localhost:6379/0")
 
     # ── Issuer identity (Ed25519 + did:web) ─────────────────────────────────
-    dpp_issuer_did: str = Field(default="did:web:dpp.ega.local")
+    dpp_issuer_did: str = Field(default="did:web:passport.hzlindia.com:BPNLHZL0000001QX")
     dpp_signing_provider: SigningProvider = Field(default="local_file")
 
     # local_file provider

@@ -718,56 +718,95 @@ export async function DppDocument({ dpp }: { dpp: DppDocumentInput }) {
       {/* Footer · issuance, did, disclaimer */}
       <footer className="dpp-doc__footer">
         <div className="dpp-doc__footer-grid">
-          <div>
+          <div className="dpp-doc__footer-col">
             <p className="dpp-doc__footer-eyebrow">Issuance</p>
-            <p>
-              <span>Issued</span>
-              <code>{issuedAt?.slice(0, 10) ?? '—'}</code>
-            </p>
-            <p>
-              <span>Expires</span>
-              <code>{expiresAt?.slice(0, 10) ?? '—'}</code>
-            </p>
-            {lciaValidUntil ? (
-              <p>
-                <span>LCIA valid</span>
-                <code>{lciaValidUntil}</code>
-              </p>
-            ) : null}
+            <dl className="dpp-doc__footer-dl">
+              <div>
+                <dt>Issued</dt>
+                <dd>{issuedAt?.slice(0, 10) ?? '—'}</dd>
+              </div>
+              <div>
+                <dt>Expires</dt>
+                <dd>{expiresAt?.slice(0, 10) ?? '—'}</dd>
+              </div>
+              {lciaValidUntil ? (
+                <div>
+                  <dt>LCIA valid</dt>
+                  <dd>{lciaValidUntil}</dd>
+                </div>
+              ) : null}
+              {languages.length ? (
+                <div>
+                  <dt>Languages</dt>
+                  <dd>{languages.join(', ')}</dd>
+                </div>
+              ) : null}
+            </dl>
           </div>
-          <div>
+
+          <div className="dpp-doc__footer-col">
             <p className="dpp-doc__footer-eyebrow">Material ID</p>
-            {did ? (
-              <p>
-                <span>did</span>
-                <code className="dpp-doc__truncate">{did}</code>
-              </p>
-            ) : null}
-            {issuerDid && issuerDid !== did ? (
-              <p>
-                <span>Issuer DID</span>
-                <code className="dpp-doc__truncate">{issuerDid}</code>
-              </p>
-            ) : null}
-            {languages.length ? (
-              <p>
-                <span>Languages</span>
-                <code>{languages.join(', ')}</code>
-              </p>
-            ) : null}
+            <dl className="dpp-doc__footer-dl dpp-doc__footer-dl--did">
+              {did ? (
+                <div>
+                  <dt>DID</dt>
+                  <dd>
+                    <code className="dpp-doc__footer-did">{did}</code>
+                  </dd>
+                </div>
+              ) : null}
+              {issuerDid && issuerDid !== did ? (
+                <div>
+                  <dt>Issuer</dt>
+                  <dd>
+                    <code className="dpp-doc__footer-did">{issuerDid}</code>
+                  </dd>
+                </div>
+              ) : null}
+            </dl>
           </div>
-          <div>
+
+          <div className="dpp-doc__footer-col">
             <p className="dpp-doc__footer-eyebrow">Documents on file</p>
-            <p className="dpp-doc__footer-count">{documents.length}</p>
-            <p className="dpp-doc__footer-hint">
-              EPD report, BIS certificate, ISO certificates, SDS — bundled with the passport.
-            </p>
+            <div className="dpp-doc__footer-docs">
+              <p className="dpp-doc__footer-count">
+                {documents.length}
+                <span className="dpp-doc__footer-count-suffix">
+                  {documents.length === 1 ? 'attachment' : 'attachments'}
+                </span>
+              </p>
+              {documents.length > 0 ? (
+                <ul className="dpp-doc__footer-doclist">
+                  {documents.slice(0, 4).map((d) => {
+                    const doc = asDict(d)
+                    const title = str(doc.title) ?? str(doc.id) ?? 'Document'
+                    return (
+                      <li key={String(doc.id ?? title)} title={title}>
+                        <span className="dpp-doc__footer-doctype">
+                          {(str(doc.type) ?? 'doc').toUpperCase()}
+                        </span>
+                        <span className="dpp-doc__footer-doctitle">{title}</span>
+                      </li>
+                    )
+                  })}
+                  {documents.length > 4 ? (
+                    <li className="dpp-doc__footer-docmore">
+                      +{documents.length - 4} more bundled with the passport
+                    </li>
+                  ) : null}
+                </ul>
+              ) : (
+                <p className="dpp-doc__footer-hint">
+                  No supporting documents attached.
+                </p>
+              )}
+            </div>
           </div>
         </div>
         <p className="dpp-doc__disclaimer">
           {dpp.isDemo
             ? 'This is a demonstration passport. The cryptographic signature is a placeholder; production passports are signed Ed25519 by Hindustan Zinc Limited.'
-            : 'Issued by Hindustan Zinc Limited. Cryptographic verification available at the issuer&rsquo;s /.well-known/did.json endpoint.'}
+            : 'Issued by Hindustan Zinc Limited. Cryptographic verification available at the issuer’s /.well-known/did.json endpoint.'}
         </p>
       </footer>
     </article>
@@ -1786,11 +1825,15 @@ const DOC_CSS = `
 }
 .dpp-doc__footer-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 40px;
+  grid-template-columns: 1fr 1.4fr 1.5fr;
+  gap: 48px;
+  align-items: start;
 }
-@media (max-width: 720px) {
-  .dpp-doc__footer-grid { grid-template-columns: 1fr; gap: 28px; }
+@media (max-width: 880px) {
+  .dpp-doc__footer-grid { grid-template-columns: 1fr; gap: 32px; }
+}
+.dpp-doc__footer-col {
+  min-width: 0;
 }
 .dpp-doc__footer-eyebrow {
   font-family: var(--font-mono, JetBrains Mono, monospace);
@@ -1799,17 +1842,23 @@ const DOC_CSS = `
   text-transform: uppercase;
   color: var(--doc-subtle);
   font-weight: 700;
-  margin: 0 0 14px;
+  margin: 0 0 16px;
 }
-.dpp-doc__footer p {
-  margin: 8px 0;
+.dpp-doc__footer-dl {
+  margin: 0;
+  display: grid;
+  gap: 10px;
+}
+.dpp-doc__footer-dl > div {
   display: grid;
   grid-template-columns: 88px minmax(0, 1fr);
-  gap: 12px;
+  gap: 14px;
   align-items: baseline;
-  font-size: 13px;
 }
-.dpp-doc__footer p span {
+.dpp-doc__footer-dl--did > div {
+  grid-template-columns: 64px minmax(0, 1fr);
+}
+.dpp-doc__footer-dl dt {
   color: var(--doc-subtle);
   font-size: 10px;
   text-transform: uppercase;
@@ -1817,21 +1866,97 @@ const DOC_CSS = `
   font-family: var(--font-mono, JetBrains Mono, monospace);
   font-weight: 700;
 }
-.dpp-doc__footer p code {
+.dpp-doc__footer-dl dd {
+  margin: 0;
   font-family: var(--font-mono, JetBrains Mono, monospace);
-  font-size: 12px;
+  font-size: 12.5px;
+  color: var(--doc-ink);
+  font-variant-numeric: tabular-nums;
+  min-width: 0;
+}
+.dpp-doc__footer-did {
+  display: block;
+  font-family: var(--font-mono, JetBrains Mono, monospace);
+  font-size: 11.5px;
   color: var(--doc-ink);
   word-break: break-all;
+  line-height: 1.5;
+}
+.dpp-doc__footer-docs {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
 }
 .dpp-doc__footer-count {
+  margin: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
   font-family: var(--font-display, Fraunces, Inter, serif);
-  font-size: 42px;
+  font-size: 38px;
   font-weight: 500;
   line-height: 1;
   letter-spacing: -0.02em;
   color: var(--doc-ink);
-  margin: 0 0 8px;
   font-variant-numeric: tabular-nums;
+}
+.dpp-doc__footer-count-suffix {
+  font-family: var(--font-mono, JetBrains Mono, monospace);
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--doc-subtle);
+  font-weight: 600;
+}
+.dpp-doc__footer-doclist {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+  border-top: 1px solid var(--doc-border);
+  padding-top: 12px;
+}
+.dpp-doc__footer-doclist li {
+  display: grid;
+  grid-template-columns: 78px minmax(0, 1fr);
+  gap: 12px;
+  align-items: baseline;
+  font-size: 12px;
+  color: var(--doc-ink);
+  line-height: 1.45;
+}
+.dpp-doc__footer-doctype {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 18px;
+  padding: 0 8px;
+  border-radius: 9999px;
+  background: rgba(11, 37, 69, 0.05);
+  border: 1px solid var(--doc-border);
+  font-family: var(--font-mono, JetBrains Mono, monospace);
+  font-size: 9.5px;
+  letter-spacing: 0.14em;
+  font-weight: 700;
+  color: var(--doc-subtle);
+  width: max-content;
+}
+.dpp-doc__footer-doctitle {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12.5px;
+  color: var(--doc-ink);
+}
+.dpp-doc__footer-docmore {
+  grid-template-columns: 1fr !important;
+  font-family: var(--font-mono, JetBrains Mono, monospace);
+  font-size: 10.5px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--doc-subtle);
+  padding-top: 4px;
 }
 .dpp-doc__footer-hint {
   font-size: 12px;
