@@ -207,18 +207,25 @@ function ComparisonRibbon({
       <ul className="dpp-mb__bars">
         {rows.map((r) => {
           const pct = (r.value / max) * 100
-          const deltaPct =
-            r.tone !== 'this'
-              ? Math.round(((r.value - rows[0]!.value) / rows[0]!.value) * 100)
-              : null
+          const ratio = r.tone !== 'this' ? r.value / rows[0]!.value : null
+          const savingsPct =
+            r.tone !== 'this' ? Math.round(((r.value - rows[0]!.value) / r.value) * 100) : null
           return (
             <li key={r.label} className={`dpp-mb__bar dpp-mb__bar--${r.tone}`}>
               <div className="dpp-mb__bar-row">
                 <span className="dpp-mb__bar-label" title={r.hint}>
                   {r.label}
+                  {r.tone === 'this' && <span className="dpp-mb__bar-tag">This passport</span>}
                 </span>
-                <span className="dpp-mb__bar-value tabular">
-                  {fmt(r.value, 2)} <em>{r.unit}</em>
+                <span className="dpp-mb__bar-meta">
+                  {ratio !== null && savingsPct !== null && (
+                    <span className="dpp-mb__bar-mult" title={`This passport saves ${savingsPct}% vs ${r.label}`}>
+                      {ratio.toFixed(ratio >= 10 ? 0 : 1)}× more carbon
+                    </span>
+                  )}
+                  <span className="dpp-mb__bar-value tabular">
+                    {fmt(r.value, 2)} <em>{r.unit}</em>
+                  </span>
                 </span>
               </div>
               <div className="dpp-mb__bar-track">
@@ -232,16 +239,15 @@ function ComparisonRibbon({
                     ease: [0.16, 1, 0.3, 1],
                   }}
                 />
-                {deltaPct !== null && (
-                  <span className="dpp-mb__bar-delta">
-                    {deltaPct > 0 ? `+${deltaPct}%` : `${deltaPct}%`} vs this passport
-                  </span>
-                )}
               </div>
             </li>
           )
         })}
       </ul>
+      <p className="dpp-mb__bars-foot">
+        Lower is better. Each bar shows the cradle-to-gate Product Carbon Footprint per kilogram of
+        metal at the factory gate.
+      </p>
     </div>
   )
 }
@@ -757,30 +763,87 @@ const MB_CSS = `
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 18px;
 }
-.dpp-mb__bar { display: flex; flex-direction: column; gap: 6px; }
+.dpp-mb__bar { display: flex; flex-direction: column; gap: 8px; }
 .dpp-mb__bar-row {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 14px;
   align-items: baseline;
-  gap: 12px;
 }
 .dpp-mb__bar-label {
-  font-size: 13px;
+  font-size: 13.5px;
   font-weight: 500;
   color: var(--doc-ink, #0b2545);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  min-width: 0;
 }
 .dpp-mb__bar--this .dpp-mb__bar-label {
   font-weight: 700;
   color: var(--doc-green, #0e7c5a);
 }
+.dpp-mb__bar-tag {
+  display: inline-flex;
+  align-items: center;
+  height: 18px;
+  padding: 0 8px;
+  border-radius: 9999px;
+  background: rgba(14, 124, 90, 0.12);
+  border: 1px solid rgba(14, 124, 90, 0.30);
+  font-family: var(--font-mono, monospace);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--doc-green, #0e7c5a);
+}
+.dpp-mb__bar-meta {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 12px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.dpp-mb__bar-mult {
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
+  padding: 0 10px;
+  border-radius: 9999px;
+  font-family: var(--font-mono, monospace);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  background: var(--mult-bg);
+  color: var(--mult-fg);
+  border: 1px solid var(--mult-border);
+}
+.dpp-mb__bar--cgg .dpp-mb__bar-mult {
+  --mult-bg: rgba(217, 119, 6, 0.10);
+  --mult-fg: #92400E;
+  --mult-border: rgba(217, 119, 6, 0.28);
+}
+.dpp-mb__bar--industry .dpp-mb__bar-mult {
+  --mult-bg: rgba(71, 85, 105, 0.10);
+  --mult-fg: #475569;
+  --mult-border: rgba(71, 85, 105, 0.24);
+}
+.dpp-mb__bar--highest .dpp-mb__bar-mult {
+  --mult-bg: rgba(220, 38, 38, 0.08);
+  --mult-fg: #991B1B;
+  --mult-border: rgba(220, 38, 38, 0.30);
+}
 .dpp-mb__bar-value {
   font-family: var(--font-mono, monospace);
-  font-size: 13px;
+  font-size: 13.5px;
   font-weight: 700;
   color: var(--doc-ink, #0b2545);
   white-space: nowrap;
+  font-variant-numeric: tabular-nums;
 }
 .dpp-mb__bar-value em {
   font-style: normal;
@@ -790,7 +853,7 @@ const MB_CSS = `
 }
 .dpp-mb__bar-track {
   position: relative;
-  height: 18px;
+  height: 14px;
   border-radius: 9999px;
   background: rgba(11, 37, 69, 0.05);
   overflow: hidden;
@@ -800,23 +863,19 @@ const MB_CSS = `
   height: 100%;
   border-radius: 9999px;
   background: linear-gradient(90deg, var(--bar-color-from) 0%, var(--bar-color-to) 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18);
 }
 .dpp-mb__bar--this   { --bar-color-from: #0e7c5a; --bar-color-to: #16A34A; }
 .dpp-mb__bar--cgg    { --bar-color-from: #B45309; --bar-color-to: #D97706; }
 .dpp-mb__bar--industry  { --bar-color-from: #475569; --bar-color-to: #64748b; }
 .dpp-mb__bar--highest   { --bar-color-from: #991B1B; --bar-color-to: #DC2626; }
 
-.dpp-mb__bar-delta {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  right: 10px;
-  font-family: var(--font-mono, monospace);
-  font-size: 10px;
-  letter-spacing: 0.04em;
-  color: rgba(255, 255, 255, 0.92);
-  pointer-events: none;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+.dpp-mb__bars-foot {
+  margin: 18px 0 0;
+  font-size: 11.5px;
+  font-style: italic;
+  color: var(--doc-subtle, #64748b);
+  line-height: 1.55;
 }
 
 /* ── 2 · Calculator ───────────────────────────────────────────────── */
