@@ -238,6 +238,13 @@ export async function setValue(
   return post(`/api/v1/draft-passports/${draftId}/values`, input)
 }
 
+export async function setValuesBulk(
+  draftId: number,
+  items: { manifestAttrId: number; value: unknown; source: EntrySource; sourceRef?: string }[],
+): Promise<DraftView> {
+  return post(`/api/v1/draft-passports/${draftId}/values/bulk`, { items })
+}
+
 export async function listLibraryPresets(draftId: number): Promise<LibraryPreset[]> {
   const res = await safeJson<{ presets: LibraryPreset[] }>(
     await authedFetch(`/api/v1/draft-passports/${draftId}/library-presets`),

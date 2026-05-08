@@ -360,6 +360,76 @@ async def set_value(
     return await get_draft(session, tenant_id=tenant_id, draft_id=draft_id)
 
 
+async def set_values_bulk(
+    session: AsyncSession,
+    *,
+    tenant_id: int,
+    draft_id: int,
+    items: list[tuple[int, Any, str, str | None]],
+    actor_id: str,
+) -> dict[str, Any]:
+    """Bulk variant of set_value: validate draft once, write every row, view-refresh once.
+
+    Used by the wizard's AI auto-fill so a 50-100 attribute synth pass is a single
+    round-trip instead of N sequential POSTs that each rebuild the draft view.
+    """
+    draft = await _require_draft(session, tenant_id, draft_id)
+    if draft.state != "entry":
+        raise ValueError("draft is not accepting attribute edits")
+
+    if not items:
+        return await get_draft(session, tenant_id=tenant_id, draft_id=draft_id)
+
+    for _, _, source, _ in items:
+        if source not in ENTRY_SOURCES:
+            raise ValueError(f"source must be one of {ENTRY_SOURCES}")
+
+    ids = [it[0] for it in items]
+    rows = (
+        await session.execute(
+            select(DppAttributeValue).where(
+                DppAttributeValue.draft_id == draft_id,
+                DppAttributeValue.manifest_attr_id.in_(ids),
+            )
+        )
+    ).scalars().all()
+    by_id = {r.manifest_attr_id: r for r in rows}
+
+    now = datetime.now(UTC)
+    for manifest_attr_id, value, source, source_ref in items:
+        row = by_id.get(manifest_attr_id)
+        if row is None:
+            raise ValueError(
+                f"attribute {manifest_attr_id} is not part of this draft's selection"
+            )
+        row.value = value
+        row.source = source
+        row.source_ref = source_ref
+        row.entered_by = actor_id
+        row.entered_at = now
+        row.status = "complete" if _is_present(value) else "empty"
+        row.updated_at = now
+
+    await session.flush()
+
+    await append_audit(
+        session,
+        tenant_id=tenant_id,
+        actor_kind="user",
+        actor_id=actor_id,
+        action="dpp_attribute_value.set_bulk",
+        target_kind="dpp_draft",
+        target_id=str(draft_id),
+        details={
+            "draftId": draft_id,
+            "count": len(items),
+            "sources": sorted({it[2] for it in items}),
+        },
+    )
+
+    return await get_draft(session, tenant_id=tenant_id, draft_id=draft_id)
+
+
 # ── Library pull (pre-filled values from tenant presets) ───────────────
 
 

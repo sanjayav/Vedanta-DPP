@@ -46,6 +46,19 @@ class SetValueRequest(BaseModel):
     model_config = {"populate_by_name": True}
 
 
+class BulkSetValueItem(BaseModel):
+    manifest_attr_id: int = Field(..., alias="manifestAttrId")
+    value: Any
+    source: str = "manual"
+    source_ref: str | None = Field(None, alias="sourceRef")
+
+    model_config = {"populate_by_name": True}
+
+
+class BulkSetValueRequest(BaseModel):
+    items: list[BulkSetValueItem]
+
+
 class LibraryPullRequest(BaseModel):
     process_step_id: int = Field(..., alias="processStepId")
     preset_id: str = Field(..., alias="presetId")
@@ -158,6 +171,28 @@ async def set_value_endpoint(
             value=payload.value,
             source=payload.source,
             source_ref=payload.source_ref,
+            actor_id=principal.email or principal.subject,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@router.post("/{draft_id}/values/bulk")
+async def set_values_bulk_endpoint(
+    draft_id: int,
+    payload: BulkSetValueRequest,
+    principal: Principal = Depends(require_dpp_operator),
+    session: AsyncSession = Depends(get_tenant_session),
+) -> dict[str, Any]:
+    try:
+        return await svc.set_values_bulk(
+            session,
+            tenant_id=principal.tenant_id,
+            draft_id=draft_id,
+            items=[
+                (it.manifest_attr_id, it.value, it.source, it.source_ref)
+                for it in payload.items
+            ],
             actor_id=principal.email or principal.subject,
         )
     except ValueError as exc:

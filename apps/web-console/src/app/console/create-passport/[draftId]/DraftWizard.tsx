@@ -45,6 +45,7 @@ import {
   refreshDraftAction,
   revokeAssignmentAction,
   setValueAction,
+  setValuesBulkAction,
   updateDisclosureAction,
   upsertIotAction,
 } from '../actions'
@@ -666,22 +667,28 @@ function AiAutoFillButton({
     setPhase('library')
     let latest: DraftView | null = null
     try {
-      // Phase 1 · pull library preset across every stage.
+      // Phase 1 · pull library preset across every stage. Each stage targets a
+      // disjoint attribute set so the writes don't contend; firing them in
+      // parallel collapses the wall time from N round-trips to ~1.
       const stageTotal = stages.length
       setProgress({ current: 0, total: stageTotal })
-      for (let i = 0; i < stages.length; i++) {
-        const stage = stages[i]!
-        setProgress({ current: i + 1, total: stageTotal })
-        const r = await pullLibraryAction(draftId, stage.stepId, presetId)
-        if (r && typeof r === 'object' && !('error' in r)) {
-          latest = r
-        }
+      let done = 0
+      const results = await Promise.all(
+        stages.map(async (stage) => {
+          const r = await pullLibraryAction(draftId, stage.stepId, presetId)
+          done += 1
+          setProgress({ current: done, total: stageTotal })
+          return r
+        }),
+      )
+      for (const r of results) {
+        if (r && typeof r === 'object' && !('error' in r)) latest = r
       }
 
-      // Phase 2 · fill every still-empty attribute with a synthesized value
-      // so the operator can demo end-to-end "create → publish" without
-      // hand-filling. The manifest validator runs on publish, so this needs
-      // to produce values that the schema accepts.
+      // Phase 2 · fill every still-empty attribute with a synthesized value in
+      // a single bulk call so the operator can demo end-to-end "create →
+      // publish" without hand-filling. The manifest validator runs on publish,
+      // so this needs to produce values that the schema accepts.
       const view = latest ?? (await refreshDraftAction(draftId))
       if (view) {
         const remaining: DraftAttribute[] = []
@@ -692,11 +699,14 @@ function AiAutoFillButton({
         }
         setPhase('synth')
         setProgress({ current: 0, total: remaining.length })
-        for (let i = 0; i < remaining.length; i++) {
-          const attr = remaining[i]!
-          setProgress({ current: i + 1, total: remaining.length })
-          const value = synthesizeAttrValue(attr)
-          await setValueAction(draftId, attr.manifestAttrId, value, 'manual')
+        if (remaining.length > 0) {
+          const items = remaining.map((attr) => ({
+            manifestAttrId: attr.manifestAttrId,
+            value: synthesizeAttrValue(attr),
+            source: 'manual' as const,
+          }))
+          await setValuesBulkAction(draftId, items)
+          setProgress({ current: remaining.length, total: remaining.length })
         }
       }
     } finally {

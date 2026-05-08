@@ -22,6 +22,7 @@ import {
   pullFromLibrary,
   revokeAssignment,
   setValue,
+  setValuesBulk,
   updateDisclosure,
   upsertIotConnection,
 } from '@/lib/draft-api'
@@ -50,6 +51,27 @@ export async function setValueAction(
 ): Promise<DraftView | { error: string }> {
   try {
     const view = await setValue(draftId, { manifestAttrId, value, source })
+    revalidatePath(`/console/create-passport/${draftId}`)
+    return view
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : 'failed' }
+  }
+}
+
+export async function setValuesBulkAction(
+  draftId: number,
+  items: { manifestAttrId: number; value: unknown; source?: EntrySource; sourceRef?: string }[],
+): Promise<DraftView | { error: string }> {
+  try {
+    const view = await setValuesBulk(
+      draftId,
+      items.map((i) => ({
+        manifestAttrId: i.manifestAttrId,
+        value: i.value,
+        source: i.source ?? 'manual',
+        sourceRef: i.sourceRef,
+      })),
+    )
     revalidatePath(`/console/create-passport/${draftId}`)
     return view
   } catch (err) {
