@@ -186,7 +186,24 @@ export async function DppDocument({ dpp }: { dpp: DppDocumentInput }) {
   const pcfUnit = str(pcf.unit) ?? 'kg CO₂e/kg'
   const pcfIndustry = asDict(pcf.industryAverage)
   const pcfIndustryValue = num(pcfIndustry.value)
+  const pcfReductionPct =
+    pcfIndustryValue !== null && pcfIndustryValue > 0 && pcfValue !== null
+      ? Math.round(((pcfIndustryValue - pcfValue) / pcfIndustryValue) * 100)
+      : null
   const pcfBreakdown = asDict(sustainability.pcfBreakdown)
+
+  // Product hero photo · demo bodies carry it under media.productImage as
+  // /dpp-assets/products/<slug>.jpg (public-viewer mount). Story content
+  // gives us a marquee headline + subhead when available.
+  const media = asDict(body.media)
+  const productImage = str(media.productImage)
+  const productImageAlt = str(media.productImageAlt) ?? `${titlePrimary} product photo`
+  const story = asDict(body.story)
+  const storyHeadline = str(story.headline)
+  const storySubhead = str(story.subhead)
+  const storyBullets = Array.isArray(story.bullets)
+    ? (story.bullets as unknown[]).filter((x): x is string => typeof x === 'string')
+    : []
 
   const renewableElectricityPercent = num(sustainability.renewableElectricityPercent)
   const epd = asDict(sustainability.epd)
@@ -218,28 +235,99 @@ export async function DppDocument({ dpp }: { dpp: DppDocumentInput }) {
     <article className="dpp-doc bg-[var(--color-paper)]">
       <DocStyle />
 
-      {/* 1. Header */}
+      {/* 1. Header — top strip with crest + eyebrow + status pills */}
       <header className="dpp-doc__header">
-        <div className="dpp-doc__header-grid">
+        <div className="dpp-doc__header-strip">
           <div className="dpp-doc__crest">
             <HzlCrest />
-            <p className="dpp-doc__crest-caption">Issued by {shortName}</p>
+            <div>
+              <p className="dpp-doc__crest-caption">Issued by</p>
+              <p className="dpp-doc__crest-name">{legalName}</p>
+            </div>
+          </div>
+          <div className="dpp-doc__status-bar">
+            <span className="dpp-doc__pill dpp-doc__pill--ok">
+              <span className="dpp-doc__pulse" />
+              Verified · Ed25519
+            </span>
+            <span className="dpp-doc__pill">Chem-X v1.0</span>
+            {dpp.isDemo ? (
+              <span className="dpp-doc__pill dpp-doc__pill--demo">Demo</span>
+            ) : null}
+          </div>
+        </div>
+
+        {/* 2. Hero — product photo + title block + headline metric + QR */}
+        <section className="dpp-doc__hero">
+          <div className="dpp-doc__hero-photo">
+            {productImage ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={productImage}
+                alt={productImageAlt}
+                className="dpp-doc__hero-photo-img"
+                loading="eager"
+              />
+            ) : (
+              <HeroPhotoFallback metal={metal} />
+            )}
+            {storyHeadline ? (
+              <div className="dpp-doc__hero-photo-caption">
+                <p>{storyHeadline}</p>
+              </div>
+            ) : null}
           </div>
 
-          <div className="dpp-doc__titleblock">
-            <p className="dpp-doc__eyebrow">Digital Product Passport · v1.0 · Chem-X aligned</p>
+          <div className="dpp-doc__hero-body">
+            <p className="dpp-doc__eyebrow">
+              Digital Product Passport · v1.0 · Chem-X aligned
+            </p>
             <h1 className="dpp-doc__title">{titlePrimary}</h1>
-            {titleSecondary ? <p className="dpp-doc__subtitle">{titleSecondary}</p> : null}
+            {titleSecondary ? (
+              <p className="dpp-doc__subtitle">{titleSecondary}</p>
+            ) : null}
             {formLabel || purityPercent !== null ? (
               <p className="dpp-doc__sub-subtitle">
                 {[
                   formLabel,
-                  purityPercent !== null ? `${fmt(purityPercent, 3)}% purity` : null,
+                  purityPercent !== null
+                    ? `${fmt(purityPercent, 3)}% purity`
+                    : null,
                 ]
                   .filter(Boolean)
                   .join(' · ')}
               </p>
             ) : null}
+
+            {/* Headline metric — the marquee PCF stat */}
+            {pcfValue !== null ? (
+              <div className="dpp-doc__hero-metric">
+                <p className="dpp-doc__hero-metric-label">
+                  Cradle-to-gate carbon footprint
+                </p>
+                <p className="dpp-doc__hero-metric-value">
+                  <span className="dpp-doc__hero-metric-num">
+                    {fmt(pcfValue, 3)}
+                  </span>
+                  <span className="dpp-doc__hero-metric-unit">{pcfUnit}</span>
+                </p>
+                {pcfReductionPct !== null && pcfReductionPct > 0 ? (
+                  <p className="dpp-doc__hero-metric-delta">
+                    <strong>~{pcfReductionPct}% below</strong>{' '}
+                    {str(pcfIndustry.source) ?? 'industry average'}
+                    {pcfIndustryValue !== null ? (
+                      <>
+                        {' '}
+                        <span className="dpp-doc__hero-metric-delta-bench">
+                          ({fmt(pcfIndustryValue, 2)} {pcfUnit})
+                        </span>
+                      </>
+                    ) : null}
+                  </p>
+                ) : null}
+              </div>
+            ) : null}
+
             <ul className="dpp-doc__title-meta">
               {productionBatch ? (
                 <li>
@@ -253,6 +341,12 @@ export async function DppDocument({ dpp }: { dpp: DppDocumentInput }) {
                   <code>{productionDate}</code>
                 </li>
               ) : null}
+              {bpnl ? (
+                <li>
+                  <span>BPNL</span>
+                  <code>{bpnl}</code>
+                </li>
+              ) : null}
               {uuid ? (
                 <li>
                   <span>UUID</span>
@@ -262,7 +356,7 @@ export async function DppDocument({ dpp }: { dpp: DppDocumentInput }) {
             </ul>
           </div>
 
-          <div className="dpp-doc__qr">
+          <div className="dpp-doc__hero-qr">
             <div
               className="dpp-doc__qr-svg"
               dangerouslySetInnerHTML={{ __html: qrSvg }}
@@ -270,16 +364,22 @@ export async function DppDocument({ dpp }: { dpp: DppDocumentInput }) {
             />
             <p className="dpp-doc__qr-caption">Scan · GS1 Digital Link</p>
           </div>
-        </div>
-        <div className="dpp-doc__status-bar">
-          <span className="dpp-doc__pill dpp-doc__pill--ok">
-            <span className="dpp-doc__pulse" />
-            Verified · Ed25519
-          </span>
-          <span className="dpp-doc__pill">Chem-X Material ID · did:web</span>
-          {bpnl ? <span className="dpp-doc__pill">BPNL · {bpnl}</span> : null}
-          {dpp.isDemo ? <span className="dpp-doc__pill dpp-doc__pill--demo">Demo</span> : null}
-        </div>
+        </section>
+
+        {storySubhead || storyBullets.length ? (
+          <section className="dpp-doc__story">
+            {storySubhead ? (
+              <p className="dpp-doc__story-subhead">{storySubhead}</p>
+            ) : null}
+            {storyBullets.length ? (
+              <ul className="dpp-doc__story-bullets">
+                {storyBullets.map((b, i) => (
+                  <li key={i}>{b}</li>
+                ))}
+              </ul>
+            ) : null}
+          </section>
+        ) : null}
       </header>
 
       {/* 2. Identification */}
@@ -700,6 +800,38 @@ function KvGrid({ rows }: { rows: Array<[string, string]> }) {
   )
 }
 
+function HeroPhotoFallback({ metal }: { metal: string | null }) {
+  // Soft gradient + abstract bar/ingot shape so the hero never breaks when
+  // a product carries no media.productImage.
+  const m = metal?.toLowerCase() ?? 'zinc'
+  const gradient =
+    m === 'lead'
+      ? 'linear-gradient(135deg, #475569 0%, #1e293b 100%)'
+      : m === 'silver'
+        ? 'linear-gradient(135deg, #cbd5e1 0%, #475569 100%)'
+        : 'linear-gradient(135deg, #94a3b8 0%, #475569 100%)'
+  return (
+    <div className="dpp-doc__hero-photo-fallback" style={{ background: gradient }} aria-hidden>
+      <svg viewBox="0 0 200 120" className="dpp-doc__hero-photo-fallback-svg">
+        <defs>
+          <linearGradient id="hpf-gloss" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stopColor="rgba(255,255,255,0.32)" />
+            <stop offset="100%" stopColor="rgba(255,255,255,0.04)" />
+          </linearGradient>
+        </defs>
+        {/* Stylised ingot block */}
+        <path
+          d="M30 60 L46 40 L154 40 L170 60 L154 80 L46 80 Z"
+          fill="url(#hpf-gloss)"
+          stroke="rgba(255,255,255,0.20)"
+          strokeWidth="0.6"
+        />
+        <path d="M46 40 L154 40 L150 50 L50 50 Z" fill="rgba(255,255,255,0.16)" />
+      </svg>
+    </div>
+  )
+}
+
 function HzlCrest() {
   return (
     <svg viewBox="0 0 64 64" className="dpp-doc__crest-mark" aria-hidden>
@@ -1044,25 +1176,203 @@ const DOC_CSS = `
 .dpp-doc__small { font-size: 12px; color: var(--doc-muted); }
 
 .dpp-doc__header {
-  padding: 56px 0 24px;
+  padding: 32px 0 28px;
   border-bottom: 1px solid var(--doc-border);
 }
-.dpp-doc__header-grid {
-  display: grid;
-  grid-template-columns: auto 1fr auto;
-  gap: 32px;
-  align-items: start;
+
+/* Top strip · crest left, status pills right */
+.dpp-doc__header-strip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding-bottom: 24px;
+  border-bottom: 1px dashed var(--doc-border);
+  margin-bottom: 28px;
 }
-@media (max-width: 720px) {
-  .dpp-doc__header-grid { grid-template-columns: 1fr; }
-  .dpp-doc__qr { justify-self: start; }
+.dpp-doc__crest {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
 }
-.dpp-doc__crest { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
-.dpp-doc__crest-mark { width: 64px; height: 64px; }
+.dpp-doc__crest-mark { width: 48px; height: 48px; flex-shrink: 0; }
 .dpp-doc__crest-caption {
   font-family: var(--font-mono, JetBrains Mono, monospace);
-  font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase;
+  font-size: 9.5px; letter-spacing: 0.18em; text-transform: uppercase;
   color: var(--doc-subtle);
+  margin: 0;
+}
+.dpp-doc__crest-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--doc-ink);
+  margin: 2px 0 0;
+}
+
+/* Hero · product photo left, title block centre, QR right */
+.dpp-doc__hero {
+  display: grid;
+  grid-template-columns: 320px minmax(0, 1fr) auto;
+  gap: 32px;
+  align-items: center;
+}
+@media (max-width: 960px) {
+  .dpp-doc__hero {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 24px;
+  }
+}
+
+.dpp-doc__hero-photo {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  width: 100%;
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--doc-recessed);
+  box-shadow:
+    0 1px 2px rgba(15, 23, 42, 0.04),
+    0 16px 32px -16px rgba(15, 23, 42, 0.18);
+}
+.dpp-doc__hero-photo-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.dpp-doc__hero-photo-fallback {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  place-items: center;
+}
+.dpp-doc__hero-photo-fallback-svg {
+  width: 70%;
+  height: auto;
+}
+.dpp-doc__hero-photo-caption {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  padding: 14px 16px;
+  background: linear-gradient(180deg, rgba(11, 37, 69, 0) 0%, rgba(11, 37, 69, 0.78) 100%);
+  color: #fff;
+}
+.dpp-doc__hero-photo-caption p {
+  font-family: var(--font-display, Fraunces, Inter, serif);
+  font-style: italic;
+  font-size: 14px;
+  line-height: 1.3;
+  margin: 0;
+}
+
+.dpp-doc__hero-body {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.dpp-doc__hero-metric {
+  margin-top: 18px;
+  padding: 16px 18px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, rgba(14, 124, 90, 0.06) 0%, rgba(14, 124, 90, 0.02) 100%);
+  border: 1px solid rgba(14, 124, 90, 0.18);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.dpp-doc__hero-metric-label {
+  font-family: var(--font-mono, JetBrains Mono, monospace);
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--doc-green);
+  font-weight: 700;
+  margin: 0;
+}
+.dpp-doc__hero-metric-value {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin: 2px 0 0;
+}
+.dpp-doc__hero-metric-num {
+  font-family: var(--font-display, Fraunces, Inter, serif);
+  font-size: 38px;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  color: var(--doc-ink);
+  font-variant-numeric: tabular-nums;
+}
+.dpp-doc__hero-metric-unit {
+  font-family: var(--font-mono, JetBrains Mono, monospace);
+  font-size: 13px;
+  color: var(--doc-muted);
+}
+.dpp-doc__hero-metric-delta {
+  font-size: 13px;
+  color: var(--doc-green);
+  margin: 4px 0 0;
+  line-height: 1.45;
+}
+.dpp-doc__hero-metric-delta strong { font-weight: 600; }
+.dpp-doc__hero-metric-delta-bench {
+  font-family: var(--font-mono, JetBrains Mono, monospace);
+  font-size: 11px;
+  color: var(--doc-muted);
+}
+
+.dpp-doc__hero-qr { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+@media (max-width: 960px) {
+  .dpp-doc__hero-qr { align-self: flex-start; }
+}
+
+/* Story ribbon — quote-style subhead + bullet list */
+.dpp-doc__story {
+  margin-top: 28px;
+  padding: 22px 24px;
+  border-radius: 12px;
+  background: linear-gradient(135deg,
+    color-mix(in srgb, var(--doc-accent) 8%, var(--doc-recessed)) 0%,
+    var(--doc-recessed) 100%);
+  border: 1px solid var(--doc-border);
+}
+.dpp-doc__story-subhead {
+  font-family: var(--font-display, Fraunces, Inter, serif);
+  font-style: italic;
+  font-size: 17px;
+  line-height: 1.5;
+  color: var(--doc-ink);
+  margin: 0;
+}
+.dpp-doc__story-bullets {
+  list-style: none;
+  padding: 0;
+  margin: 14px 0 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 10px 24px;
+}
+.dpp-doc__story-bullets li {
+  position: relative;
+  padding-left: 18px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--doc-muted);
+}
+.dpp-doc__story-bullets li::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 8px;
+  width: 8px; height: 8px;
+  border-radius: 9999px;
+  background: var(--doc-accent);
+  opacity: 0.7;
 }
 .dpp-doc__eyebrow {
   font-family: var(--font-mono, JetBrains Mono, monospace);
@@ -1258,12 +1568,32 @@ const DOC_CSS = `
 .dpp-doc__packaging li { padding: 4px 0; border-bottom: 1px dashed var(--doc-border); }
 
 .dpp-doc__lcia-grid {
-  display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 16px;
 }
+@media (max-width: 880px) {
+  .dpp-doc__lcia-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 560px) {
+  .dpp-doc__lcia-grid { grid-template-columns: 1fr; }
+}
 .dpp-doc__lcia {
-  border: 1px solid var(--doc-border); border-radius: 8px; padding: 18px;
-  background: #fff; display: flex; flex-direction: column; gap: 12px;
+  border: 1px solid var(--doc-border); border-radius: 10px; padding: 18px;
+  background: #fff;
+  display: flex; flex-direction: column; gap: 12px;
+  min-height: 232px;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+  transition: border-color 200ms ease, box-shadow 200ms ease, transform 200ms ease;
+}
+.dpp-doc__lcia:hover {
+  border-color: rgba(14, 124, 90, 0.25);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 14px 24px -16px rgba(15, 23, 42, 0.18);
+  transform: translateY(-2px);
+}
+@media (prefers-reduced-motion: reduce) {
+  .dpp-doc__lcia { transition: none; }
+  .dpp-doc__lcia:hover { transform: none; }
 }
 .dpp-doc__lcia--empty { opacity: 0.55; }
 .dpp-doc__lcia-head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
