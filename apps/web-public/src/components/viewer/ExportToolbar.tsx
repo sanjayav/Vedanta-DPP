@@ -22,19 +22,19 @@ export function ExportToolbar({ dpp, upiPath }: { dpp: ViewerDpp; upiPath: strin
 
         <nav className="flex flex-wrap items-center gap-2">
           <ExportLink
+            href={`/api/dpp-pdf/${upiPath}`}
+            label="Download PDF"
+            kind="primary"
+          />
+          <ExportLink
             href={`/api/demo-export/${encodeURIComponent(upiPath)}/dpp.json`}
             label="JSON"
-            kind="primary"
           />
           <ExportLink
             href={`/api/demo-export/${encodeURIComponent(upiPath)}/credential.vc.json`}
             label="W3C VC"
           />
           <ExportLink href={`/api/demo-export/${encodeURIComponent(upiPath)}/qr.svg`} label="QR" />
-          <ExportLink
-            href={`/api/demo-export/${encodeURIComponent(upiPath)}/report.pdf`}
-            label="PDF report"
-          />
         </nav>
       </div>
     </section>

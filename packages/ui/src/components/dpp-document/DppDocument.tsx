@@ -227,7 +227,12 @@ export async function DppDocument({ dpp }: { dpp: DppDocumentInput }) {
     (bpnl && uuid
       ? `https://passport.hzlindia.com/dpp/${bpnl}/${uuid}`
       : 'https://passport.hzlindia.com/dpp/sample/ecozen')
-  const qrSvg = await QRCode.toString(digitalLink, {
+  // The QR target is the PDF endpoint — scanning hands the user the
+  // self-contained, archival passport. The HTML viewer is still reachable at
+  // `digitalLink` for desktop browsing. The PDF lives under /api/ to avoid
+  // colliding with the /dpp/[...upi] catch-all that owns the HTML view.
+  const qrTarget = digitalLink.replace(/\/dpp\//, '/api/dpp-pdf/')
+  const qrSvg = await QRCode.toString(qrTarget, {
     type: 'svg',
     margin: 0,
     errorCorrectionLevel: 'M',
