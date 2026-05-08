@@ -57,6 +57,7 @@ function num(v: unknown): number | null {
 }
 function fmt(n: number | null, digits = 2): string {
   if (n === null) return '—'
+  if (n === 0) return '0'
   if (Math.abs(n) >= 100) return n.toFixed(0)
   if (Math.abs(n) >= 1) return n.toFixed(Math.min(digits, 2))
   if (Math.abs(n) >= 0.001) return n.toFixed(Math.min(digits + 1, 4))
