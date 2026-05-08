@@ -105,7 +105,7 @@ export function InviteMemberDialog({ grantableRoles, myEmail }: Props) {
                 name="email"
                 required
                 autoFocus
-                placeholder="colleague@ega.ae"
+                placeholder="colleague@vedanta.co.in"
                 className="invite-dlg__input"
               />
             </label>

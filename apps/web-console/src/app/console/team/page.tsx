@@ -1,12 +1,14 @@
 import Link from 'next/link'
 import {
   CheckCircle2,
-  ChevronDown,
   Clock,
-  MoreHorizontal,
+  KeySquare,
+  Lock,
+  ShieldCheck,
   ShieldOff,
   UserPlus,
   Users,
+  Workflow,
 } from 'lucide-react'
 
 import { currentUser } from '@/lib/auth'
@@ -23,7 +25,10 @@ import {
   type TenantRole,
 } from '@/lib/rbac'
 
+import { AnimatedKpi } from '@/components/console/AnimatedKpi'
+
 import { InviteMemberDialog } from './InviteMemberDialog'
+import { TeamRowMenu } from './TeamRowMenu'
 import { listPendingInvites } from './invite-store'
 
 export const revalidate = 30
@@ -33,6 +38,8 @@ interface Member {
   name: string | null
   email: string
   role: TenantRole
+  /** Department / site for the directory list. */
+  unit: string
   status: 'active' | 'pending' | 'suspended'
   invitedAt: string
   joinedAt: string | null
@@ -41,211 +48,229 @@ interface Member {
   invitedBy: string
 }
 
+// HZL directory · plausible Vedanta names + corporate / operational emails.
+// These map to the five tenant roles in the SDD §12.1.1 RBAC table.
 const MEMBERS: Member[] = [
   {
-    id: 'u-ega-admin',
-    name: 'Fatima Al-Mansoori',
-    email: 'sustainability.lead@ega.ae',
+    id: 'u-hzl-admin',
+    name: 'Aashima V Khanna',
+    email: 'sustainability.lead@vedanta.co.in',
     role: 'tenant_admin',
+    unit: 'Sustainability & Compliance · Yashad Bhawan',
     status: 'active',
     invitedAt: '2025-12-01',
     joinedAt: '2025-12-02',
-    lastActiveAt: '2026-05-05T09:32:00Z',
+    lastActiveAt: '2026-05-08T09:32:00Z',
     mfaEnabled: true,
     invitedBy: 'platform',
   },
   {
-    id: 'u-ega-it',
-    name: 'Mohammed Al-Zaabi',
-    email: 'it@ega.ae',
+    id: 'u-hzl-it',
+    name: 'Rajesh Sharma',
+    email: 'it.ops@vedanta.co.in',
     role: 'it_administrator',
+    unit: 'Group IT · Udaipur HQ',
     status: 'active',
     invitedAt: '2026-01-10',
     joinedAt: '2026-01-10',
-    lastActiveAt: '2026-05-04T17:11:00Z',
+    lastActiveAt: '2026-05-07T17:11:00Z',
     mfaEnabled: true,
-    invitedBy: 'sustainability.lead@ega.ae',
+    invitedBy: 'sustainability.lead@vedanta.co.in',
   },
   {
-    id: 'u-ega-ops',
-    name: 'Ahmed Al-Hashimi',
-    email: 'casthouse.ops@ega.ae',
+    id: 'u-hzl-ops-cha',
+    name: 'Vikram Singh',
+    email: 'chanderiya.ops@hzlindia.com',
     role: 'dpp_operator',
+    unit: 'Chanderiya Lead-Zinc Smelter (CLZS)',
     status: 'active',
     invitedAt: '2026-01-15',
     joinedAt: '2026-01-15',
-    lastActiveAt: '2026-05-05T07:45:00Z',
+    lastActiveAt: '2026-05-08T07:45:00Z',
     mfaEnabled: true,
-    invitedBy: 'it@ega.ae',
+    invitedBy: 'it.ops@vedanta.co.in',
   },
   {
-    id: 'u-ega-ops-2',
-    name: 'Rashid Al-Suwaidi',
-    email: 'smelter.ops@ega.ae',
+    id: 'u-hzl-ops-dar',
+    name: 'Priya Iyer',
+    email: 'dariba.ops@hzlindia.com',
     role: 'dpp_operator',
+    unit: 'Dariba Smelting Complex (DSC)',
     status: 'active',
     invitedAt: '2026-02-01',
     joinedAt: '2026-02-02',
-    lastActiveAt: '2026-05-04T22:18:00Z',
+    lastActiveAt: '2026-05-07T22:18:00Z',
     mfaEnabled: false,
-    invitedBy: 'it@ega.ae',
+    invitedBy: 'it.ops@vedanta.co.in',
   },
   {
-    id: 'u-ega-ops-3',
-    name: 'Hamdan Al-Shamsi',
-    email: 'refinery.lead@ega.ae',
+    id: 'u-hzl-ops-pmp',
+    name: 'Ananya Reddy',
+    email: 'pantnagar.ops@hzlindia.com',
     role: 'dpp_operator',
+    unit: 'Pantnagar Metal Plant · Silver Refinery',
     status: 'active',
     invitedAt: '2026-02-15',
     joinedAt: '2026-02-16',
-    lastActiveAt: '2026-05-03T13:09:00Z',
+    lastActiveAt: '2026-05-06T13:09:00Z',
     mfaEnabled: true,
-    invitedBy: 'it@ega.ae',
+    invitedBy: 'it.ops@vedanta.co.in',
   },
   {
-    id: 'u-ega-qa',
-    name: 'Sara Al-Blooshi',
-    email: 'qa@ega.ae',
+    id: 'u-hzl-qa-1',
+    name: 'Arjun Rao',
+    email: 'qa.carbon@vedanta.co.in',
     role: 'dpp_reviewer',
+    unit: 'QA & Carbon Analyst · Group',
     status: 'active',
     invitedAt: '2026-01-20',
     joinedAt: '2026-01-21',
-    lastActiveAt: '2026-05-05T08:50:00Z',
+    lastActiveAt: '2026-05-08T08:50:00Z',
     mfaEnabled: true,
-    invitedBy: 'sustainability.lead@ega.ae',
+    invitedBy: 'sustainability.lead@vedanta.co.in',
   },
   {
-    id: 'u-ega-qa-2',
-    name: 'Noura Al-Ketbi',
-    email: 'carbon.analyst@ega.ae',
+    id: 'u-hzl-qa-2',
+    name: 'Sneha Patel',
+    email: 'lca.review@vedanta.co.in',
     role: 'dpp_reviewer',
+    unit: 'LCA & Sustainability Reviewer',
     status: 'active',
     invitedAt: '2026-02-05',
     joinedAt: '2026-02-05',
-    lastActiveAt: '2026-05-04T11:30:00Z',
+    lastActiveAt: '2026-05-07T11:30:00Z',
     mfaEnabled: true,
-    invitedBy: 'sustainability.lead@ega.ae',
+    invitedBy: 'sustainability.lead@vedanta.co.in',
   },
   {
-    id: 'u-ega-audit',
-    name: 'Khalid Al-Nuaimi',
-    email: 'audit@ega.ae',
+    id: 'u-hzl-audit-1',
+    name: 'Ramesh Naik',
+    email: 'audit.internal@vedanta.co.in',
     role: 'tenant_auditor',
+    unit: 'Internal Audit · Vedanta Group',
     status: 'active',
     invitedAt: '2026-01-20',
     joinedAt: '2026-01-22',
-    lastActiveAt: '2026-05-02T16:00:00Z',
+    lastActiveAt: '2026-05-05T16:00:00Z',
     mfaEnabled: true,
-    invitedBy: 'sustainability.lead@ega.ae',
+    invitedBy: 'sustainability.lead@vedanta.co.in',
   },
   {
-    id: 'u-ega-audit-2',
-    name: 'Omar Al-Dhaheri',
-    email: 'compliance.lead@ega.ae',
+    id: 'u-hzl-audit-2',
+    name: 'Pooja Mehta',
+    email: 'compliance.bis@vedanta.co.in',
     role: 'tenant_auditor',
+    unit: 'BIS / EPD Compliance',
     status: 'active',
     invitedAt: '2026-02-10',
     joinedAt: '2026-02-11',
-    lastActiveAt: '2026-05-04T09:42:00Z',
+    lastActiveAt: '2026-05-07T09:42:00Z',
     mfaEnabled: false,
-    invitedBy: 'sustainability.lead@ega.ae',
+    invitedBy: 'sustainability.lead@vedanta.co.in',
   },
+  // Pending invites
   {
     id: 'inv-1',
     name: null,
-    email: 'logistics@ega.ae',
+    email: 'logistics.mundra@hzlindia.com',
     role: 'dpp_operator',
-    status: 'pending',
-    invitedAt: '2026-04-22',
-    joinedAt: null,
-    lastActiveAt: null,
-    mfaEnabled: false,
-    invitedBy: 'it@ega.ae',
-  },
-  {
-    id: 'inv-2',
-    name: null,
-    email: 'lab.technician@ega.ae',
-    role: 'dpp_operator',
+    unit: 'Mundra Port Logistics',
     status: 'pending',
     invitedAt: '2026-04-25',
     joinedAt: null,
     lastActiveAt: null,
     mfaEnabled: false,
-    invitedBy: 'it@ega.ae',
+    invitedBy: 'it.ops@vedanta.co.in',
   },
   {
-    id: 'inv-3',
+    id: 'inv-2',
     name: null,
-    email: 'environmental@ega.ae',
-    role: 'tenant_auditor',
+    email: 'lab.tech.dariba@hzlindia.com',
+    role: 'dpp_operator',
+    unit: 'Dariba NABL Lab',
     status: 'pending',
     invitedAt: '2026-04-28',
     joinedAt: null,
     lastActiveAt: null,
     mfaEnabled: false,
-    invitedBy: 'sustainability.lead@ega.ae',
+    invitedBy: 'it.ops@vedanta.co.in',
   },
   {
-    id: 'inv-4',
+    id: 'inv-3',
     name: null,
-    email: 'casting.supervisor@ega.ae',
-    role: 'dpp_operator',
+    email: 'environmental.cha@vedanta.co.in',
+    role: 'tenant_auditor',
+    unit: 'Environmental · Chanderiya',
     status: 'pending',
     invitedAt: '2026-05-01',
     joinedAt: null,
     lastActiveAt: null,
     mfaEnabled: false,
-    invitedBy: 'it@ega.ae',
+    invitedBy: 'sustainability.lead@vedanta.co.in',
   },
   {
-    id: 'sus-1',
-    name: 'Ali Al-Jazeeri',
-    email: 'former.ops@ega.ae',
+    id: 'inv-4',
+    name: null,
+    email: 'shift.supervisor@hzlindia.com',
     role: 'dpp_operator',
+    unit: 'Casthouse Shift A · Chanderiya',
+    status: 'pending',
+    invitedAt: '2026-05-05',
+    joinedAt: null,
+    lastActiveAt: null,
+    mfaEnabled: false,
+    invitedBy: 'it.ops@vedanta.co.in',
+  },
+  // Suspended
+  {
+    id: 'sus-1',
+    name: 'Karan Mehra',
+    email: 'former.ops@vedanta.co.in',
+    role: 'dpp_operator',
+    unit: 'Left organisation · 2026-03-01',
     status: 'suspended',
     invitedAt: '2025-08-15',
     joinedAt: '2025-08-16',
     lastActiveAt: '2026-03-01T12:00:00Z',
     mfaEnabled: true,
-    invitedBy: 'it@ega.ae',
+    invitedBy: 'it.ops@vedanta.co.in',
   },
 ]
 
-const RECENT_RBAC_EVENTS = [
+const RECENT_RBAC_EVENTS: { at: string; actor: string; action: string; target: string; detail: string }[] = [
   {
-    at: '2026-05-04T17:11:00Z',
-    actor: 'it@ega.ae',
+    at: '2026-05-07T17:11:00Z',
+    actor: 'it.ops@vedanta.co.in',
     action: 'invited',
-    target: 'lab.technician@ega.ae',
+    target: 'lab.tech.dariba@hzlindia.com',
     detail: 'Role: DPP Operator',
   },
   {
-    at: '2026-05-03T09:00:00Z',
-    actor: 'sustainability.lead@ega.ae',
+    at: '2026-05-06T09:00:00Z',
+    actor: 'sustainability.lead@vedanta.co.in',
     action: 'role_changed',
-    target: 'qa@ega.ae',
+    target: 'qa.carbon@vedanta.co.in',
     detail: 'Operator → DPP Reviewer',
   },
   {
-    at: '2026-04-29T14:30:00Z',
-    actor: 'it@ega.ae',
+    at: '2026-05-02T14:30:00Z',
+    actor: 'it.ops@vedanta.co.in',
     action: 'mfa_enforced',
     target: 'tenant',
-    detail: 'MFA now required for all roles',
+    detail: 'MFA now required for tenant_admin and dpp_reviewer',
   },
   {
-    at: '2026-04-22T08:30:00Z',
-    actor: 'it@ega.ae',
+    at: '2026-04-25T08:30:00Z',
+    actor: 'it.ops@vedanta.co.in',
     action: 'invited',
-    target: 'logistics@ega.ae',
+    target: 'logistics.mundra@hzlindia.com',
     detail: 'Role: DPP Operator',
   },
   {
     at: '2026-03-01T12:00:00Z',
-    actor: 'sustainability.lead@ega.ae',
+    actor: 'sustainability.lead@vedanta.co.in',
     action: 'suspended',
-    target: 'former.ops@ega.ae',
+    target: 'former.ops@vedanta.co.in',
     detail: 'Reason: left organisation',
   },
 ]
@@ -256,14 +281,12 @@ export default async function TeamPage() {
     ? (me.role as TenantRole)
     : 'tenant_auditor'
 
-  // Fold in any invitations created during this session via the server action.
-  // The dev-only `invite-store` keeps them in memory; production swaps to the
-  // tenant_users table.
   const liveInvites: Member[] = listPendingInvites().map((i) => ({
     id: i.id,
     name: i.name,
     email: i.email,
     role: i.role,
+    unit: 'Newly invited',
     status: 'pending' as const,
     invitedAt: i.invitedAt,
     joinedAt: null,
@@ -291,22 +314,25 @@ export default async function TeamPage() {
       <style>{TEAM_CSS}</style>
 
       <div className="mx-auto max-w-[1320px] px-7 py-7">
-        {/* ── Header · avatar tile + title + invite CTA ──────────── */}
-        <header className="team__header">
-          <div className="team__header-block">
-            <div className="team__header-avatar" aria-hidden>
+        {/* ── Hero ───────────────────────────────────────────────── */}
+        <header className="team__hero">
+          <div className="team__hero-block">
+            <div className="team__hero-avatar" aria-hidden>
               <Users className="h-5 w-5" />
             </div>
             <div className="min-w-0">
-              <h1 className="team__title">Team</h1>
-              <p className="team__subtitle">
-                {me.tenantSlug.toUpperCase()} · member management & RBAC. Roles map 1:1 to SDD
-                §12.1.1.
+              <p className="team__hero-eyebrow">Tenant administration · {(me.tenantSlug ?? 'hzl').toUpperCase()}</p>
+              <h1 className="team__hero-title">Team &amp; Access</h1>
+              <p className="team__hero-sub">
+                Five tenant roles map 1:1 to the SDD §12.1.1 RBAC table. Every state change is
+                hash-chained into the audit log, signed Ed25519, and reflected on the recipient&apos;s
+                permission scope within the same request cycle.
               </p>
             </div>
           </div>
-          <div className="team__header-actions">
+          <div className="team__hero-actions">
             <Link href="/console/audit" className="team__btn team__btn--ghost">
+              <ShieldCheck className="h-3.5 w-3.5" />
               Audit log
             </Link>
             {canManageUsers ? (
@@ -325,44 +351,97 @@ export default async function TeamPage() {
           </div>
         </header>
 
-        {/* ── KPI strip · 4 cards with corner icons ───────────── */}
-        <section className="team__kpi-grid">
-          <KpiCard
-            label="Total members"
-            value={MEMBERS.length}
-            sub="All roles"
+        {/* ── KPI strip · animated counters ──────────────────────── */}
+        <section className="team__kpis">
+          <KpiTile
+            tone="navy"
             icon={<Users className="h-4 w-4" />}
+            label="Total members"
+            value={String(MEMBERS.length)}
+            hint="All states"
+            delay={0}
           />
-          <KpiCard
-            label="Active"
-            value={active.length}
-            sub={`${mfaCovered}/${active.length} have MFA`}
+          <KpiTile
+            tone="green"
             icon={<CheckCircle2 className="h-4 w-4" />}
-            tone="ok"
+            label="Active"
+            value={String(active.length)}
+            hint={`${mfaCovered}/${active.length} have MFA`}
+            delay={0.05}
           />
-          <KpiCard
-            label="Pending invites"
-            value={pending.length}
-            sub="Awaiting acceptance"
+          <KpiTile
+            tone="amber"
             icon={<Clock className="h-4 w-4" />}
-            tone={pending.length > 0 ? 'amber' : undefined}
+            label="Pending invites"
+            value={String(pending.length)}
+            hint="Awaiting acceptance"
+            delay={0.10}
           />
-          <KpiCard
-            label="Suspended"
-            value={suspended.length}
-            sub="Access revoked"
+          <KpiTile
+            tone="red"
             icon={<ShieldOff className="h-4 w-4" />}
-            tone={suspended.length > 0 ? 'danger' : undefined}
+            label="Suspended"
+            value={String(suspended.length)}
+            hint="Access revoked"
+            delay={0.15}
+          />
+          <KpiTile
+            tone="violet"
+            icon={<KeySquare className="h-4 w-4" />}
+            label="MFA coverage"
+            value={`${active.length > 0 ? Math.round((mfaCovered / active.length) * 100) : 0}`}
+            unit="%"
+            hint="Active members"
+            delay={0.20}
           />
         </section>
 
-        {/* ── Pending invitations ──────────────────────────────── */}
+        {/* ── Role pillars · the centerpiece ────────────────────── */}
+        <section className="team__roles">
+          <header className="team__sectionhead">
+            <p className="team__sectionhead-eyebrow">SDD §12.1.1 · five tenant roles</p>
+            <h2 className="team__sectionhead-title">Roles &amp; reach</h2>
+            <p className="team__sectionhead-sub">
+              Each role grants a precise set of permissions to a tenant-scoped surface. Click a
+              card to see the full grant.
+            </p>
+          </header>
+          <div className="team__role-grid">
+            {TENANT_ROLES.map((r) => (
+              <RoleCard
+                key={r}
+                profile={ROLE_PROFILES[r]}
+                count={roleCounts[r] ?? 0}
+                isMine={r === myRole}
+                totalActive={active.length}
+              />
+            ))}
+          </div>
+        </section>
+
+        {/* ── Permission matrix — always visible, with hover ───── */}
+        <section className="team__matrix-section">
+          <header className="team__sectionhead">
+            <p className="team__sectionhead-eyebrow">Permission matrix · 19 capabilities</p>
+            <h2 className="team__sectionhead-title">Who can do what</h2>
+            <p className="team__sectionhead-sub">
+              Permissions are coarse-grained, scoped to one tenant. Hover a row to highlight the
+              full grant; the matrix is sticky on both axes for long lists.
+            </p>
+          </header>
+          <PermissionMatrix />
+        </section>
+
+        {/* ── Pending invitations ───────────────────────────────── */}
         {pending.length > 0 && (
           <section className="team__section">
-            <h2 className="team__section-title">
-              Pending Invitations
-              <span className="team__count-badge team__count-badge--amber">{pending.length}</span>
-            </h2>
+            <header className="team__list-head">
+              <h2 className="team__list-title">
+                Pending invitations
+                <span className="team__count team__count--amber">{pending.length}</span>
+              </h2>
+              <p className="team__list-sub">Single-use links · expire in 7 days · MFA required on accept.</p>
+            </header>
             <ul className="team__rows">
               {pending.map((m) => (
                 <li key={m.id} className="team__row team__row--pending">
@@ -372,33 +451,35 @@ export default async function TeamPage() {
                   <div className="min-w-0 flex-1">
                     <p className="team__row-primary">{m.email}</p>
                     <p className="team__row-secondary">
-                      Invited {formatDate(m.invitedAt)} by {m.invitedBy}
+                      {m.unit} · invited {formatDate(m.invitedAt)} by {m.invitedBy}
                     </p>
                   </div>
-                  <div className="team__row-meta">
-                    <RoleBadge role={m.role} />
-                    <span className="team__pill team__pill--amber">Pending</span>
-                    {canManage(myRole, m.role) && <RowMenu kind="pending" />}
-                  </div>
+                  <RoleBadge role={m.role} />
+                  <span className="team__pill team__pill--amber">Pending</span>
+                  {canManage(myRole, m.role) && <TeamRowMenu kind="pending" />}
                 </li>
               ))}
             </ul>
           </section>
         )}
 
-        {/* ── Active members ────────────────────────────────── */}
+        {/* ── Active members ────────────────────────────────────── */}
         <section className="team__section">
-          <h2 className="team__section-title">
-            Members
-            <span className="team__count-badge">{active.length}</span>
-          </h2>
+          <header className="team__list-head">
+            <h2 className="team__list-title">
+              Members
+              <span className="team__count">{active.length}</span>
+            </h2>
+            <p className="team__list-sub">Sorted by role · most-recently active first.</p>
+          </header>
           <div className="team__rows-card">
             <div className="team__rows-head">
-              <span className="team__rows-head-name">Name</span>
-              <span className="team__rows-head-meta">Role</span>
-              <span className="team__rows-head-meta">Status</span>
-              <span className="team__rows-head-meta">Joined</span>
-              <span className="team__rows-head-meta" />
+              <span>Member</span>
+              <span>Site / unit</span>
+              <span>Role</span>
+              <span>MFA</span>
+              <span>Last active</span>
+              <span aria-hidden />
             </div>
             <ul className="team__rows team__rows--flat">
               {active.map((m) => {
@@ -406,7 +487,9 @@ export default async function TeamPage() {
                 return (
                   <li key={m.id} className="team__row team__row--member">
                     <div className="team__row-name">
-                      <div className="team__avatar">{(m.name ?? m.email)[0]?.toUpperCase()}</div>
+                      <div className={`team__avatar team__avatar--${ROLE_PROFILES[m.role].tone}`}>
+                        {(m.name ?? m.email)[0]?.toUpperCase()}
+                      </div>
                       <div className="min-w-0">
                         <p className="team__row-primary">
                           {m.name ?? m.email}
@@ -415,17 +498,24 @@ export default async function TeamPage() {
                         <p className="team__row-secondary">{m.email}</p>
                       </div>
                     </div>
+                    <span className="team__row-unit">{m.unit}</span>
                     <RoleBadge role={m.role} />
-                    <span className="team__status">
-                      <span className="team__status-dot" /> Active
-                    </span>
-                    <span className="team__row-meta-text">
-                      {formatDate(m.joinedAt ?? m.invitedAt)}
+                    {m.mfaEnabled ? (
+                      <span className="team__mfa team__mfa--on">
+                        <Lock className="h-3 w-3" /> Enabled
+                      </span>
+                    ) : (
+                      <span className="team__mfa team__mfa--off">
+                        <Lock className="h-3 w-3" /> Off
+                      </span>
+                    )}
+                    <span className="team__row-time" title={m.lastActiveAt ?? '—'}>
+                      {m.lastActiveAt ? formatRelative(m.lastActiveAt) : '—'}
                     </span>
                     {editable ? (
-                      <RowMenu kind="member" />
+                      <TeamRowMenu kind="member" />
                     ) : (
-                      <span className="team__row-meta-text">—</span>
+                      <span className="team__row-time">—</span>
                     )}
                   </li>
                 )
@@ -434,15 +524,16 @@ export default async function TeamPage() {
           </div>
         </section>
 
-        {/* ── Suspended ────────────────────────────────────────── */}
+        {/* ── Suspended ─────────────────────────────────────────── */}
         {suspended.length > 0 && (
           <section className="team__section">
-            <h2 className="team__section-title">
-              Suspended
-              <span className="team__count-badge team__count-badge--danger">
-                {suspended.length}
-              </span>
-            </h2>
+            <header className="team__list-head">
+              <h2 className="team__list-title">
+                Suspended
+                <span className="team__count team__count--danger">{suspended.length}</span>
+              </h2>
+              <p className="team__list-sub">Access revoked · session keys rotated · audit retained.</p>
+            </header>
             <ul className="team__rows">
               {suspended.map((m) => (
                 <li key={m.id} className="team__row team__row--member team__row--muted">
@@ -455,73 +546,59 @@ export default async function TeamPage() {
                       <p className="team__row-secondary">{m.email}</p>
                     </div>
                   </div>
+                  <span className="team__row-unit">{m.unit}</span>
                   <RoleBadge role={m.role} muted />
-                  <span className="team__status team__status--muted">
-                    <span className="team__status-dot team__status-dot--muted" /> Suspended
+                  <span className="team__mfa team__mfa--off">
+                    <ShieldOff className="h-3 w-3" /> Revoked
                   </span>
-                  <span className="team__row-meta-text">
-                    {m.lastActiveAt ? formatDate(m.lastActiveAt) : '—'}
+                  <span className="team__row-time">
+                    {m.lastActiveAt ? formatRelative(m.lastActiveAt) : '—'}
                   </span>
-                  {canManage(myRole, m.role) && <RowMenu kind="suspended" />}
+                  {canManage(myRole, m.role) && <TeamRowMenu kind="suspended" />}
                 </li>
               ))}
             </ul>
           </section>
         )}
 
-        {/* ── Role overview (collapsed by default) ──────────── */}
-        <details className="team__expander">
-          <summary className="team__expander-summary">
-            <span className="team__expander-title">Role overview</span>
-            <span className="team__expander-sub">5 tenant roles · click to expand</span>
-            <ChevronDown className="team__expander-chev h-4 w-4" />
-          </summary>
-          <div className="team__expander-body">
-            <div className="team__role-grid">
-              {TENANT_ROLES.map((r) => (
-                <RoleCard
-                  key={r}
-                  profile={ROLE_PROFILES[r]}
-                  count={roleCounts[r] ?? 0}
-                  isMine={r === myRole}
-                />
-              ))}
-            </div>
-          </div>
-        </details>
-
-        {/* ── Permission matrix (collapsed by default) ─────── */}
-        <details className="team__expander">
-          <summary className="team__expander-summary">
-            <span className="team__expander-title">Permission matrix</span>
-            <span className="team__expander-sub">19 permissions × 5 roles · click to expand</span>
-            <ChevronDown className="team__expander-chev h-4 w-4" />
-          </summary>
-          <div className="team__expander-body">
-            <PermissionMatrix />
-          </div>
-        </details>
-
-        {/* ── Recent RBAC events ────────────────────────────── */}
+        {/* ── Recent RBAC events · audit timeline ───────────────── */}
         <section className="team__section">
-          <h2 className="team__section-title">
-            Recent RBAC events
-            <Link href="/console/audit" className="team__viewall">
-              View full audit →
-            </Link>
-          </h2>
+          <header className="team__list-head">
+            <h2 className="team__list-title">
+              Recent RBAC events
+              <Link href="/console/audit" className="team__viewall">
+                View full audit →
+              </Link>
+            </h2>
+            <p className="team__list-sub">
+              Hash-chained · Ed25519-signed · streamed to <code>/api/v1/audit</code>.
+            </p>
+          </header>
           <ol className="team__audit">
-            {RECENT_RBAC_EVENTS.map((e, i) => (
-              <li key={i} className="team__audit-row">
-                <span className="team__audit-time">{formatRelative(e.at)}</span>
-                <span className={`team__audit-action team__audit-action--${e.action}`}>
-                  {actionLabel(e.action)}
-                </span>
-                <span className="team__audit-target">{e.target}</span>
-                <span className="team__audit-detail">{e.detail}</span>
-                <span className="team__audit-actor">by {e.actor}</span>
-              </li>
-            ))}
+            {RECENT_RBAC_EVENTS.map((e, i) => {
+              const tone = AUDIT_TONE[e.action] ?? '#94a3b8'
+              return (
+                <li key={i} className="team__audit-row">
+                  <span
+                    className="team__audit-pip"
+                    style={{ background: tone, boxShadow: `0 0 0 4px ${tone}26` }}
+                    aria-hidden
+                  />
+                  <div className="min-w-0">
+                    <p className="team__audit-line">
+                      <span className="team__audit-actor">{e.actor}</span>
+                      <span className="team__audit-verb"> {actionLabel(e.action)} </span>
+                      <span className="team__audit-target">{e.target}</span>
+                    </p>
+                    <p className="team__audit-meta">
+                      <span>{formatRelative(e.at)}</span>
+                      <span aria-hidden>·</span>
+                      <span>{e.detail}</span>
+                    </p>
+                  </div>
+                </li>
+              )
+            })}
           </ol>
         </section>
       </div>
@@ -531,93 +608,31 @@ export default async function TeamPage() {
 
 // ── Subcomponents ─────────────────────────────────────────────────────────
 
-function KpiCard({
+function KpiTile({
+  tone,
+  icon,
   label,
   value,
-  sub,
-  icon,
-  tone,
+  unit,
+  hint,
+  delay,
 }: {
-  label: string
-  value: number
-  sub: string
+  tone: 'navy' | 'green' | 'amber' | 'red' | 'violet'
   icon: React.ReactNode
-  tone?: 'ok' | 'amber' | 'danger'
+  label: string
+  value: string
+  unit?: string
+  hint: string
+  delay: number
 }) {
   return (
-    <article className={`team__kpi${tone ? ` team__kpi--${tone}` : ''}`}>
+    <article className={`team__kpi team__kpi--${tone}`}>
       <div className="team__kpi-head">
+        <span className={`team__kpi-icon team__kpi-icon--${tone}`}>{icon}</span>
         <p className="team__kpi-label">{label}</p>
-        <span className={`team__kpi-icon${tone ? ` team__kpi-icon--${tone}` : ''}`}>{icon}</span>
       </div>
-      <p className="team__kpi-value">{value}</p>
-      <p className="team__kpi-sub">{sub}</p>
+      <AnimatedKpi label="" value={value} unit={unit} hint={hint} delay={delay} />
     </article>
-  )
-}
-
-function RowMenu({ kind }: { kind: 'pending' | 'member' | 'suspended' }) {
-  // Pure-CSS menu · `<details>` opens an absolutely-positioned menu list.
-  // Keeps the page server-rendered with no client JS.
-  return (
-    <details className="team__menu">
-      <summary className="team__menu-trigger" aria-label="Open member actions">
-        <MoreHorizontal className="h-4 w-4" />
-      </summary>
-      <ul className="team__menu-list" role="menu">
-        {kind === 'pending' && (
-          <>
-            <li>
-              <button>Resend invitation</button>
-            </li>
-            <li>
-              <button>Copy invite link</button>
-            </li>
-            <li>
-              <button>Change role</button>
-            </li>
-            <li className="team__menu-divider" />
-            <li>
-              <button className="team__menu-danger">Revoke invite</button>
-            </li>
-          </>
-        )}
-        {kind === 'member' && (
-          <>
-            <li>
-              <button>Edit profile</button>
-            </li>
-            <li>
-              <button>Change role</button>
-            </li>
-            <li>
-              <button>Reset MFA</button>
-            </li>
-            <li>
-              <button>View activity</button>
-            </li>
-            <li className="team__menu-divider" />
-            <li>
-              <button className="team__menu-danger">Suspend access</button>
-            </li>
-          </>
-        )}
-        {kind === 'suspended' && (
-          <>
-            <li>
-              <button>Reinstate</button>
-            </li>
-            <li>
-              <button>View activity</button>
-            </li>
-            <li className="team__menu-divider" />
-            <li>
-              <button className="team__menu-danger">Delete record</button>
-            </li>
-          </>
-        )}
-      </ul>
-    </details>
   )
 }
 
@@ -625,53 +640,50 @@ function RoleCard({
   profile,
   count,
   isMine,
+  totalActive,
 }: {
   profile: RoleProfile
   count: number
   isMine: boolean
+  totalActive: number
 }) {
+  const pct = totalActive > 0 ? Math.round((count / totalActive) * 100) : 0
+  const top = profile.permissions.slice(0, 3)
   return (
-    <details className="team__role">
+    <details className={`team__role team__role--${profile.tone}`}>
       <summary className="team__role-summary">
         <span className={`team__role-glyph team__role-glyph--${profile.tone}`}>
           {profile.glyph}
         </span>
-        <span className="min-w-0 flex-1">
-          <span className="flex flex-wrap items-center gap-2">
-            <span className="team__role-label">{profile.label}</span>
+        <div className="min-w-0 flex-1">
+          <div className="team__role-head">
+            <h3 className="team__role-label">{profile.label}</h3>
             {isMine && <span className="team__youtag">Your role</span>}
-          </span>
-          <span className="team__role-summary-text">{profile.summary}</span>
-        </span>
-        <span className="team__role-count">{count}</span>
-        <ChevronDown className="team__role-chev h-3.5 w-3.5" />
+          </div>
+          <p className="team__role-sub">{profile.summary}</p>
+        </div>
+        <div className="team__role-stat">
+          <span className="team__role-count">{count}</span>
+          <span className="team__role-count-label">{pct}% of active</span>
+        </div>
       </summary>
       <div className="team__role-body">
         <p className="team__role-description">{profile.description}</p>
-        <div className="team__role-meta">
-          <span>
-            Default landing: <code>{profile.defaultLanding}</code>
-          </span>
-          <span>Permissions: {profile.permissions.length}</span>
-        </div>
         <div className="team__role-perms">
-          {PERMISSION_GROUPS.map((g) => {
-            const perms = profile.permissions.filter((p) => PERMISSION_LABELS[p].group === g)
-            if (perms.length === 0) return null
-            return (
-              <div key={g}>
-                <p className="team__role-perm-group-label">{g}</p>
-                <ul>
-                  {perms.map((p) => (
-                    <li key={p}>
-                      <CheckCircle2 className="h-3 w-3 text-[var(--color-green,#16a34a)]" />
-                      <span>{PERMISSION_LABELS[p].label}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )
-          })}
+          <p className="team__role-perm-label">
+            Top {top.length} of {profile.permissions.length} permissions
+          </p>
+          <ul className="team__role-perm-list">
+            {top.map((p) => (
+              <li key={p}>
+                <CheckCircle2 className="h-3 w-3 text-[var(--color-green,#16a34a)]" />
+                <span>{PERMISSION_LABELS[p].label}</span>
+              </li>
+            ))}
+          </ul>
+          <p className="team__role-meta">
+            Default landing: <code>{profile.defaultLanding}</code>
+          </p>
         </div>
       </div>
     </details>
@@ -687,7 +699,7 @@ function PermissionMatrix() {
           <tr>
             <th className="team__matrix-th-label">Permission</th>
             {TENANT_ROLES.map((r) => (
-              <th key={r} className="team__matrix-th">
+              <th key={r} className={`team__matrix-th team__matrix-th--${ROLE_PROFILES[r].tone}`}>
                 <span className={`team__role-glyph team__role-glyph--${ROLE_PROFILES[r].tone}`}>
                   {ROLE_PROFILES[r].glyph}
                 </span>
@@ -703,15 +715,16 @@ function PermissionMatrix() {
             )
             return (
               <>
-                <tr key={`group-${g}`}>
+                <tr key={`group-${g}`} className="team__matrix-grouprow-row">
                   <td colSpan={1 + TENANT_ROLES.length} className="team__matrix-grouprow">
+                    <Workflow className="h-3 w-3" />
                     {g}
                   </td>
                 </tr>
                 {perms.map((p) => (
                   <tr key={p} className="team__matrix-row">
                     <td className="team__matrix-perm">
-                      <span>{PERMISSION_LABELS[p].label}</span>
+                      <span className="team__matrix-perm-label">{PERMISSION_LABELS[p].label}</span>
                       <span className="team__matrix-perm-detail">
                         {PERMISSION_LABELS[p].description}
                       </span>
@@ -720,13 +733,13 @@ function PermissionMatrix() {
                       <td
                         key={r}
                         className={`team__matrix-cell${
-                          hasPermission(r, p) ? 'team__matrix-cell--on' : ''
+                          hasPermission(r, p) ? ' team__matrix-cell--on' : ''
                         }`}
                       >
                         {hasPermission(r, p) ? (
                           <CheckCircle2 className="mx-auto h-3.5 w-3.5" />
                         ) : (
-                          '·'
+                          <span className="team__matrix-cell-no">—</span>
                         )}
                       </td>
                     ))}
@@ -745,7 +758,7 @@ function RoleBadge({ role, muted }: { role: TenantRole; muted?: boolean }) {
   const p = ROLE_PROFILES[role]
   return (
     <span
-      className={`team__rolebadge team__rolebadge--${p.tone}${muted ? 'team__rolebadge--muted' : ''}`}
+      className={`team__rolebadge team__rolebadge--${p.tone}${muted ? ' team__rolebadge--muted' : ''}`}
     >
       <span className="team__rolebadge-glyph">{p.glyph}</span>
       {p.label}
@@ -755,10 +768,21 @@ function RoleBadge({ role, muted }: { role: TenantRole; muted?: boolean }) {
 
 // ── helpers ──────────────────────────────────────────────────────────────
 
+const AUDIT_TONE: Record<string, string> = {
+  invited: '#3B82F6',
+  role_changed: '#7C3AED',
+  mfa_enforced: '#0F4C81',
+  suspended: '#DC2626',
+  reinstated: '#16A34A',
+}
+
 function actionLabel(a: string): string {
-  if (a === 'role_changed') return 'Role changed'
-  if (a === 'mfa_enforced') return 'MFA enforced'
-  return a.replace(/^./, (c) => c.toUpperCase())
+  if (a === 'role_changed') return 'changed role for'
+  if (a === 'mfa_enforced') return 'enforced MFA on'
+  if (a === 'invited') return 'invited'
+  if (a === 'suspended') return 'suspended'
+  if (a === 'reinstated') return 'reinstated'
+  return a.replace(/_/g, ' ')
 }
 
 function formatDate(iso: string): string {
@@ -784,577 +808,648 @@ function formatRelative(iso: string): string {
 // ── styles ───────────────────────────────────────────────────────────────
 
 const TEAM_CSS = `
-/* Header · subtle gradient band so the page reads as a destination,
- * not an empty form. */
-.team__header {
+/* Hero band — unifies the page with the rest of the console chrome */
+.team__hero {
   position: relative;
-  display: flex; flex-wrap: wrap; align-items: center; gap: 16px;
+  display: flex; flex-wrap: wrap; align-items: flex-start; gap: 16px;
   justify-content: space-between;
-  padding: 28px 28px 30px;
-  margin: 0 -28px 28px;
+  padding: 28px 28px 26px;
+  margin: 0 -28px 24px;
   background:
-    radial-gradient(circle at 0% 0%, rgba(15,76,129,0.08), transparent 50%),
-    radial-gradient(circle at 100% 0%, rgba(15,76,129,0.05), transparent 50%);
+    radial-gradient(circle at 0% 0%, rgba(15,76,129,0.08), transparent 55%),
+    radial-gradient(circle at 100% 0%, rgba(124,58,237,0.06), transparent 55%),
+    linear-gradient(180deg, #ffffff 0%, var(--surface-canvas) 100%);
   border-bottom: 1px solid var(--surface-divider);
 }
-.team__header-block { display: flex; align-items: center; gap: 16px; min-width: 0; }
-.team__header-avatar {
+.team__hero-block { display: flex; align-items: flex-start; gap: 16px; min-width: 0; }
+.team__hero-avatar {
   display: grid; place-items: center;
   width: 52px; height: 52px;
   border-radius: 14px;
-  background: linear-gradient(135deg, var(--color-accent), #4f8fc7);
-  color: #fff;
+  background: linear-gradient(135deg, var(--color-accent, #0F4C81), #4f8fc7);
+  color: #ffffff;
   flex-shrink: 0;
-  box-shadow: 0 8px 24px -8px rgba(15,76,129,0.5);
+  box-shadow:
+    0 12px 28px -10px rgba(15,76,129,0.45),
+    0 0 0 1px rgba(15,76,129,0.15) inset;
 }
-.team__title {
+.team__hero-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.20em;
+  text-transform: uppercase;
+  color: var(--color-accent, #0F4C81);
+  font-weight: 700;
+}
+.team__hero-title {
+  margin-top: 4px;
   font-family: var(--font-display);
-  font-size: clamp(26px, 3vw, 30px);
-  font-weight: 600; letter-spacing: -0.012em;
-  color: var(--fg-default); line-height: 1.1;
+  font-size: clamp(24px, 3vw, 30px);
+  font-weight: 600;
+  letter-spacing: -0.014em;
+  line-height: 1.1;
+  color: var(--fg-default);
 }
-.team__subtitle { margin-top: 3px; font-size: 13px; color: var(--fg-muted); }
-.team__header-actions { display: flex; gap: 8px; flex-wrap: wrap; }
-
+.team__hero-sub {
+  margin-top: 6px;
+  font-size: 13px;
+  color: var(--fg-muted);
+  max-width: 660px;
+  line-height: 1.55;
+}
+.team__hero-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
 .team__btn {
   display: inline-flex; align-items: center; gap: 6px;
   height: 36px; padding: 0 14px;
-  border-radius: 8px;
+  border-radius: 9px;
   font-size: 12px; font-weight: 600;
-  transition: background 150ms, opacity 150ms;
   white-space: nowrap;
+  transition: background 150ms, opacity 150ms;
 }
-.team__btn--primary {
-  background: var(--color-accent);
-  color: #fff;
-  box-shadow: 0 2px 6px -2px rgba(15,76,129,0.4);
-}
-.team__btn--primary:hover { opacity: 0.92; }
 .team__btn--ghost {
-  border: 1px solid var(--surface-border);
   background: var(--surface-page);
   color: var(--fg-default);
+  border: 1px solid var(--surface-border);
 }
 .team__btn--ghost:hover { background: var(--surface-hover); }
 .team__btn--disabled {
-  color: var(--fg-subtle);
-  border: 1px solid var(--surface-border);
   background: var(--surface-canvas);
+  border: 1px solid var(--surface-border);
+  color: var(--fg-subtle);
   cursor: not-allowed;
 }
 
 /* KPI strip */
-.team__kpi-grid {
+.team__kpis {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
   gap: 12px;
-  margin-bottom: 22px;
+  margin-bottom: 24px;
 }
 .team__kpi {
-  background: var(--surface-page);
-  border: 1px solid var(--surface-border);
-  border-radius: 14px;
-  padding: 18px 20px;
   position: relative;
-  transition: border-color 150ms;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px 18px 18px;
+  border-radius: 14px;
+  border: 1px solid var(--surface-border);
+  background: var(--surface-page);
+  overflow: hidden;
+  transition: transform 200ms ease, box-shadow 200ms ease, border-color 200ms ease;
 }
-.team__kpi:hover { border-color: var(--surface-border); }
-.team__kpi-head {
-  display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;
+.team__kpi:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 24px -16px rgba(15,23,42,0.20);
+  border-color: rgba(15,76,129,0.25);
 }
-.team__kpi-label {
-  font-family: var(--font-mono);
-  font-size: 9.5px; letter-spacing: 0.18em; text-transform: uppercase;
-  color: var(--fg-subtle);
+.team__kpi::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 16px; right: 16px;
+  height: 3px;
+  border-radius: 0 0 4px 4px;
+  background: var(--kpi-accent, #94A3B8);
+  opacity: 0.85;
 }
+.team__kpi--navy   { --kpi-accent: #0F4C81; }
+.team__kpi--green  { --kpi-accent: #16A34A; }
+.team__kpi--amber  { --kpi-accent: #D97706; }
+.team__kpi--red    { --kpi-accent: #DC2626; }
+.team__kpi--violet { --kpi-accent: #7C3AED; }
+
+.team__kpi-head { display: flex; align-items: center; gap: 10px; }
 .team__kpi-icon {
   display: grid; place-items: center;
-  width: 32px; height: 32px;
-  border-radius: 9px;
+  width: 30px; height: 30px;
+  border-radius: 8px;
   background: var(--surface-hover);
+}
+.team__kpi-icon--navy   { background: rgba(15,76,129,0.10); color: #0F4C81; }
+.team__kpi-icon--green  { background: rgba(22,163,74,0.10); color: #16A34A; }
+.team__kpi-icon--amber  { background: rgba(217,119,6,0.14); color: #B45309; }
+.team__kpi-icon--red    { background: rgba(220,38,38,0.10); color: #B91C1C; }
+.team__kpi-icon--violet { background: rgba(124,58,237,0.10); color: #7C3AED; }
+
+.team__kpi-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--fg-subtle);
+  font-weight: 700;
+}
+
+/* Section heads */
+.team__sectionhead { margin-bottom: 18px; }
+.team__sectionhead-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.20em;
+  text-transform: uppercase;
+  color: var(--color-accent, #0F4C81);
+  font-weight: 700;
+}
+.team__sectionhead-title {
+  margin-top: 4px;
+  font-family: var(--font-display);
+  font-size: clamp(20px, 2.4vw, 24px);
+  font-weight: 600;
+  letter-spacing: -0.012em;
+  color: var(--fg-default);
+}
+.team__sectionhead-sub {
+  margin-top: 6px;
+  font-size: 13px;
   color: var(--fg-muted);
+  max-width: 640px;
+}
+
+/* Role pillars · the centerpiece */
+.team__roles { margin-bottom: 36px; }
+.team__role-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(232px, 1fr));
+  gap: 12px;
+}
+.team__role {
+  position: relative;
+  border-radius: 14px;
+  border: 1px solid var(--surface-border);
+  background: var(--surface-page);
+  overflow: hidden;
+  transition: border-color 220ms ease, transform 220ms ease, box-shadow 220ms ease;
+}
+.team__role:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 16px 28px -16px rgba(15,23,42,0.20);
+}
+.team__role[open] { box-shadow: 0 18px 32px -16px rgba(15,23,42,0.24); }
+.team__role::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 14px; right: 14px;
+  height: 3px;
+  border-radius: 0 0 4px 4px;
+  background: var(--role-accent);
+}
+.team__role--accent  { --role-accent: linear-gradient(90deg, #0F4C81, #4F8FC7); }
+.team__role--success { --role-accent: linear-gradient(90deg, #16A34A, #4ADE80); }
+.team__role--warning { --role-accent: linear-gradient(90deg, #D97706, #F59E0B); }
+.team__role--info    { --role-accent: linear-gradient(90deg, #3B82F6, #60A5FA); }
+.team__role--neutral { --role-accent: linear-gradient(90deg, #64748B, #94A3B8); }
+
+.team__role-summary {
+  list-style: none;
+  cursor: pointer;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 18px 16px 14px;
+}
+.team__role-summary::-webkit-details-marker { display: none; }
+.team__role-glyph {
+  display: grid; place-items: center;
+  width: 36px; height: 36px;
+  border-radius: 10px;
+  font-size: 18px;
   flex-shrink: 0;
 }
-.team__kpi-icon--ok    { background: rgba(22,163,74,0.10); color: #16a34a; }
-.team__kpi-icon--amber { background: rgba(245,158,11,0.14); color: #b45309; }
-.team__kpi-icon--danger { background: rgba(239,68,68,0.10); color: #b91c1c; }
-.team__kpi-value {
-  margin-top: 14px;
+.team__role-glyph--accent  { background: rgba(15,76,129,0.10);  color: #0F4C81; }
+.team__role-glyph--success { background: rgba(22,163,74,0.10);  color: #14532D; }
+.team__role-glyph--warning { background: rgba(217,119,6,0.14);  color: #92400E; }
+.team__role-glyph--info    { background: rgba(59,130,246,0.10); color: #1E40AF; }
+.team__role-glyph--neutral { background: rgba(100,116,139,0.12); color: #475569; }
+
+.team__role-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.team__role-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--fg-default);
+}
+.team__youtag {
+  display: inline-flex; align-items: center;
+  height: 18px;
+  padding: 0 8px;
+  border-radius: 9999px;
+  background: rgba(15,76,129,0.10);
+  border: 1px solid rgba(15,76,129,0.25);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: #0F4C81;
+}
+.team__role-sub {
+  margin-top: 2px;
+  font-size: 12px;
+  color: var(--fg-muted);
+  line-height: 1.45;
+}
+.team__role-stat {
+  display: flex; flex-direction: column; align-items: flex-end;
+  flex-shrink: 0;
+}
+.team__role-count {
   font-family: var(--font-display);
-  font-size: 36px; font-weight: 600;
-  letter-spacing: -0.015em; line-height: 1;
+  font-size: 26px;
+  font-weight: 600;
+  letter-spacing: -0.014em;
+  line-height: 1;
   color: var(--fg-default);
   font-variant-numeric: tabular-nums;
 }
-.team__kpi--ok    .team__kpi-value { color: #16a34a; }
-.team__kpi--amber .team__kpi-value { color: #b45309; }
-.team__kpi--danger .team__kpi-value { color: #b91c1c; }
-.team__kpi-sub {
-  margin-top: 8px;
-  font-size: 11.5px;
+.team__role-count-label {
+  margin-top: 2px;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: var(--fg-subtle);
+  font-weight: 600;
+}
+.team__role-body {
+  padding: 0 16px 16px;
+  border-top: 1px dashed var(--surface-border);
+  margin: 0 4px;
+}
+.team__role-description {
+  margin-top: 12px;
+  font-size: 12.5px;
+  line-height: 1.55;
   color: var(--fg-muted);
 }
-
-/* Inline invite form */
-.team__invite {
-  background: var(--surface-page);
+.team__role-perms { margin-top: 14px; }
+.team__role-perm-label {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--fg-subtle);
+  font-weight: 700;
+}
+.team__role-perm-list {
+  list-style: none; margin: 8px 0 0; padding: 0;
+  display: flex; flex-direction: column; gap: 6px;
+}
+.team__role-perm-list li {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 12.5px;
+  color: var(--fg-default);
+}
+.team__role-meta {
+  margin-top: 12px;
+  font-size: 11px;
+  color: var(--fg-subtle);
+}
+.team__role-meta code {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  background: var(--surface-canvas);
+  padding: 2px 6px;
+  border-radius: 4px;
   border: 1px solid var(--surface-border);
+}
+
+/* Permission matrix · always visible, sticky-ish, hover row+col */
+.team__matrix-section { margin-bottom: 36px; }
+.team__matrix-wrap {
   border-radius: 14px;
-  padding: 16px 18px 18px;
-  margin-bottom: 24px;
-}
-.team__invite-head { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 14px; }
-.team__invite-icon {
-  display: grid; place-items: center;
-  width: 32px; height: 32px;
-  border-radius: 8px;
-  background: var(--color-accent-soft);
-  color: var(--color-accent);
-  flex-shrink: 0;
-}
-.team__invite-title {
-  font-size: 14px; font-weight: 600;
-  color: var(--fg-default);
-}
-.team__invite-sub { margin-top: 2px; font-size: 12px; color: var(--fg-muted); }
-.team__invite-form {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 10px;
-}
-@media (min-width: 760px) {
-  .team__invite-form { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) auto; align-items: end; gap: 12px; }
-}
-.team__invite-field { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
-.team__invite-label {
-  font-family: var(--font-mono);
-  font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase;
-  color: var(--fg-subtle);
-}
-.team__invite-input {
-  height: 38px;
-  padding: 0 12px;
-  border-radius: 8px;
   border: 1px solid var(--surface-border);
   background: var(--surface-page);
-  font-size: 13px;
-  color: var(--fg-default);
-  outline: none;
-  transition: border-color 150ms, box-shadow 150ms;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+.team__matrix {
   width: 100%;
+  border-collapse: collapse;
+  min-width: 720px;
+  font-size: 12.5px;
 }
-.team__invite-input:focus {
-  border-color: var(--color-accent);
-  box-shadow: 0 0 0 3px rgba(15,76,129,0.10);
+.team__matrix-th-label,
+.team__matrix-th {
+  padding: 14px 14px;
+  text-align: center;
+  background: var(--surface-canvas);
+  border-bottom: 1px solid var(--surface-border);
+  position: sticky;
+  top: 0;
+  z-index: 1;
 }
-.team__invite-select-wrap { position: relative; }
-.team__invite-select {
-  appearance: none;
-  -webkit-appearance: none;
-  padding-right: 32px;
-  cursor: pointer;
-}
-.team__invite-select-chev {
-  position: absolute;
-  right: 10px; top: 50%;
-  transform: translateY(-50%);
-  pointer-events: none;
+.team__matrix-th-label {
+  text-align: left;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
   color: var(--fg-subtle);
+  font-weight: 700;
+  width: 40%;
 }
-.team__invite-submit { height: 38px; }
-
-/* Sections + lists */
-.team__section { margin-top: 28px; }
-.team__section-title {
-  display: flex; align-items: center; gap: 10px;
-  margin: 0 0 12px;
-  font-family: var(--font-mono);
-  font-size: 10.5px; letter-spacing: 0.2em; text-transform: uppercase;
-  color: var(--fg-subtle); font-weight: 600;
+.team__matrix-th { vertical-align: middle; padding: 12px 6px; }
+.team__matrix-th .team__role-glyph {
+  width: 28px; height: 28px; font-size: 14px; margin: 0 auto 4px;
 }
-.team__count-badge {
-  display: inline-flex; align-items: center; justify-content: center;
-  min-width: 20px; height: 20px;
-  padding: 0 6px;
-  border-radius: 9999px;
+.team__matrix-th .block {
   font-family: var(--font-mono);
-  font-size: 10px; font-weight: 700;
-  background: var(--surface-hover);
+  font-size: 9.5px;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: var(--fg-default);
+  font-weight: 700;
+}
+.team__matrix-grouprow td {
+  padding: 10px 16px 6px;
+  background: linear-gradient(180deg, var(--surface-canvas) 0%, transparent 100%);
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.20em;
+  text-transform: uppercase;
+  color: var(--color-accent, #0F4C81);
+  font-weight: 700;
+}
+.team__matrix-grouprow td svg {
+  display: inline-block;
+  margin-right: 6px;
+  vertical-align: -1px;
+}
+.team__matrix-row {
+  transition: background 120ms ease;
+}
+.team__matrix-row:hover { background: rgba(15,76,129,0.04); }
+.team__matrix-row:hover .team__matrix-cell { background: rgba(15,76,129,0.04); }
+.team__matrix-perm {
+  padding: 10px 14px;
+  display: flex; flex-direction: column; gap: 2px;
+  border-bottom: 1px solid var(--surface-divider);
+}
+.team__matrix-perm-label {
+  font-size: 12.5px;
+  font-weight: 600;
   color: var(--fg-default);
 }
-.team__count-badge--amber { background: rgba(245,158,11,0.18); color: #b45309; }
-.team__count-badge--danger { background: rgba(239,68,68,0.10); color: #b91c1c; }
+.team__matrix-perm-detail {
+  font-size: 11px;
+  color: var(--fg-subtle);
+  line-height: 1.4;
+}
+.team__matrix-cell {
+  padding: 10px 6px;
+  text-align: center;
+  border-bottom: 1px solid var(--surface-divider);
+  color: var(--fg-subtle);
+  transition: background 120ms ease, color 120ms ease;
+}
+.team__matrix-cell--on {
+  color: #16A34A;
+  background: rgba(22,163,74,0.04);
+}
+.team__matrix-cell-no {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  color: var(--fg-subtle);
+  opacity: 0.5;
+}
+
+/* List sections — pending / active / suspended */
+.team__section { margin-bottom: 28px; }
+.team__list-head { margin-bottom: 14px; }
+.team__list-title {
+  display: inline-flex; align-items: center; gap: 10px;
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: -0.012em;
+  color: var(--fg-default);
+}
+.team__count {
+  display: grid; place-items: center;
+  min-width: 26px; height: 22px;
+  padding: 0 8px;
+  border-radius: 9999px;
+  background: var(--surface-hover);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--fg-default);
+  font-variant-numeric: tabular-nums;
+}
+.team__count--amber  { background: rgba(217,119,6,0.14); color: #92400E; }
+.team__count--danger { background: rgba(220,38,38,0.10); color: #B91C1C; }
+.team__list-sub {
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--fg-muted);
+}
+.team__list-sub code {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  padding: 1px 5px;
+  background: var(--surface-canvas);
+  border-radius: 3px;
+  border: 1px solid var(--surface-border);
+}
 .team__viewall {
   margin-left: auto;
   font-family: var(--font-mono);
-  font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase;
+  font-size: 11px;
   color: var(--color-accent);
+  letter-spacing: 0.04em;
 }
-.team__viewall:hover { text-decoration: underline; }
 
-.team__rows { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; }
 .team__rows-card {
-  background: var(--surface-page);
-  border: 1px solid var(--surface-border);
   border-radius: 14px;
+  border: 1px solid var(--surface-border);
+  background: var(--surface-page);
   overflow: hidden;
 }
 .team__rows-head {
   display: grid;
-  grid-template-columns: minmax(220px, 2.4fr) 160px 110px 110px 40px;
-  gap: 14px;
-  padding: 11px 18px;
+  grid-template-columns: 2.4fr 1.6fr 1.4fr 1fr 1fr auto;
+  gap: 12px;
+  padding: 12px 18px;
   background: var(--surface-canvas);
   border-bottom: 1px solid var(--surface-border);
   font-family: var(--font-mono);
-  font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase;
-  color: var(--fg-subtle); font-weight: 600;
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--fg-subtle);
+  font-weight: 700;
 }
-.team__rows-head-name, .team__rows-head-meta { white-space: nowrap; }
-.team__rows--flat { gap: 0; }
-.team__rows--flat .team__row { border-radius: 0; border: 0; border-top: 1px solid var(--surface-divider); }
-.team__rows--flat .team__row:first-child { border-top: 0; }
-
+.team__rows-head > span { white-space: nowrap; }
+.team__rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.team__rows--flat .team__row {
+  border-radius: 0;
+  border: none;
+  border-bottom: 1px solid var(--surface-divider);
+  background: transparent;
+}
+.team__rows--flat .team__row:last-child { border-bottom: none; }
 .team__row {
-  display: flex; align-items: center; gap: 14px;
-  padding: 12px 18px;
-  background: var(--surface-page);
-  border: 1px solid var(--surface-border);
-  border-radius: 12px;
-  transition: background 120ms;
-}
-.team__row:hover { background: var(--surface-canvas); }
-.team__row--member {
   display: grid;
-  grid-template-columns: minmax(220px, 2.4fr) 160px 110px 110px 40px;
-  gap: 14px;
+  grid-template-columns: 2.4fr 1.6fr 1.4fr 1fr 1fr auto;
+  gap: 12px;
+  align-items: center;
+  padding: 14px 18px;
+  border-radius: 12px;
+  border: 1px solid var(--surface-border);
+  background: var(--surface-page);
+  margin-bottom: 8px;
+  transition: background 120ms ease;
 }
-.team__row--pending { gap: 14px; }
+.team__rows-card .team__row:last-child { margin-bottom: 0; }
+.team__row:hover { background: var(--surface-canvas); }
+.team__row--pending {
+  display: flex; gap: 12px;
+  align-items: center;
+  padding: 14px 18px;
+  margin-bottom: 8px;
+}
 .team__row--muted { opacity: 0.85; }
-
-.team__row-name { display: flex; align-items: center; gap: 12px; min-width: 0; }
-.team__avatar {
-  display: grid; place-items: center;
-  width: 32px; height: 32px;
-  border-radius: 9999px;
-  background: var(--color-accent-soft);
-  color: var(--color-accent);
-  font-size: 12px; font-weight: 700;
-  flex-shrink: 0;
-}
-.team__avatar--muted { background: var(--surface-hover); color: var(--fg-subtle); }
 .team__row-icon {
   display: grid; place-items: center;
   width: 32px; height: 32px;
-  border-radius: 8px;
-  background: var(--surface-hover);
-  color: var(--fg-muted);
+  border-radius: 9px;
   flex-shrink: 0;
 }
-.team__row-icon--amber { background: rgba(245,158,11,0.14); color: #b45309; }
+.team__row-icon--amber {
+  background: rgba(217,119,6,0.14);
+  color: #B45309;
+}
+.team__row-name { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.team__avatar {
+  display: grid; place-items: center;
+  width: 36px; height: 36px;
+  border-radius: 9999px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+  flex-shrink: 0;
+}
+.team__avatar--accent  { background: linear-gradient(135deg, #0F4C81, #4F8FC7); }
+.team__avatar--success { background: linear-gradient(135deg, #16A34A, #4ADE80); }
+.team__avatar--warning { background: linear-gradient(135deg, #D97706, #F59E0B); }
+.team__avatar--info    { background: linear-gradient(135deg, #3B82F6, #60A5FA); }
+.team__avatar--neutral { background: linear-gradient(135deg, #64748B, #94A3B8); }
+.team__avatar--muted   { background: linear-gradient(135deg, #94A3B8, #CBD5E1); color: #475569; }
+
 .team__row-primary {
-  font-size: 13px; font-weight: 500;
+  font-size: 13px; font-weight: 600;
   color: var(--fg-default);
-  display: flex; align-items: center; gap: 8px;
-  flex-wrap: wrap;
+  display: inline-flex; align-items: center; gap: 8px;
 }
 .team__row-secondary {
   margin-top: 2px;
   font-family: var(--font-mono);
   font-size: 11px;
-  color: var(--fg-muted);
+  color: var(--fg-subtle);
 }
-.team__row-meta { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
-.team__row-meta-text {
+.team__row-unit {
+  font-size: 12px;
+  color: var(--fg-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.team__row-time {
   font-family: var(--font-mono);
   font-size: 11px;
-  color: var(--fg-muted);
+  color: var(--fg-subtle);
   white-space: nowrap;
 }
 
-.team__youtag {
-  display: inline-flex; align-items: center;
-  padding: 1px 7px;
-  border-radius: 9999px;
-  font-family: var(--font-mono);
-  font-size: 9px; font-weight: 700;
-  letter-spacing: 0.12em;
-  background: var(--color-accent-soft);
-  color: var(--color-accent);
-}
-
-/* Status pill */
-.team__status {
-  display: inline-flex; align-items: center; gap: 6px;
-  font-size: 12px; color: var(--fg-default);
-}
-.team__status-dot {
-  width: 7px; height: 7px;
-  border-radius: 9999px;
-  background: #16a34a;
-  box-shadow: 0 0 6px rgba(22,163,74,0.6);
-}
-.team__status-dot--muted { background: var(--fg-subtle); box-shadow: none; }
-.team__status--muted { color: var(--fg-muted); }
-
-/* Pill (generic) */
-.team__pill {
-  display: inline-flex; align-items: center;
-  padding: 3px 10px;
-  border-radius: 9999px;
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-}
-.team__pill--amber { background: rgba(245,158,11,0.16); color: #92400e; }
-
-/* Role badge */
 .team__rolebadge {
-  display: inline-flex; align-items: center; gap: 6px;
-  padding: 3px 10px;
+  display: inline-flex; align-items: center; gap: 5px;
+  height: 24px;
+  padding: 0 9px;
   border-radius: 9999px;
   font-size: 11px; font-weight: 600;
-  letter-spacing: 0.02em;
+  border: 1px solid;
+  white-space: nowrap;
 }
-.team__rolebadge-glyph {
-  font-family: var(--font-mono);
-  font-size: 10px; font-weight: 700;
-}
-.team__rolebadge--accent { color: var(--color-accent); background: var(--color-accent-soft); }
-.team__rolebadge--success { color: #166534; background: rgba(22,163,74,0.12); }
-.team__rolebadge--warning { color: #92400e; background: rgba(245,158,11,0.14); }
-.team__rolebadge--info { color: var(--color-accent); background: rgba(15,76,129,0.08); }
-.team__rolebadge--neutral { color: var(--fg-muted); background: var(--surface-hover); }
+.team__rolebadge-glyph { font-size: 11px; line-height: 1; }
+.team__rolebadge--accent  { background: rgba(15,76,129,0.08);  color: #0F4C81; border-color: rgba(15,76,129,0.25); }
+.team__rolebadge--success { background: rgba(22,163,74,0.08);  color: #14532D; border-color: rgba(22,163,74,0.30); }
+.team__rolebadge--warning { background: rgba(217,119,6,0.10);  color: #92400E; border-color: rgba(217,119,6,0.30); }
+.team__rolebadge--info    { background: rgba(59,130,246,0.08); color: #1E40AF; border-color: rgba(59,130,246,0.30); }
+.team__rolebadge--neutral { background: rgba(100,116,139,0.10); color: #475569; border-color: rgba(100,116,139,0.30); }
 .team__rolebadge--muted { opacity: 0.7; }
 
-/* Three-dot menu */
-.team__menu { position: relative; flex-shrink: 0; }
-.team__menu-trigger {
-  display: grid; place-items: center;
-  width: 32px; height: 32px;
-  border-radius: 8px;
-  color: var(--fg-subtle);
-  cursor: pointer;
-  list-style: none;
-  border: 1px solid transparent;
-  background: transparent;
-  transition: background 120ms, color 120ms, border-color 120ms;
-}
-.team__menu-trigger::-webkit-details-marker { display: none; }
-.team__menu-trigger:hover {
-  background: var(--surface-hover);
-  color: var(--fg-default);
-  border-color: var(--surface-border);
-}
-.team__menu[open] .team__menu-trigger {
-  background: var(--surface-hover);
-  color: var(--fg-default);
-  border-color: var(--surface-border);
-}
-.team__menu-list {
-  position: absolute;
-  right: 0; top: calc(100% + 6px);
-  min-width: 180px;
-  background: var(--surface-page);
-  border: 1px solid var(--surface-border);
-  border-radius: 10px;
-  box-shadow: 0 12px 32px -8px rgba(15,23,42,0.16),
-              0 4px 8px -4px rgba(15,23,42,0.08);
-  padding: 4px;
-  z-index: 30;
-  list-style: none;
-  margin: 0;
-}
-.team__menu-list button {
-  display: flex; align-items: center;
-  width: 100%;
-  padding: 8px 10px;
-  border-radius: 6px;
-  font-size: 12.5px;
-  text-align: left;
-  color: var(--fg-default);
-  background: transparent;
-  transition: background 120ms;
-}
-.team__menu-list button:hover { background: var(--surface-hover); }
-.team__menu-list .team__menu-danger { color: #b91c1c; }
-.team__menu-list .team__menu-danger:hover { background: #FEF2F2; }
-.team__menu-divider {
-  height: 1px;
-  background: var(--surface-divider);
-  margin: 4px 6px;
-}
-
-/* Expanders (role overview / matrix) */
-.team__expander {
-  margin-top: 28px;
-  background: var(--surface-page);
-  border: 1px solid var(--surface-border);
-  border-radius: 14px;
-  overflow: hidden;
-}
-.team__expander[open] {
-  box-shadow: 0 1px 2px rgba(15,23,42,0.04);
-}
-.team__expander-summary {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 16px 20px;
-  cursor: pointer;
-  list-style: none;
-  user-select: none;
-}
-.team__expander-summary::-webkit-details-marker { display: none; }
-.team__expander-summary:hover { background: var(--surface-canvas); }
-.team__expander-title {
-  font-family: var(--font-display);
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--fg-default);
-}
-.team__expander-sub {
-  font-size: 12px;
-  color: var(--fg-muted);
-}
-.team__expander-chev {
-  margin-left: auto;
-  color: var(--fg-subtle);
-  transition: transform 180ms ease;
-}
-.team__expander[open] .team__expander-chev { transform: rotate(180deg); }
-.team__expander-body {
-  padding: 0 20px 20px;
-  border-top: 1px solid var(--surface-divider);
-  padding-top: 16px;
-}
-
-/* Role cards (inside expander) */
-.team__role-grid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 8px;
-}
-@media (min-width: 900px) { .team__role-grid { grid-template-columns: 1fr 1fr; } }
-.team__role { border: 1px solid var(--surface-border); background: var(--surface-page); border-radius: 10px; overflow: hidden; }
-.team__role-summary { display: flex; align-items: center; gap: 14px; padding: 12px 14px; cursor: pointer; list-style: none; user-select: none; }
-.team__role-summary::-webkit-details-marker { display: none; }
-.team__role-summary:hover { background: var(--surface-canvas); }
-.team__role-glyph {
-  display: grid; place-items: center;
-  width: 32px; height: 32px;
-  border-radius: 8px;
+.team__pill {
+  display: inline-flex; align-items: center;
+  height: 22px;
+  padding: 0 9px;
+  border-radius: 9999px;
   font-family: var(--font-mono);
-  font-size: 16px; font-weight: 700;
-  flex-shrink: 0;
-}
-.team__role-glyph--accent { background: var(--color-accent-soft); color: var(--color-accent); }
-.team__role-glyph--success { background: rgba(22,163,74,0.12); color: #166534; }
-.team__role-glyph--warning { background: rgba(245,158,11,0.14); color: #92400e; }
-.team__role-glyph--info { background: rgba(15,76,129,0.10); color: var(--color-accent); }
-.team__role-glyph--neutral { background: var(--surface-hover); color: var(--fg-muted); }
-.team__role-label { font-size: 14px; font-weight: 600; color: var(--fg-default); }
-.team__role-summary-text { display: block; font-size: 12px; color: var(--fg-muted); margin-top: 2px; }
-.team__role-count {
-  font-family: var(--font-mono);
-  font-size: 14px; font-weight: 700;
-  color: var(--fg-default);
-  font-variant-numeric: tabular-nums;
-  min-width: 26px; text-align: right;
-}
-.team__role-chev { color: var(--fg-subtle); transition: transform 180ms ease; }
-.team__role[open] .team__role-chev { transform: rotate(180deg); }
-.team__role-body {
-  padding: 12px 14px 14px;
-  border-top: 1px solid var(--surface-divider);
-  background: var(--surface-canvas);
-}
-.team__role-description { font-size: 12.5px; color: var(--fg-default); line-height: 1.55; }
-.team__role-meta {
-  display: flex; gap: 18px; flex-wrap: wrap;
-  margin-top: 8px;
-  font-size: 11px; color: var(--fg-muted);
-}
-.team__role-meta code { font-family: var(--font-mono); font-size: 11px; color: var(--color-accent); padding: 1px 5px; background: var(--surface-hover); border-radius: 3px; }
-.team__role-perms {
-  margin-top: 12px;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 10px;
-}
-.team__role-perm-group-label {
-  font-family: var(--font-mono);
-  font-size: 9px; letter-spacing: 0.16em; text-transform: uppercase;
-  color: var(--fg-subtle);
-  margin-bottom: 4px;
-}
-.team__role-perms ul { list-style: none; padding: 0; margin: 0; }
-.team__role-perms li {
-  display: flex; align-items: center; gap: 6px;
-  padding: 2px 0;
-  font-size: 12px; color: var(--fg-default);
-}
-
-/* Matrix */
-.team__matrix-wrap { overflow-x: auto; border: 1px solid var(--surface-border); border-radius: 12px; }
-.team__matrix { width: 100%; border-collapse: collapse; min-width: 900px; }
-.team__matrix th, .team__matrix td { border-right: 1px solid var(--surface-divider); }
-.team__matrix th:last-child, .team__matrix td:last-child { border-right: 0; }
-.team__matrix-th-label, .team__matrix-th { padding: 12px 14px; background: var(--surface-canvas); border-bottom: 1px solid var(--surface-border); }
-.team__matrix-th-label { width: 38%; text-align: left; font-family: var(--font-mono); font-size: 9.5px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--fg-subtle); font-weight: 600; }
-.team__matrix-th { text-align: center; font-family: var(--font-mono); font-size: 10px; font-weight: 600; color: var(--fg-default); letter-spacing: 0.05em; }
-.team__matrix-th .team__role-glyph { margin: 0 auto 4px; }
-.team__matrix-grouprow {
-  background: var(--color-accent-soft);
-  font-family: var(--font-mono);
-  font-size: 9.5px; letter-spacing: 0.2em;
-  text-transform: uppercase;
+  font-size: 10px;
   font-weight: 700;
-  color: var(--color-accent);
-  padding: 8px 14px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
 }
-.team__matrix-row { transition: background 120ms; }
-.team__matrix-row:hover { background: var(--surface-canvas); }
-.team__matrix-perm { padding: 12px 14px; border-bottom: 1px solid var(--surface-divider); }
-.team__matrix-perm > span:first-child { display: block; font-size: 12.5px; font-weight: 500; color: var(--fg-default); }
-.team__matrix-perm-detail { display: block; margin-top: 2px; font-size: 11px; color: var(--fg-muted); }
-.team__matrix-cell { padding: 12px 4px; text-align: center; border-bottom: 1px solid var(--surface-divider); color: var(--fg-subtle); font-family: var(--font-mono); }
-.team__matrix-cell--on { color: #16a34a; background: rgba(22,163,74,0.06); }
+.team__pill--amber {
+  background: rgba(217,119,6,0.14);
+  color: #92400E;
+  border: 1px solid rgba(217,119,6,0.30);
+}
 
-/* Recent events */
-.team__audit { list-style: none; padding: 0; margin: 0; border: 1px solid var(--surface-border); border-radius: 12px; background: var(--surface-page); overflow: hidden; }
+.team__mfa {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+}
+.team__mfa--on { color: #16A34A; }
+.team__mfa--off { color: var(--fg-subtle); }
+
+/* Audit timeline */
+.team__audit {
+  list-style: none;
+  margin: 0; padding: 0;
+}
 .team__audit-row {
   display: grid;
-  grid-template-columns: 110px 130px 1fr 1.5fr 200px;
-  gap: 14px;
-  padding: 10px 16px;
-  font-size: 12px;
-  border-top: 1px solid var(--surface-divider);
+  grid-template-columns: 18px 1fr;
+  gap: 12px;
+  padding: 12px 0;
+  position: relative;
 }
-.team__audit-row:first-child { border-top: 0; }
-.team__audit-time { font-family: var(--font-mono); font-size: 10.5px; color: var(--fg-subtle); white-space: nowrap; }
-.team__audit-action {
-  font-family: var(--font-mono);
-  font-size: 10.5px; font-weight: 600;
-  letter-spacing: 0.04em;
-  display: inline-flex; align-items: center;
-  padding: 2px 8px;
+.team__audit-row:not(:last-child)::before {
+  content: '';
+  position: absolute;
+  left: 8px;
+  top: 24px;
+  bottom: -12px;
+  width: 1px;
+  background: var(--surface-border);
+}
+.team__audit-pip {
+  width: 10px; height: 10px;
+  margin-left: 4px;
+  margin-top: 4px;
   border-radius: 9999px;
-  align-self: center;
-  width: fit-content;
+  position: relative;
+  z-index: 1;
 }
-.team__audit-action--invited { background: rgba(15,76,129,0.10); color: var(--color-accent); }
-.team__audit-action--role_changed { background: rgba(245,158,11,0.14); color: #92400e; }
-.team__audit-action--suspended { background: rgba(239,68,68,0.10); color: #991B1B; }
-.team__audit-action--mfa_enforced { background: rgba(22,163,74,0.10); color: #166534; }
-.team__audit-target { font-family: var(--font-mono); font-size: 11.5px; color: var(--fg-default); }
-.team__audit-detail { color: var(--fg-muted); }
-.team__audit-actor { font-size: 11px; color: var(--fg-subtle); text-align: right; }
-@media (max-width: 900px) {
-  .team__audit-row { grid-template-columns: 1fr; gap: 4px; padding: 12px 14px; }
-  .team__audit-actor { text-align: left; }
-  .team__row--member { grid-template-columns: 1fr; align-items: flex-start; gap: 8px; }
-  .team__rows-head { display: none; }
+.team__audit-line {
+  font-size: 13px;
+  color: var(--fg-default);
+  line-height: 1.4;
+  margin: 0;
+}
+.team__audit-actor { font-weight: 600; }
+.team__audit-verb { color: var(--fg-muted); }
+.team__audit-target { font-family: var(--font-mono); font-size: 12px; color: var(--fg-default); }
+.team__audit-meta {
+  margin-top: 3px;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--fg-subtle);
+  display: flex; align-items: center; gap: 6px;
 }
 `
