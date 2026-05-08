@@ -23,6 +23,8 @@
 
 import QRCode from 'qrcode'
 
+import { MarketingBand } from './MarketingBand'
+
 export interface DppDocumentInput {
   /** Canonical DPP body · `dpp/v1.0.0` schema. */
   dpp: Record<string, unknown>
@@ -382,7 +384,14 @@ export async function DppDocument({ dpp }: { dpp: DppDocumentInput }) {
         ) : null}
       </header>
 
-      {/* 2. Identification */}
+      {/* 2. Marketing band — buyer-tier impact, comparison, verifications, share */}
+      <MarketingBand
+        body={dpp.dpp}
+        resolverUrl={digitalLink}
+        productName={titlePrimary}
+      />
+
+      {/* 3. Identification */}
       <Section eyebrow="Section 01" title="Identification">
         <KvGrid
           rows={[
