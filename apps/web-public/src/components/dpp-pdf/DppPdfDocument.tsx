@@ -53,6 +53,20 @@ const paper = '#FFFFFF'
 const wash = '#F4F6FA'
 const accent = '#3D7A4B'
 const amber = '#B8732A'
+const danger = '#B23A3A'
+
+// ── Buyer-impact constants (mirror MarketingBand.tsx) ────────────────────
+const CARS_PER_TONNE_CO2 = 1 / 4.6 // EPA: 1 typical passenger car ≈ 4.6 tCO₂e/year
+const TREES_PER_TONNE_CO2 = 1 / 0.022 // 1 mature tree ≈ 0.022 tCO₂e/year sequestered
+const FLIGHTS_PER_TONNE_CO2 = 1 / 0.99 // 1 transatlantic flight ≈ 0.99 tCO₂e
+const DEFAULT_TONNES = 24 // canonical demo shipment size
+const DEFAULT_CARBON_PRICE_INR = 8000 // ₹/tCO₂e
+
+function fmtINR(n: number): string {
+  if (n >= 1e7) return `${(n / 1e7).toLocaleString(undefined, { maximumFractionDigits: 2 })} crore`
+  if (n >= 1e5) return `${(n / 1e5).toLocaleString(undefined, { maximumFractionDigits: 2 })} lakh`
+  return n.toLocaleString('en-IN', { maximumFractionDigits: 0 })
+}
 
 // ── Stylesheet ────────────────────────────────────────────────────────────
 const s = StyleSheet.create({
@@ -389,6 +403,187 @@ const s = StyleSheet.create({
     color: muted,
     lineHeight: 1.55,
     maxWidth: 480,
+  },
+
+  // ── Buyer impact · comparison ribbon ────────────────────────────────────
+  bandIntro: {
+    fontSize: 9.5,
+    color: muted,
+    fontFamily: 'Times-Italic',
+    lineHeight: 1.55,
+    marginBottom: 14,
+    maxWidth: 460,
+  },
+  cmpRow: { marginBottom: 12 },
+  cmpRowHead: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-end',
+    marginBottom: 4,
+  },
+  cmpLabelGroup: { flexDirection: 'row', alignItems: 'baseline', flex: 1 },
+  cmpLabel: { fontSize: 10, color: ink, fontFamily: 'Helvetica-Bold' },
+  cmpThisTag: {
+    marginLeft: 6,
+    fontSize: 7,
+    color: accent,
+    backgroundColor: '#E8F0EB',
+    borderWidth: 0.5,
+    borderColor: accent,
+    paddingHorizontal: 5,
+    paddingVertical: 1,
+    borderRadius: 999,
+    fontFamily: 'Helvetica-Bold',
+    letterSpacing: 0.6,
+  },
+  cmpRightGroup: { flexDirection: 'row', alignItems: 'center' },
+  cmpMult: {
+    fontSize: 7.5,
+    fontFamily: 'Courier',
+    fontWeight: 700,
+    paddingHorizontal: 6,
+    paddingVertical: 1.5,
+    borderRadius: 999,
+    borderWidth: 0.5,
+    marginRight: 8,
+    letterSpacing: 0.4,
+  },
+  cmpValue: {
+    fontSize: 10,
+    color: ink,
+    fontFamily: 'Courier',
+  },
+  cmpValueUnit: { fontSize: 8, color: muted, fontFamily: 'Helvetica' },
+  cmpTrack: {
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: wash,
+    overflow: 'hidden',
+  },
+  cmpFill: { height: 6, borderRadius: 3 },
+  cmpFoot: {
+    fontSize: 8,
+    color: muted,
+    fontFamily: 'Times-Italic',
+    marginTop: 4,
+    lineHeight: 1.5,
+  },
+
+  // ── Buyer impact · calculator ───────────────────────────────────────────
+  calcSubtitle: {
+    fontSize: 9,
+    color: muted,
+    fontFamily: 'Times-Italic',
+    lineHeight: 1.5,
+    marginBottom: 14,
+    maxWidth: 460,
+  },
+  calcAssumptionRow: {
+    flexDirection: 'row',
+    backgroundColor: wash,
+    borderRadius: 4,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    marginBottom: 14,
+  },
+  calcAssumption: { flex: 1, paddingRight: 12 },
+  calcAssumptionLabel: {
+    fontSize: 7,
+    letterSpacing: 1.2,
+    color: subtle,
+    fontFamily: 'Helvetica-Bold',
+    textTransform: 'uppercase',
+    marginBottom: 2,
+  },
+  calcAssumptionValue: {
+    fontSize: 11,
+    color: ink,
+    fontFamily: 'Courier',
+  },
+  calcHeroBlock: {
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderTopWidth: 1.2,
+    borderTopColor: ink,
+    borderBottomWidth: 0.6,
+    borderBottomColor: border,
+    marginBottom: 14,
+  },
+  calcHeroLabel: {
+    fontSize: 7.5,
+    letterSpacing: 1.6,
+    color: subtle,
+    fontFamily: 'Helvetica-Bold',
+    textTransform: 'uppercase',
+    marginBottom: 4,
+  },
+  calcHeroValue: {
+    fontSize: 32,
+    fontFamily: 'Times-Roman',
+    color: ink,
+    lineHeight: 1.05,
+    marginBottom: 2,
+  },
+  calcHeroUnit: {
+    fontSize: 10,
+    color: muted,
+    fontFamily: 'Helvetica',
+    marginBottom: 6,
+  },
+  calcHeroContext: {
+    fontSize: 9,
+    color: muted,
+    fontFamily: 'Times-Italic',
+    lineHeight: 1.5,
+    maxWidth: 440,
+  },
+  equivGrid: { flexDirection: 'row', marginBottom: 14 },
+  equivCard: {
+    flex: 1,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderWidth: 0.5,
+    borderColor: border,
+    marginRight: -0.5,
+  },
+  equivNum: {
+    fontSize: 20,
+    fontFamily: 'Times-Roman',
+    color: ink,
+    lineHeight: 1.05,
+    marginBottom: 2,
+  },
+  equivLabel: {
+    fontSize: 9,
+    color: ink,
+    fontFamily: 'Helvetica-Bold',
+    marginBottom: 3,
+  },
+  equivSource: { fontSize: 7.5, color: subtle, fontFamily: 'Helvetica' },
+  inrStrip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: ink,
+    color: paper,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 4,
+    marginTop: 4,
+  },
+  inrLabel: {
+    fontSize: 9,
+    color: '#FFFFFF',
+    fontFamily: 'Helvetica',
+    flex: 1,
+    paddingRight: 12,
+    lineHeight: 1.4,
+  },
+  inrValue: {
+    fontSize: 18,
+    color: '#FFFFFF',
+    fontFamily: 'Times-Roman',
+    fontWeight: 600,
   },
 })
 
@@ -902,7 +1097,214 @@ export function DppPdfDocument({ dpp: viewer, qrPng, resolverUrl }: DppPdfProps)
         {pageFooter}
       </Page>
 
-      {/* ── Page 4 · ESPR + Use & Safety + Compliance + Closing ────── */}
+      {/* ── Page 4 · Buyer impact · comparison + calculator ─────────── */}
+      <Page size="A4" style={s.page}>
+        {pageHeader}
+
+        <View style={s.section}>
+          <Text style={s.sectionEyebrow}>For your scope-3 ledger</Text>
+          <Text style={s.sectionTitle}>What this passport means for you</Text>
+          <View style={s.sectionDivider} />
+          <Text style={s.bandIntro}>
+            The numbers below are the conversation you take to your CFO. Every figure is
+            signed, verified, and exportable.
+          </Text>
+
+          {/* Comparison ribbon */}
+          <Text style={[s.kvLabel, { marginBottom: 8 }]}>Comparison · how this stacks</Text>
+          {(() => {
+            const industryAvg = asDict(pcfBlock.industryAverage)
+            const industryV = num(industryAvg.value)
+            const industrySrc = str(industryAvg.source) ?? 'Industry average'
+            type Row = {
+              label: string
+              value: number
+              tone: 'this' | 'cgg' | 'industry' | 'highest'
+            }
+            const thisVal = pcfValue ?? 0
+            const rows: Row[] = [{ label: titlePrimary, value: thisVal, tone: 'this' }]
+            if (thisVal < 3.0) {
+              rows.push({
+                label: 'CGG Continuous Galvanising Grade',
+                value: 3.4,
+                tone: 'cgg',
+              })
+            }
+            if (industryV !== null) {
+              rows.push({ label: industrySrc, value: industryV, tone: 'industry' })
+            }
+            if (industryV === null || industryV < 4.5) {
+              rows.push({
+                label: 'Coal-grid primary zinc (worst case)',
+                value: 5.0,
+                tone: 'highest',
+              })
+            }
+            const max = Math.max(...rows.map((r) => r.value)) * 1.05
+            const toneFill: Record<Row['tone'], string> = {
+              this: accent,
+              cgg: amber,
+              industry: muted,
+              highest: danger,
+            }
+            const toneChipBg: Record<Row['tone'], string> = {
+              this: '#E8F0EB',
+              cgg: '#FBEBDC',
+              industry: '#E5E9F0',
+              highest: '#F8E2E2',
+            }
+            const toneChipFg: Record<Row['tone'], string> = {
+              this: accent,
+              cgg: amber,
+              industry: muted,
+              highest: danger,
+            }
+            return rows.map((r) => {
+              const pct = (r.value / max) * 100
+              const ratio = r.tone !== 'this' ? r.value / thisVal : null
+              return (
+                <View key={r.label} style={s.cmpRow}>
+                  <View style={s.cmpRowHead}>
+                    <View style={s.cmpLabelGroup}>
+                      <Text style={s.cmpLabel}>{r.label}</Text>
+                      {r.tone === 'this' ? (
+                        <Text style={s.cmpThisTag}>THIS PASSPORT</Text>
+                      ) : null}
+                    </View>
+                    <View style={s.cmpRightGroup}>
+                      {ratio !== null ? (
+                        <Text
+                          style={[
+                            s.cmpMult,
+                            {
+                              backgroundColor: toneChipBg[r.tone],
+                              color: toneChipFg[r.tone],
+                              borderColor: toneChipFg[r.tone],
+                            },
+                          ]}
+                        >
+                          {ratio.toFixed(ratio >= 10 ? 0 : 1)}× more carbon
+                        </Text>
+                      ) : null}
+                      <Text style={s.cmpValue}>
+                        {fmt(r.value, 2)}{' '}
+                        <Text style={s.cmpValueUnit}>{pcfUnit}</Text>
+                      </Text>
+                    </View>
+                  </View>
+                  <View style={s.cmpTrack}>
+                    <View
+                      style={[
+                        s.cmpFill,
+                        { width: `${pct}%`, backgroundColor: toneFill[r.tone] },
+                      ]}
+                    />
+                  </View>
+                </View>
+              )
+            })
+          })()}
+          <Text style={s.cmpFoot}>
+            Lower is better. Each bar shows the cradle-to-gate Product Carbon Footprint per
+            kilogram of metal at the factory gate.
+          </Text>
+        </View>
+
+        {/* Impact calculator */}
+        <View style={s.section}>
+          <Text style={s.sectionEyebrow}>Customer impact calculator</Text>
+          <Text style={s.sectionTitle}>Run your own number</Text>
+          <View style={s.sectionDivider} />
+          {(() => {
+            const industryAvg = asDict(pcfBlock.industryAverage)
+            const industryV = num(industryAvg.value)
+            const baseline =
+              industryV !== null
+                ? industryV
+                : Math.max((pcfValue ?? 0) * 3, (pcfValue ?? 0) + 1.5)
+            const tonnes = DEFAULT_TONNES
+            const carbonPrice = DEFAULT_CARBON_PRICE_INR
+            const avoidedKgPerKg = Math.max(0, baseline - (pcfValue ?? 0))
+            const avoidedTonnes = avoidedKgPerKg * tonnes // kg/kg × tonnes = tonnes CO2e
+            const cars = avoidedTonnes * CARS_PER_TONNE_CO2
+            const trees = avoidedTonnes * TREES_PER_TONNE_CO2
+            const flights = avoidedTonnes * FLIGHTS_PER_TONNE_CO2
+            const inrSaved = avoidedTonnes * carbonPrice
+            return (
+              <>
+                <Text style={s.calcSubtitle}>
+                  Snapshot at the canonical demo assumptions below — the live HTML viewer
+                  exposes sliders for shipment size and internal carbon price. Every figure
+                  is the delta versus the {industryV !== null ? 'verified benchmark' : 'commodity reference'}.
+                </Text>
+
+                <View style={s.calcAssumptionRow}>
+                  <View style={s.calcAssumption}>
+                    <Text style={s.calcAssumptionLabel}>Shipment size</Text>
+                    <Text style={s.calcAssumptionValue}>
+                      {tonnes.toLocaleString()} tonnes of metal
+                    </Text>
+                  </View>
+                  <View style={s.calcAssumption}>
+                    <Text style={s.calcAssumptionLabel}>Internal carbon price</Text>
+                    <Text style={s.calcAssumptionValue}>
+                      ₹ {carbonPrice.toLocaleString('en-IN')} / tCO₂e
+                    </Text>
+                  </View>
+                  <View style={s.calcAssumption}>
+                    <Text style={s.calcAssumptionLabel}>Reference baseline</Text>
+                    <Text style={s.calcAssumptionValue}>
+                      {fmt(baseline, 2)} {pcfUnit}
+                    </Text>
+                  </View>
+                </View>
+
+                <View style={s.calcHeroBlock}>
+                  <Text style={s.calcHeroLabel}>
+                    CO₂e you avoid by sourcing this passport
+                  </Text>
+                  <Text style={s.calcHeroValue}>{fmt(avoidedTonnes, 1)}</Text>
+                  <Text style={s.calcHeroUnit}>tonnes CO₂e</Text>
+                  <Text style={s.calcHeroContext}>
+                    versus the {industryV !== null ? 'verified benchmark' : 'commodity reference'}{' '}
+                    of {fmt(baseline, 2)} {pcfUnit} for an equivalent shipment.
+                  </Text>
+                </View>
+
+                <View style={s.equivGrid}>
+                  <View style={s.equivCard}>
+                    <Text style={s.equivNum}>{fmt(cars, 0)}</Text>
+                    <Text style={s.equivLabel}>passenger cars / year</Text>
+                    <Text style={s.equivSource}>EPA · 4.6 tCO₂e per car-year</Text>
+                  </View>
+                  <View style={s.equivCard}>
+                    <Text style={s.equivNum}>{fmt(trees, 0)}</Text>
+                    <Text style={s.equivLabel}>mature trees / year</Text>
+                    <Text style={s.equivSource}>USDA · 22 kgCO₂e per tree-year</Text>
+                  </View>
+                  <View style={s.equivCard}>
+                    <Text style={s.equivNum}>{fmt(flights, 0)}</Text>
+                    <Text style={s.equivLabel}>transatlantic flights</Text>
+                    <Text style={s.equivSource}>ICAO · 0.99 tCO₂e/economy seat</Text>
+                  </View>
+                </View>
+
+                <View style={s.inrStrip}>
+                  <Text style={s.inrLabel}>
+                    At ₹ {carbonPrice.toLocaleString('en-IN')} / tCO₂e, your scope-3
+                    avoidance value is
+                  </Text>
+                  <Text style={s.inrValue}>₹ {fmtINR(inrSaved)}</Text>
+                </View>
+              </>
+            )
+          })()}
+        </View>
+
+        {pageFooter}
+      </Page>
+
+      {/* ── Page 5 · ESPR + Use & Safety + Compliance + Closing ────── */}
       <Page size="A4" style={s.page}>
         {pageHeader}
 

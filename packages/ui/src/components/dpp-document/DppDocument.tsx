@@ -390,13 +390,6 @@ export async function DppDocument({ dpp }: { dpp: DppDocumentInput }) {
         ) : null}
       </header>
 
-      {/* 2. Marketing band — buyer-tier impact, comparison, verifications, share */}
-      <MarketingBand
-        body={dpp.dpp}
-        resolverUrl={digitalLink}
-        productName={titlePrimary}
-      />
-
       {/* Section 01 · Identification */}
       <Section eyebrow="01 · Identification" title="What it is">
         <KvGrid
@@ -722,6 +715,16 @@ export async function DppDocument({ dpp }: { dpp: DppDocumentInput }) {
           ) : null}
         </Section>
       ) : null}
+
+      {/* Marketing band · buyer-tier impact, comparison, calculator, share.
+          Sits at the end of the technical narrative so the editorial sections
+          read top-to-bottom uninterrupted; the marketing summary lands just
+          before the issuance/DID footer where a buyer is most ready to act. */}
+      <MarketingBand
+        body={dpp.dpp}
+        resolverUrl={digitalLink}
+        productName={titlePrimary}
+      />
 
       {/* Footer · issuance, did, disclaimer */}
       <footer className="dpp-doc__footer">
