@@ -1,14 +1,23 @@
-import { ArrowRightLeft, CheckCircle2, Clock, Recycle, ShieldAlert, Truck } from 'lucide-react'
+import {
+  ArrowRightLeft,
+  CheckCircle2,
+  Clock,
+  Inbox,
+  Recycle,
+  ShieldAlert,
+  Truck,
+} from 'lucide-react'
 
-import { matchDemoPassport } from '@dpp/ui'
+import { EmptyState } from '@dpp/ui'
 
+import { AnimatedKpi } from '@/components/console/AnimatedKpi'
 import { currentUser } from '@/lib/auth'
 import { listDpps } from '@/lib/api'
 import { hasPermission, TENANT_ROLES, type TenantRole } from '@/lib/rbac'
 
 import { InitiateTransferDialog } from './InitiateTransferDialog'
-import { RowActions } from './RowActions'
-import { listTransfers, type Transfer, type TransferKind, type TransferState } from './store'
+import { TransferActivityFeed, TransferBoard } from './TransferBoard'
+import { listTransfers, type TransferKind, type TransferState } from './store'
 
 export const revalidate = 30
 
@@ -16,32 +25,13 @@ interface PageProps {
   searchParams: Promise<{ state?: string; kind?: string; q?: string }>
 }
 
-const STATE_DEFINITIONS: { key: TransferState; label: string; tone: StateTone }[] = [
-  { key: 'pending_countersign', label: 'Pending countersign', tone: 'amber' },
-  { key: 'settled', label: 'Settled', tone: 'ok' },
-  { key: 'rejected', label: 'Rejected', tone: 'muted' },
-  { key: 'disputed', label: 'Disputed', tone: 'danger' },
-  { key: 'draft', label: 'Draft', tone: 'muted' },
-]
-
-type StateTone = 'ok' | 'amber' | 'muted' | 'danger'
-
 const KIND_LABEL: Record<TransferKind, string> = {
   ownership: 'Ownership',
   custody: 'Custody',
   end_of_life: 'End-of-Life',
 }
 
-const KIND_GLYPH: Record<TransferKind, React.ReactNode> = {
-  ownership: <ArrowRightLeft className="h-3.5 w-3.5" />,
-  custody: <Truck className="h-3.5 w-3.5" />,
-  end_of_life: <Recycle className="h-3.5 w-3.5" />,
-}
-
 export default async function OwnershipTransfersPage({ searchParams }: PageProps) {
-  // Fan out the four IO-bound calls in parallel · cookie read, search params,
-  // DPP list, transfer list. Sequencing them was the largest chunk of latency
-  // on this page.
   const [me, params, dpps] = await Promise.all([
     currentUser(),
     searchParams,
@@ -55,8 +45,8 @@ export default async function OwnershipTransfersPage({ searchParams }: PageProps
   const kindFilter = (params.kind ?? '') as TransferKind | ''
   const query = (params.q ?? '').trim().toLowerCase()
 
-  const transfers = listTransfers()
-  const filtered = transfers.filter((t) => {
+  const allTransfers = listTransfers()
+  const filtered = allTransfers.filter((t) => {
     if (stateFilter && t.state !== stateFilter) return false
     if (kindFilter && t.kind !== kindFilter) return false
     if (query) {
@@ -68,20 +58,16 @@ export default async function OwnershipTransfersPage({ searchParams }: PageProps
   })
 
   const counts = {
-    pending: transfers.filter((t) => t.state === 'pending_countersign').length,
-    settled: transfers.filter((t) => t.state === 'settled').length,
-    disputed: transfers.filter((t) => t.state === 'disputed').length,
-    rejected: transfers.filter((t) => t.state === 'rejected').length,
+    pending: allTransfers.filter((t) => t.state === 'pending_countersign').length,
+    settled: allTransfers.filter((t) => t.state === 'settled').length,
+    disputed: allTransfers.filter((t) => t.state === 'disputed').length,
+    rejected: allTransfers.filter((t) => t.state === 'rejected').length,
   }
+  const settledRate =
+    allTransfers.length > 0
+      ? Math.round((counts.settled / allTransfers.length) * 100)
+      : 0
 
-  const byKind: Record<TransferKind, number> = {
-    ownership: transfers.filter((t) => t.kind === 'ownership').length,
-    custody: transfers.filter((t) => t.kind === 'custody').length,
-    end_of_life: transfers.filter((t) => t.kind === 'end_of_life').length,
-  }
-
-  // Live passport options for the "Initiate" dialog dropdown · already
-  // fetched in parallel above with the user + searchParams.
   const passportOptions = dpps.items.map((d) => ({
     upi: d.upi,
     label: `${d.brand} · ${d.alloy} (${humanise(d.form)})`,
@@ -91,26 +77,36 @@ export default async function OwnershipTransfersPage({ searchParams }: PageProps
     <div className="ot-page min-h-[calc(100vh-56px)] bg-[var(--surface-canvas)]">
       <style>{OT_PAGE_CSS}</style>
 
-      <div className="mx-auto max-w-[1320px] px-7 py-7">
-        <header className="ot-page__header">
-          <div className="ot-page__header-block">
-            <div className="ot-page__avatar" aria-hidden>
+      <div className="mx-auto max-w-[1400px] px-7 py-7">
+        {/* ── Hero band ────────────────────────────────────────────── */}
+        <header className="ot-hero">
+          <div className="ot-hero__main">
+            <div className="ot-hero__crest" aria-hidden>
               <ArrowRightLeft className="h-5 w-5" />
             </div>
             <div className="min-w-0">
-              <h1 className="ot-page__title">Ownership Transfers</h1>
-              <p className="ot-page__subtitle">
-                Per-batch chain-of-custody. Each transfer signs a Verifiable Credential to the
-                recipient&apos;s DID and writes to the audit log.
+              <p className="ot-hero__eyebrow">Chain of custody</p>
+              <h1 className="ot-hero__title">Ownership Transfers</h1>
+              <p className="ot-hero__sub">
+                Per-batch hand-offs between BPN-identified parties. Each transfer signs a
+                Verifiable Credential to the recipient&apos;s DID and writes to the audit log.
               </p>
             </div>
           </div>
-          <div className="ot-page__header-actions">
+          <div className="ot-hero__cta">
+            {counts.pending > 0 && (
+              <span className="ot-hero__pending" aria-live="polite">
+                <span className="ot-hero__pending-dot" aria-hidden />
+                <span>
+                  <strong>{counts.pending}</strong> awaiting countersign
+                </span>
+              </span>
+            )}
             {canInitiate ? (
               <InitiateTransferDialog passports={passportOptions} myEmail={me.email} />
             ) : (
               <span
-                className="ot-page__btn ot-page__btn--disabled"
+                className="ot-hero__btn-disabled"
                 title="Requires a role with publish_passport"
               >
                 <ArrowRightLeft className="h-3.5 w-3.5" /> Initiate Transfer
@@ -119,123 +115,105 @@ export default async function OwnershipTransfersPage({ searchParams }: PageProps
           </div>
         </header>
 
-        <section className="ot-page__kpi-grid">
-          <KpiCard
+        {/* ── KPI band · animated counters ──────────────────────────── */}
+        <section className="ot-kpis">
+          <KpiTile
+            tone="amber"
+            icon={<Clock className="h-4 w-4" />}
             label="Pending countersign"
-            value={counts.pending}
-            sub="Awaiting recipient signature"
-            icon={<Clock className="h-4 w-4" />}
-            tone={counts.pending > 0 ? 'amber' : undefined}
+            value={String(counts.pending)}
+            hint="Recipient action needed"
+            delay={0}
           />
-          <KpiCard
-            label="Settled this period"
-            value={counts.settled}
-            sub="Verifiable credentials issued"
+          <KpiTile
+            tone="green"
             icon={<CheckCircle2 className="h-4 w-4" />}
-            tone="ok"
+            label="Settled"
+            value={String(counts.settled)}
+            hint={`${settledRate}% of all transfers`}
+            delay={0.05}
           />
-          <KpiCard
-            label="Disputed"
-            value={counts.disputed}
-            sub="Open with verifier"
+          <KpiTile
+            tone="red"
             icon={<ShieldAlert className="h-4 w-4" />}
-            tone={counts.disputed > 0 ? 'danger' : undefined}
+            label="Disputed"
+            value={String(counts.disputed)}
+            hint="Open with verifier"
+            delay={0.1}
           />
-          <KpiCard
-            label="Rejected / cancelled"
-            value={counts.rejected}
-            sub="Closed without settlement"
-            icon={<Clock className="h-4 w-4" />}
+          <KpiTile
+            tone="muted"
+            icon={<Inbox className="h-4 w-4" />}
+            label="Total transfers"
+            value={String(allTransfers.length)}
+            hint="Lifetime"
+            delay={0.15}
           />
         </section>
 
-        <section className="ot-page__mix">
-          <div className="ot-page__mix-card">
-            <p className="ot-page__mix-label">Transfer mix · last 30 days</p>
-            <Donut byKind={byKind} />
+        {/* ── Filter bar ──────────────────────────────────────────── */}
+        <form className="ot-filters" action="/console/ownership-transfers" method="get">
+          <div className="ot-filters__search">
+            <input
+              type="search"
+              name="q"
+              defaultValue={params.q ?? ''}
+              placeholder="Search by recipient, UPI, PO, or product…"
+            />
           </div>
+          <FilterChipRow
+            paramKey="kind"
+            current={kindFilter}
+            otherParam="state"
+            otherValue={stateFilter}
+            query={query}
+            options={[
+              { value: '', label: 'All kinds' },
+              { value: 'ownership', label: KIND_LABEL.ownership, glyph: <ArrowRightLeft className="h-3 w-3" /> },
+              { value: 'custody', label: KIND_LABEL.custody, glyph: <Truck className="h-3 w-3" /> },
+              { value: 'end_of_life', label: KIND_LABEL.end_of_life, glyph: <Recycle className="h-3 w-3" /> },
+            ]}
+          />
+        </form>
 
-          <form className="ot-page__filters" action="/console/ownership-transfers" method="get">
-            <div className="ot-page__search">
-              <input
-                type="search"
-                name="q"
-                defaultValue={params.q ?? ''}
-                placeholder="Search by recipient, passport UPI, PO, or product…"
-                className="ot-page__search-input"
-              />
-            </div>
-            <div className="ot-page__chips">
-              <FilterPill
-                label="All states"
-                active={!stateFilter}
-                href={hrefFor('state', '', { kindFilter, query })}
-                tone="muted"
-              />
-              {STATE_DEFINITIONS.map((s) => (
-                <FilterPill
-                  key={s.key}
-                  label={s.label}
-                  active={stateFilter === s.key}
-                  href={hrefFor('state', s.key, { kindFilter, query })}
-                  tone={s.tone}
-                />
-              ))}
-            </div>
-            <div className="ot-page__chips">
-              <FilterPill
-                label="All kinds"
-                active={!kindFilter}
-                href={hrefFor('kind', '', { stateFilter, query })}
-                tone="muted"
-              />
-              {(['ownership', 'custody', 'end_of_life'] as TransferKind[]).map((k) => (
-                <FilterPill
-                  key={k}
-                  label={KIND_LABEL[k]}
-                  active={kindFilter === k}
-                  href={hrefFor('kind', k, { stateFilter, query })}
-                  tone={k === 'ownership' ? 'accent' : k === 'custody' ? 'amber' : 'ok'}
-                  glyph={KIND_GLYPH[k]}
-                />
-              ))}
-            </div>
-          </form>
+        {/* ── Status board ─────────────────────────────────────────── */}
+        <section className="mt-2">
+          {filtered.length === 0 && allTransfers.length > 0 ? (
+            <EmptyState
+              icon={<Inbox className="h-5 w-5" />}
+              title="No transfers match these filters"
+              description={
+                <>
+                  Clear the search or pick a different state/kind chip above to see the full
+                  ledger.
+                </>
+              }
+              tone="info"
+              className="my-6"
+            />
+          ) : allTransfers.length === 0 ? (
+            <EmptyState
+              icon={<ArrowRightLeft className="h-5 w-5" />}
+              title="No transfers yet"
+              description="Initiate the first ownership transfer · the recipient countersigns and a Verifiable Credential is issued to their DID."
+              tone="info"
+              className="my-6"
+            />
+          ) : (
+            <TransferBoard transfers={filtered} canAct={canInitiate} />
+          )}
         </section>
 
-        <section className="ot-page__tablecard">
-          <div className="overflow-x-auto">
-            <table className="ot-page__table">
-              <thead>
-                <tr>
-                  <Th>State</Th>
-                  <Th>Kind</Th>
-                  <Th>Passport</Th>
-                  <Th>From</Th>
-                  <Th>Recipient</Th>
-                  <Th>Reference</Th>
-                  <Th>Initiated</Th>
-                  <Th align="right">Actions</Th>
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.length === 0 && (
-                  <tr>
-                    <td
-                      colSpan={8}
-                      className="px-4 py-16 text-center text-[13px] text-[var(--fg-subtle)]"
-                    >
-                      No transfers match these filters.
-                    </td>
-                  </tr>
-                )}
-                {filtered.map((t) => (
-                  <TransferRow key={t.id} t={t} canAct={canInitiate} />
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </section>
+        {/* ── Activity timeline ────────────────────────────────────── */}
+        {allTransfers.length > 0 && (
+          <section className="ot-activity-section">
+            <header className="ot-activity-section__head">
+              <p className="ot-activity-section__eyebrow">Recent activity</p>
+              <span className="ot-activity-section__hint">Last 10 events</span>
+            </header>
+            <TransferActivityFeed transfers={allTransfers} />
+          </section>
+        )}
       </div>
     </div>
   )
@@ -243,534 +221,348 @@ export default async function OwnershipTransfersPage({ searchParams }: PageProps
 
 // ── Subcomponents ─────────────────────────────────────────────────────────
 
-function TransferRow({ t, canAct }: { t: Transfer; canAct: boolean }) {
-  const stateInfo = STATE_DEFINITIONS.find((s) => s.key === t.state) ?? {
-    label: humanise(t.state),
-    tone: 'muted' as StateTone,
-  }
-  const demo = matchDemoPassport(t.passportUpi)
-  // Demo bodies carry the public-viewer path `/dpp-assets/products/...`;
-  // rewrite to the console's `/products/...` mount.
-  const rawImage = (demo?.body.media as Record<string, unknown> | undefined)?.productImage as
-    | string
-    | undefined
-  const productImage = rawImage?.replace(/^\/dpp-assets\/products\//, '/products/')
-
-  return (
-    <tr className="ot-row">
-      <Td>
-        <span className={`ot-row__state ot-row__state--${stateInfo.tone}`}>
-          <span className="ot-row__state-dot" />
-          {stateInfo.label}
-        </span>
-      </Td>
-      <Td>
-        <span className={`ot-row__kind ot-row__kind--${t.kind}`}>
-          {KIND_GLYPH[t.kind]}
-          {KIND_LABEL[t.kind]}
-        </span>
-      </Td>
-      <Td>
-        <div className="ot-row__passport">
-          {productImage && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={productImage} alt="" className="ot-row__passport-img" loading="lazy" />
-          )}
-          <div className="min-w-0">
-            <p className="ot-row__passport-label">{t.productLabel}</p>
-            <p className="ot-row__passport-upi" title={t.passportUpi}>
-              {shortenUpi(t.passportUpi)}
-            </p>
-          </div>
-        </div>
-      </Td>
-      <Td>
-        <p className="ot-row__org">{t.fromOrg}</p>
-        <p className="ot-row__did" title={t.fromDid}>
-          {t.fromDid}
-        </p>
-      </Td>
-      <Td>
-        <p className="ot-row__org">{t.toOrg}</p>
-        <p className="ot-row__did" title={t.toDid}>
-          {t.toDid}
-        </p>
-      </Td>
-      <Td>
-        <p className="ot-row__ref">{t.reference ?? '—'}</p>
-        {t.credentialId && (
-          <p className="ot-row__vc" title={`Body SHA-256 ${t.bodySha256}`}>
-            {t.credentialId}
-          </p>
-        )}
-      </Td>
-      <Td>
-        <p className="ot-row__time">{formatRelative(t.initiatedAt)}</p>
-        {t.settledAt && (
-          <p className="ot-row__time-secondary">settled {formatRelative(t.settledAt)}</p>
-        )}
-      </Td>
-      <Td align="right">
-        {canAct ? (
-          <RowActions id={t.id} state={t.state} />
-        ) : (
-          <span className="ot-row__time-secondary">—</span>
-        )}
-      </Td>
-    </tr>
-  )
-}
-
-function KpiCard({
+function KpiTile({
+  tone,
+  icon,
   label,
   value,
-  sub,
-  icon,
-  tone,
+  hint,
+  delay,
 }: {
-  label: string
-  value: number
-  sub: string
+  tone: 'amber' | 'green' | 'red' | 'muted'
   icon: React.ReactNode
-  tone?: 'ok' | 'amber' | 'danger'
+  label: string
+  value: string
+  hint: string
+  delay: number
 }) {
   return (
-    <article className={`ot-page__kpi${tone ? ` ot-page__kpi--${tone}` : ''}`}>
-      <div className="ot-page__kpi-head">
-        <p className="ot-page__kpi-label">{label}</p>
-        <span className={`ot-page__kpi-icon${tone ? ` ot-page__kpi-icon--${tone}` : ''}`}>
-          {icon}
-        </span>
+    <div className={`ot-kpi ot-kpi--${tone}`}>
+      <div className="ot-kpi__head">
+        <span className={`ot-kpi__icon ot-kpi__icon--${tone}`}>{icon}</span>
+        <p className="ot-kpi__label">{label}</p>
       </div>
-      <p className="ot-page__kpi-value">{value}</p>
-      <p className="ot-page__kpi-sub">{sub}</p>
-    </article>
-  )
-}
-
-function Donut({ byKind }: { byKind: Record<TransferKind, number> }) {
-  const total = byKind.ownership + byKind.custody + byKind.end_of_life || 1
-  const r = 28
-  const c = 2 * Math.PI * r
-  const ownLen = (byKind.ownership / total) * c
-  const cusLen = (byKind.custody / total) * c
-  const eolLen = (byKind.end_of_life / total) * c
-  return (
-    <div className="ot-donut">
-      <svg viewBox="0 0 80 80" className="ot-donut__svg" aria-hidden>
-        <circle cx="40" cy="40" r={r} fill="none" stroke="var(--surface-hover)" strokeWidth="10" />
-        <circle
-          cx="40"
-          cy="40"
-          r={r}
-          fill="none"
-          stroke="var(--color-accent)"
-          strokeWidth="10"
-          strokeDasharray={`${ownLen} ${c}`}
-          transform="rotate(-90 40 40)"
-        />
-        <circle
-          cx="40"
-          cy="40"
-          r={r}
-          fill="none"
-          stroke="#f59e0b"
-          strokeWidth="10"
-          strokeDasharray={`${cusLen} ${c}`}
-          strokeDashoffset={-ownLen}
-          transform="rotate(-90 40 40)"
-        />
-        <circle
-          cx="40"
-          cy="40"
-          r={r}
-          fill="none"
-          stroke="#16a34a"
-          strokeWidth="10"
-          strokeDasharray={`${eolLen} ${c}`}
-          strokeDashoffset={-(ownLen + cusLen)}
-          transform="rotate(-90 40 40)"
-        />
-      </svg>
-      <ul className="ot-donut__legend">
-        <li>
-          <span className="ot-donut__swatch" style={{ background: 'var(--color-accent)' }} />{' '}
-          Ownership <strong>{byKind.ownership}</strong>
-        </li>
-        <li>
-          <span className="ot-donut__swatch" style={{ background: '#f59e0b' }} /> Custody{' '}
-          <strong>{byKind.custody}</strong>
-        </li>
-        <li>
-          <span className="ot-donut__swatch" style={{ background: '#16a34a' }} /> End-of-Life{' '}
-          <strong>{byKind.end_of_life}</strong>
-        </li>
-      </ul>
+      <div className="ot-kpi__value">
+        <AnimatedKpi label="" value={value} hint={hint} delay={delay} />
+      </div>
     </div>
   )
 }
 
-function FilterPill({
-  href,
-  label,
-  active,
-  tone,
-  glyph,
+function FilterChipRow({
+  paramKey,
+  current,
+  otherParam,
+  otherValue,
+  query,
+  options,
 }: {
-  href: { pathname: string; query: Record<string, string> }
-  label: string
-  active: boolean
-  tone: StateTone | 'accent'
-  glyph?: React.ReactNode
+  paramKey: 'state' | 'kind'
+  current: string
+  otherParam: 'state' | 'kind'
+  otherValue: string
+  query: string
+  options: { value: string; label: string; glyph?: React.ReactNode }[]
 }) {
-  const search = new URLSearchParams(href.query).toString()
-  const url = search ? `${href.pathname}?${search}` : href.pathname
   return (
-    <a
-      href={url}
-      className={[
-        'ot-page__chip',
-        active ? `ot-page__chip--active ot-page__chip--${tone}` : '',
-      ].join(' ')}
-    >
-      {glyph}
-      <span>{label}</span>
-    </a>
+    <div className="ot-filters__chips">
+      {options.map((opt) => {
+        const q = new URLSearchParams()
+        if (opt.value) q.set(paramKey, opt.value)
+        if (otherValue) q.set(otherParam, otherValue)
+        if (query) q.set('q', query)
+        const isActive = current === opt.value
+        const url = q.toString()
+          ? `/console/ownership-transfers?${q.toString()}`
+          : '/console/ownership-transfers'
+        return (
+          <a
+            key={opt.value || 'all'}
+            href={url}
+            className={`ot-chip${isActive ? ' is-active' : ''}`}
+          >
+            {opt.glyph}
+            <span>{opt.label}</span>
+          </a>
+        )
+      })}
+    </div>
   )
-}
-
-function Th({ children, align = 'left' }: { children: React.ReactNode; align?: 'left' | 'right' }) {
-  return (
-    <th
-      className={`ot-page__th ${align === 'right' ? 'text-right' : 'text-left'}`}
-      scope="col"
-    >
-      {children}
-    </th>
-  )
-}
-
-function Td({ children, align = 'left' }: { children: React.ReactNode; align?: 'left' | 'right' }) {
-  return (
-    <td className={`ot-page__td ${align === 'right' ? 'text-right' : 'text-left'}`}>
-      {children}
-    </td>
-  )
-}
-
-// ── helpers ──────────────────────────────────────────────────────────────
-
-function shortenUpi(upi: string): string {
-  const segs = upi.split('/').filter(Boolean)
-  if (segs.length <= 2) return upi
-  return `${segs[0]}/…/${segs[segs.length - 1]}`
 }
 
 function humanise(s: string): string {
   return s.replace(/[_-]/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
 }
 
-function formatRelative(iso: string): string {
-  const d = new Date(iso)
-  const ms = Date.now() - d.getTime()
-  const s = Math.floor(ms / 1000)
-  if (s < 60) return `${s}s ago`
-  const m = Math.floor(s / 60)
-  if (m < 60) return `${m}m ago`
-  const h = Math.floor(m / 60)
-  if (h < 24) return `${h}h ago`
-  const day = Math.floor(h / 24)
-  if (day < 14) return `${day}d ago`
-  return iso.slice(0, 10)
-}
-
-function hrefFor(
-  flipping: 'state' | 'kind',
-  value: string,
-  rest: { stateFilter?: string; kindFilter?: string; query?: string },
-): { pathname: string; query: Record<string, string> } {
-  const q: Record<string, string> = {}
-  if (flipping === 'state') {
-    if (value) q.state = value
-    if (rest.kindFilter) q.kind = rest.kindFilter
-  } else {
-    if (value) q.kind = value
-    if (rest.stateFilter) q.state = rest.stateFilter
-  }
-  if (rest.query) q.q = rest.query
-  return { pathname: '/console/ownership-transfers', query: q }
-}
-
 // ── styles ───────────────────────────────────────────────────────────────
 
 const OT_PAGE_CSS = `
-.ot-page__header {
+.ot-hero {
   position: relative;
-  display: flex; flex-wrap: wrap; align-items: center; gap: 16px;
-  justify-content: space-between;
-  padding: 28px 28px 30px;
-  margin: 0 -28px 26px;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 18px;
+  padding: 28px 28px 26px;
+  margin: 0 -28px 24px;
   background:
-    radial-gradient(circle at 0% 0%, rgba(15,76,129,0.08), transparent 50%),
-    radial-gradient(circle at 100% 0%, rgba(245,158,11,0.06), transparent 50%);
+    radial-gradient(circle at 0% 0%, rgba(15,76,129,0.08), transparent 55%),
+    radial-gradient(circle at 100% 0%, rgba(217,119,6,0.06), transparent 55%),
+    linear-gradient(180deg, #ffffff 0%, var(--surface-canvas) 100%);
   border-bottom: 1px solid var(--surface-divider);
 }
-.ot-page__header-block { display: flex; align-items: center; gap: 16px; min-width: 0; }
-.ot-page__avatar {
+@media (min-width: 980px) {
+  .ot-hero { grid-template-columns: 1fr auto; align-items: center; }
+}
+
+.ot-hero__main { display: flex; align-items: flex-start; gap: 16px; min-width: 0; }
+.ot-hero__crest {
   display: grid; place-items: center;
   width: 52px; height: 52px;
   border-radius: 14px;
-  background: linear-gradient(135deg, var(--color-accent), #4f8fc7);
-  color: #fff;
+  background: linear-gradient(135deg, var(--color-accent, #0F4C81), #4F8FC7);
+  color: #ffffff;
   flex-shrink: 0;
-  box-shadow: 0 8px 24px -8px rgba(15,76,129,0.5);
+  box-shadow:
+    0 12px 28px -10px rgba(15,76,129,0.45),
+    0 0 0 1px rgba(15,76,129,0.15) inset;
 }
-.ot-page__title {
+.ot-hero__eyebrow {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.20em;
+  text-transform: uppercase;
+  color: var(--color-accent, #0F4C81);
+  font-weight: 700;
+}
+.ot-hero__title {
+  margin-top: 4px;
   font-family: var(--font-display);
-  font-size: clamp(26px, 3vw, 30px);
-  font-weight: 600; letter-spacing: -0.012em;
-  color: var(--fg-default); line-height: 1.1;
+  font-size: clamp(24px, 3vw, 30px);
+  font-weight: 600;
+  letter-spacing: -0.014em;
+  color: var(--fg-default);
+  line-height: 1.1;
 }
-.ot-page__subtitle { margin-top: 3px; font-size: 13px; color: var(--fg-muted); max-width: 640px; }
-.ot-page__header-actions { display: flex; gap: 8px; }
-.ot-page__btn {
+.ot-hero__sub {
+  margin-top: 6px;
+  font-size: 13px;
+  color: var(--fg-muted);
+  max-width: 620px;
+  line-height: 1.55;
+}
+
+.ot-hero__cta {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+.ot-hero__pending {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-radius: 9999px;
+  border: 1px solid rgba(217,119,6,0.30);
+  background: rgba(254,243,199,0.50);
+  color: #92400E;
+  font-size: 12px;
+  font-weight: 500;
+}
+.ot-hero__pending strong {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  margin-right: 2px;
+}
+.ot-hero__pending-dot {
+  position: relative;
+  width: 8px; height: 8px;
+  border-radius: 9999px;
+  background: #D97706;
+}
+.ot-hero__pending-dot::after {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border-radius: 9999px;
+  background: rgba(217,119,6,0.40);
+  animation: ot-hero-pulse 1.6s ease-out infinite;
+}
+@keyframes ot-hero-pulse {
+  0%   { transform: scale(0.6); opacity: 1; }
+  100% { transform: scale(2.2); opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ot-hero__pending-dot::after { animation: none; }
+}
+
+.ot-hero__btn-disabled {
   display: inline-flex; align-items: center; gap: 6px;
   height: 36px; padding: 0 14px;
-  border-radius: 8px;
-  font-size: 12px; font-weight: 600;
-}
-.ot-page__btn--disabled {
-  color: var(--fg-subtle);
   border: 1px solid var(--surface-border);
-  background: var(--surface-canvas);
-  cursor: not-allowed;
-}
-
-.ot-page__kpi-grid {
-  display: grid; gap: 12px;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  margin-bottom: 22px;
-}
-.ot-page__kpi {
-  background: var(--surface-page);
-  border: 1px solid var(--surface-border);
-  border-radius: 14px;
-  padding: 18px 20px;
-}
-.ot-page__kpi-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
-.ot-page__kpi-label { font-family: var(--font-mono); font-size: 9.5px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--fg-subtle); }
-.ot-page__kpi-icon {
-  display: grid; place-items: center;
-  width: 32px; height: 32px;
   border-radius: 9px;
-  background: var(--surface-hover);
-  color: var(--fg-muted);
+  font-size: 12px;
+  color: var(--fg-subtle);
+  cursor: not-allowed;
+  background: var(--surface-canvas);
 }
-.ot-page__kpi-icon--ok { background: rgba(22,163,74,0.10); color: #16a34a; }
-.ot-page__kpi-icon--amber { background: rgba(245,158,11,0.14); color: #b45309; }
-.ot-page__kpi-icon--danger { background: rgba(239,68,68,0.10); color: #b91c1c; }
-.ot-page__kpi-value {
-  margin-top: 14px;
-  font-family: var(--font-display);
-  font-size: 36px; font-weight: 600;
-  letter-spacing: -0.015em; line-height: 1;
-  color: var(--fg-default);
-  font-variant-numeric: tabular-nums;
-}
-.ot-page__kpi--ok .ot-page__kpi-value { color: #16a34a; }
-.ot-page__kpi--amber .ot-page__kpi-value { color: #b45309; }
-.ot-page__kpi--danger .ot-page__kpi-value { color: #b91c1c; }
-.ot-page__kpi-sub { margin-top: 8px; font-size: 11.5px; color: var(--fg-muted); }
 
-.ot-page__mix {
+/* KPI band */
+.ot-kpis {
   display: grid;
-  grid-template-columns: 1fr;
-  gap: 14px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
   margin-bottom: 18px;
 }
-@media (min-width: 1100px) { .ot-page__mix { grid-template-columns: 320px minmax(0, 1fr); } }
-.ot-page__mix-card {
+.ot-kpi {
+  position: relative;
   background: var(--surface-page);
   border: 1px solid var(--surface-border);
   border-radius: 14px;
-  padding: 18px 20px;
-}
-.ot-page__mix-label {
-  font-family: var(--font-mono);
-  font-size: 9.5px; letter-spacing: 0.18em; text-transform: uppercase;
-  color: var(--fg-subtle);
-  margin-bottom: 14px;
-}
-.ot-donut { display: flex; align-items: center; gap: 18px; }
-.ot-donut__svg { width: 80px; height: 80px; flex-shrink: 0; }
-.ot-donut__legend { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 6px; font-size: 12px; color: var(--fg-default); }
-.ot-donut__legend li { display: flex; align-items: center; gap: 8px; }
-.ot-donut__legend strong { margin-left: auto; font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
-.ot-donut__swatch { display: inline-block; width: 10px; height: 10px; border-radius: 3px; }
-
-.ot-page__filters {
-  background: var(--surface-page);
-  border: 1px solid var(--surface-border);
-  border-radius: 14px;
-  padding: 14px 16px;
+  padding: 16px 18px 18px;
   display: flex;
   flex-direction: column;
   gap: 10px;
-}
-.ot-page__search-input {
-  width: 100%;
-  height: 38px;
-  padding: 0 14px;
-  border-radius: 9999px;
-  border: 1px solid var(--surface-border);
-  background: var(--surface-page);
-  font-size: 13px; color: var(--fg-default);
-  outline: none;
-  transition: border-color 150ms;
-}
-.ot-page__search-input:focus { border-color: var(--color-accent); box-shadow: 0 0 0 3px rgba(15,76,129,0.10); }
-.ot-page__chips { display: flex; flex-wrap: wrap; gap: 6px; }
-.ot-page__chip {
-  display: inline-flex; align-items: center; gap: 6px;
-  height: 28px; padding: 0 12px;
-  border-radius: 9999px;
-  border: 1px solid var(--surface-border);
-  background: var(--surface-page);
-  font-size: 11.5px; font-weight: 500;
-  color: var(--fg-muted);
-  transition: background 150ms, border-color 150ms, color 150ms;
-}
-.ot-page__chip:hover { background: var(--surface-hover); color: var(--fg-default); }
-.ot-page__chip--active { background: var(--surface-hover); color: var(--fg-default); font-weight: 600; }
-.ot-page__chip--ok.ot-page__chip--active { color: #166534; border-color: rgba(22,163,74,0.4); background: rgba(22,163,74,0.08); }
-.ot-page__chip--amber.ot-page__chip--active { color: #92400e; border-color: rgba(245,158,11,0.4); background: rgba(245,158,11,0.10); }
-.ot-page__chip--danger.ot-page__chip--active { color: #991B1B; border-color: rgba(239,68,68,0.4); background: rgba(239,68,68,0.08); }
-.ot-page__chip--accent.ot-page__chip--active { color: var(--color-accent); border-color: var(--color-accent); background: var(--color-accent-soft); }
-
-.ot-page__tablecard {
-  border: 1px solid var(--surface-border);
-  background: var(--surface-page);
-  border-radius: 14px;
   overflow: hidden;
+  transition: border-color 200ms ease, transform 200ms ease, box-shadow 200ms ease;
 }
-.ot-page__table { width: 100%; border-collapse: collapse; min-width: 1200px; font-size: 12.5px; }
-.ot-page__th {
-  padding: 12px 16px;
-  font-family: var(--font-mono);
-  font-size: 9.5px; letter-spacing: 0.18em; text-transform: uppercase;
-  color: var(--fg-subtle);
-  background: var(--surface-canvas);
-  border-bottom: 1px solid var(--surface-border);
-  white-space: nowrap; font-weight: 600;
+.ot-kpi:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 24px -16px rgba(15,23,42,0.20);
+  border-color: var(--surface-border-strong, var(--surface-border));
 }
-.ot-page__td { padding: 14px 16px; vertical-align: middle; border-top: 1px solid var(--surface-divider); }
-.ot-row { transition: background 120ms; }
-.ot-row:hover { background: var(--surface-canvas); }
-
-.ot-row__state {
-  display: inline-flex; align-items: center; gap: 6px;
-  padding: 3px 10px;
-  border-radius: 9999px;
-  font-size: 11px; font-weight: 600;
-  letter-spacing: 0.04em;
-  white-space: nowrap;
+.ot-kpi::before {
+  /* tier-tinted stripe at top */
+  content: '';
+  position: absolute;
+  top: 0; left: 16px; right: 16px;
+  height: 3px;
+  border-radius: 0 0 4px 4px;
+  background: var(--kpi-accent, #94A3B8);
+  opacity: 0.85;
 }
-.ot-row__state-dot { width: 6px; height: 6px; border-radius: 9999px; background: currentColor; }
-.ot-row__state--ok { color: #166534; background: rgba(22,163,74,0.10); }
-.ot-row__state--amber { color: #92400e; background: rgba(245,158,11,0.12); }
-.ot-row__state--danger { color: #991b1b; background: rgba(239,68,68,0.10); }
-.ot-row__state--muted { color: var(--fg-muted); background: var(--surface-hover); }
+.ot-kpi--amber  { --kpi-accent: #D97706; }
+.ot-kpi--green  { --kpi-accent: #16A34A; }
+.ot-kpi--red    { --kpi-accent: #DC2626; }
+.ot-kpi--muted  { --kpi-accent: #94A3B8; }
 
-.ot-row__kind {
-  display: inline-flex; align-items: center; gap: 6px;
-  padding: 3px 10px;
-  border-radius: 9999px;
-  font-size: 11px; font-weight: 600;
+.ot-kpi__head {
+  display: flex; align-items: center; gap: 10px;
 }
-.ot-row__kind--ownership { background: rgba(15,76,129,0.08); color: var(--color-accent); }
-.ot-row__kind--custody { background: rgba(245,158,11,0.12); color: #b45309; }
-.ot-row__kind--end_of_life { background: rgba(22,163,74,0.10); color: #166534; }
-
-.ot-row__passport { display: flex; align-items: center; gap: 12px; min-width: 0; }
-.ot-row__passport-img {
-  width: 40px; height: 40px;
-  border-radius: 8px;
-  object-fit: cover;
-  background: var(--surface-canvas);
-  border: 1px solid var(--surface-border);
-  flex-shrink: 0;
-}
-.ot-row__passport-label { font-size: 12.5px; font-weight: 600; color: var(--fg-default); }
-.ot-row__passport-upi { margin-top: 2px; font-family: var(--font-mono); font-size: 10.5px; color: var(--fg-muted); }
-
-.ot-row__org { font-size: 12.5px; font-weight: 500; color: var(--fg-default); }
-.ot-row__did { margin-top: 2px; font-family: var(--font-mono); font-size: 10px; color: var(--fg-subtle); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 220px; }
-
-.ot-row__ref { font-family: var(--font-mono); font-size: 11.5px; color: var(--fg-default); }
-.ot-row__vc { margin-top: 2px; font-family: var(--font-mono); font-size: 10px; color: var(--color-accent); }
-
-.ot-row__time { font-family: var(--font-mono); font-size: 11.5px; color: var(--fg-default); white-space: nowrap; }
-.ot-row__time-secondary { margin-top: 2px; font-family: var(--font-mono); font-size: 10px; color: var(--fg-subtle); }
-
-.ot-row__actions { display: inline-flex; align-items: center; gap: 6px; justify-content: flex-end; }
-.ot-row__btn {
-  display: inline-flex; align-items: center; gap: 5px;
-  height: 30px; padding: 0 10px;
-  border-radius: 8px;
-  font-size: 11.5px; font-weight: 600;
-  transition: background 150ms, opacity 150ms;
-}
-.ot-row__btn--primary { background: var(--color-accent); color: #fff; }
-.ot-row__btn--primary:hover { opacity: 0.92; }
-.ot-row__btn--primary:disabled { opacity: 0.5; cursor: not-allowed; }
-.ot-row__btn--ghost {
-  border: 1px solid var(--surface-border);
-  background: var(--surface-page);
-  color: var(--fg-muted);
-}
-.ot-row__btn--ghost:hover { background: var(--surface-hover); color: var(--fg-default); }
-
-.ot-row__menu { position: relative; flex-shrink: 0; }
-.ot-row__menu--alone { display: inline-block; }
-.ot-row__menu-trigger {
+.ot-kpi__icon {
   display: grid; place-items: center;
   width: 30px; height: 30px;
   border-radius: 8px;
-  color: var(--fg-subtle);
-  cursor: pointer;
-  list-style: none;
-  border: 1px solid transparent;
-  background: transparent;
-  transition: background 120ms, color 120ms;
+  background: var(--surface-hover);
+  color: var(--fg-muted);
 }
-.ot-row__menu-trigger::-webkit-details-marker { display: none; }
-.ot-row__menu-trigger:hover { background: var(--surface-hover); color: var(--fg-default); border-color: var(--surface-border); }
-.ot-row__menu[open] .ot-row__menu-trigger { background: var(--surface-hover); color: var(--fg-default); border-color: var(--surface-border); }
-.ot-row__menu-list {
-  position: absolute;
-  right: 0; top: calc(100% + 6px);
-  min-width: 180px;
+.ot-kpi__icon--amber { background: rgba(217,119,6,0.14); color: #B45309; }
+.ot-kpi__icon--green { background: rgba(22,163,74,0.10); color: #16A34A; }
+.ot-kpi__icon--red   { background: rgba(220,38,38,0.10); color: #B91C1C; }
+.ot-kpi__icon--muted { background: var(--surface-hover); color: var(--fg-muted); }
+.ot-kpi__label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--fg-subtle);
+  font-weight: 700;
+}
+.ot-kpi__value {
+  /* AnimatedKpi has its own label; we hide the label slot since it's empty */
+}
+.ot-kpi__value :global(.tabular-nums) {
+  font-family: var(--font-display);
+  font-size: 30px;
+  font-weight: 600;
+  letter-spacing: -0.014em;
+  line-height: 1;
+}
+
+/* Filters */
+.ot-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  padding: 12px 14px;
+  margin-bottom: 14px;
   background: var(--surface-page);
   border: 1px solid var(--surface-border);
-  border-radius: 10px;
-  box-shadow: 0 12px 32px -8px rgba(15,23,42,0.16), 0 4px 8px -4px rgba(15,23,42,0.08);
-  padding: 4px;
-  z-index: 30;
-  list-style: none;
-  margin: 0;
+  border-radius: 14px;
 }
-.ot-row__menu-item {
-  display: flex; align-items: center;
+.ot-filters__search {
+  flex: 1 1 280px;
+  min-width: 240px;
+}
+.ot-filters__search input {
   width: 100%;
-  padding: 8px 10px;
-  border-radius: 6px;
-  font-size: 12.5px;
-  text-align: left;
+  height: 36px;
+  padding: 0 14px;
+  border-radius: 9999px;
+  border: 1px solid var(--surface-border);
+  background: var(--surface-canvas);
+  font-size: 13px;
   color: var(--fg-default);
-  background: transparent;
-  transition: background 120ms;
+  outline: none;
+  transition: border-color 150ms ease, box-shadow 150ms ease, background 150ms ease;
 }
-.ot-row__menu-item:hover { background: var(--surface-hover); }
-.ot-row__menu-item--danger { color: #b91c1c; }
-.ot-row__menu-item--danger:hover { background: #FEF2F2; }
+.ot-filters__search input:focus {
+  border-color: var(--color-accent, #0F4C81);
+  background: var(--surface-page);
+  box-shadow: 0 0 0 3px rgba(15,76,129,0.10);
+}
+.ot-filters__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.ot-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 28px;
+  padding: 0 12px;
+  border-radius: 9999px;
+  border: 1px solid var(--surface-border);
+  background: var(--surface-canvas);
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--fg-muted);
+  transition: background 150ms ease, color 150ms ease, border-color 150ms ease;
+}
+.ot-chip:hover { background: var(--surface-hover); color: var(--fg-default); }
+.ot-chip.is-active {
+  background: var(--color-accent, #0F4C81);
+  color: #ffffff;
+  border-color: var(--color-accent, #0F4C81);
+}
+
+/* Activity */
+.ot-activity-section {
+  margin-top: 18px;
+  padding: 18px 20px 16px;
+  background: var(--surface-page);
+  border: 1px solid var(--surface-border);
+  border-radius: 14px;
+}
+.ot-activity-section__head {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 8px;
+}
+.ot-activity-section__eyebrow {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--fg-subtle);
+  font-weight: 700;
+}
+.ot-activity-section__hint {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--fg-subtle);
+  letter-spacing: 0.04em;
+}
 `
