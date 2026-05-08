@@ -465,9 +465,26 @@ export async function DppDocument({ dpp }: { dpp: DppDocumentInput }) {
         </div>
       </Section>
 
-      {/* Section 03 · BPN trail · entity → site (the verifiable chain) */}
+      {/* Section 03 · Origin · the geographic + temporal answer */}
+      <Section eyebrow="03 · Origin" title="Where it came from">
+        <KvGrid
+          rows={[
+            [
+              'Country',
+              originCountry
+                ? `${COUNTRY_FLAG[originCountry] ?? ''} ${originCountry}`.trim()
+                : '—',
+            ],
+            ['Subdivision', originSubdivision ?? '—'],
+            ['Manufacturing batch', productionBatch ?? '—'],
+            ['Manufacturing date', productionDate ?? '—'],
+          ]}
+        />
+      </Section>
+
+      {/* Section 04 · BPN trail · entity → site (the verifiable chain) */}
       {sites.length ? (
-        <Section eyebrow="03 · BPN trail" title="Where it came from">
+        <Section eyebrow="04 · BPN trail" title="Who’s on the trail">
           <p className="dpp-doc__lede">
             Catena-X CX-0010 BPDM identifies every actor and site on the trail. Each BPN
             resolves to a DID Document published at the issuer&rsquo;s
@@ -510,33 +527,9 @@ export async function DppDocument({ dpp }: { dpp: DppDocumentInput }) {
         </Section>
       ) : null}
 
-      {/* Section 04 · Origin */}
-      <Section eyebrow="04 · Origin" title="When it was made">
-        <KvGrid
-          rows={[
-            [
-              'Country',
-              originCountry
-                ? `${COUNTRY_FLAG[originCountry] ?? ''} ${originCountry}`.trim()
-                : '—',
-            ],
-            ['Subdivision', originSubdivision ?? '—'],
-            ['Manufacturing batch', productionBatch ?? '—'],
-            ['Manufacturing date', productionDate ?? '—'],
-          ]}
-        />
-      </Section>
-
-      {/* Section 05 · Physical */}
-      {Object.keys(physical).length ? (
-        <Section eyebrow="05 · Physical" title="How it ships">
-          <PhysicalBlock physical={physical} />
-        </Section>
-      ) : null}
-
-      {/* Section 06 · Chemistry */}
+      {/* Section 05 · Chemistry · composition before form */}
       {compositionRows.length ? (
-        <Section eyebrow="06 · Chemistry" title="What it&rsquo;s made of">
+        <Section eyebrow="05 · Chemistry" title="What it&rsquo;s made of">
           <table className="dpp-doc__table dpp-doc__table--wide">
             <thead>
               <tr>
@@ -572,6 +565,13 @@ export async function DppDocument({ dpp }: { dpp: DppDocumentInput }) {
               })}
             </tbody>
           </table>
+        </Section>
+      ) : null}
+
+      {/* Section 06 · Physical · how the product ships */}
+      {Object.keys(physical).length ? (
+        <Section eyebrow="06 · Physical" title="How it ships">
+          <PhysicalBlock physical={physical} />
         </Section>
       ) : null}
 
@@ -641,52 +641,54 @@ export async function DppDocument({ dpp }: { dpp: DppDocumentInput }) {
         <RecycledBlock recycled={recycled} circularity={circularity} />
       </Section>
 
-      {/* Section 10 · ESPR + Use & Life */}
-      {Object.keys(espr).length || Object.keys(useAndLife).length ? (
-        <Section eyebrow="10 · ESPR" title="How to use it safely">
-          {Object.keys(espr).length ? (
-            <KvGrid
-              rows={[
-                ['Durability', str(espr.durability) ?? '—'],
-                ['Reliability', str(espr.reliability) ?? '—'],
-                ['Reusability', str(espr.reusability) ?? '—'],
-                ['Energy efficiency', str(espr.energyEfficiency) ?? '—'],
-                ['Resource efficiency', str(espr.resourceEfficiency) ?? '—'],
-              ]}
-            />
-          ) : null}
-          {Object.keys(useAndLife).length ? (
-            <div className="dpp-doc__use">
-              {str(useAndLife.storageInstructions) ? (
-                <p>
-                  <strong>Storage.</strong> {str(useAndLife.storageInstructions)}
-                </p>
-              ) : null}
-              {str(useAndLife.handlingInstructions) ? (
-                <p>
-                  <strong>Handling.</strong> {str(useAndLife.handlingInstructions)}
-                </p>
-              ) : null}
-              {str(useAndLife.safetyInformation) ? (
-                <p>
-                  <strong>Safety.</strong> {str(useAndLife.safetyInformation)}
-                </p>
-              ) : null}
-              {str(useAndLife.sdsUrl) ? (
-                <p>
-                  <a href={str(useAndLife.sdsUrl) ?? '#'} target="_blank" rel="noopener noreferrer">
-                    Safety Data Sheet ↗
-                  </a>
-                </p>
-              ) : null}
-            </div>
-          ) : null}
+      {/* Section 10 · ESPR design profile · durability / reliability / efficiency */}
+      {Object.keys(espr).length ? (
+        <Section eyebrow="10 · ESPR" title="How it’s designed to last">
+          <KvGrid
+            rows={[
+              ['Durability', str(espr.durability) ?? '—'],
+              ['Reliability', str(espr.reliability) ?? '—'],
+              ['Reusability', str(espr.reusability) ?? '—'],
+              ['Energy efficiency', str(espr.energyEfficiency) ?? '—'],
+              ['Resource efficiency', str(espr.resourceEfficiency) ?? '—'],
+            ]}
+          />
         </Section>
       ) : null}
 
-      {/* Section 11 · Compliance */}
+      {/* Section 11 · Use & Safety · storage / handling / SDS */}
+      {Object.keys(useAndLife).length ? (
+        <Section eyebrow="11 · Use & Safety" title="How to handle it">
+          <div className="dpp-doc__use">
+            {str(useAndLife.storageInstructions) ? (
+              <p>
+                <strong>Storage.</strong> {str(useAndLife.storageInstructions)}
+              </p>
+            ) : null}
+            {str(useAndLife.handlingInstructions) ? (
+              <p>
+                <strong>Handling.</strong> {str(useAndLife.handlingInstructions)}
+              </p>
+            ) : null}
+            {str(useAndLife.safetyInformation) ? (
+              <p>
+                <strong>Safety.</strong> {str(useAndLife.safetyInformation)}
+              </p>
+            ) : null}
+            {str(useAndLife.sdsUrl) ? (
+              <p>
+                <a href={str(useAndLife.sdsUrl) ?? '#'} target="_blank" rel="noopener noreferrer">
+                  Safety Data Sheet ↗
+                </a>
+              </p>
+            ) : null}
+          </div>
+        </Section>
+      ) : null}
+
+      {/* Section 12 · Compliance · regulations + certifications */}
       {regulations.length || certifications.length ? (
-        <Section eyebrow="11 · Compliance" title="What it conforms to">
+        <Section eyebrow="12 · Compliance" title="What it conforms to">
           {regulations.length ? (
             <>
               <p className="dpp-doc__sub-eyebrow">Regulations</p>
