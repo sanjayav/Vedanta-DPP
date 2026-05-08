@@ -235,18 +235,37 @@
   --shadow-popover: 0 8px 24px -6px rgba(11, 37, 69, 0.12),
     0 2px 6px -2px rgba(11, 37, 69, 0.06);
 
+  /* Elevation scale — apply via CSS var so cards / panels / drawers
+     stay in lockstep across the platform. e1 = subtle rest, e5 = modal. */
+  --elev-1: 0 1px 2px rgba(11, 37, 69, 0.04);
+  --elev-2: 0 1px 2px rgba(11, 37, 69, 0.04), 0 4px 12px -8px rgba(11, 37, 69, 0.10);
+  --elev-3: 0 4px 8px rgba(11, 37, 69, 0.04), 0 12px 24px -12px rgba(11, 37, 69, 0.18);
+  --elev-4: 0 8px 16px rgba(11, 37, 69, 0.06), 0 24px 48px -16px rgba(11, 37, 69, 0.24);
+  --elev-5: 0 16px 32px rgba(11, 37, 69, 0.08), 0 32px 64px -16px rgba(11, 37, 69, 0.32);
+
+  /* Spring presets (for motion components) */
+  --spring-bouncy: 360 22 0.2;        /* stiffness damping mass */
+  --spring-firm:   480 36 1;
+  --spring-gentle: 220 28 1;
+
   /* Motion */
   --motion-fast: 150ms;
   --motion-base: 240ms;
   --motion-hero: 480ms;
   --ease-standard: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-decelerate: cubic-bezier(0, 0, 0.2, 1);
+  --ease-emphasis: cubic-bezier(0.2, 0, 0, 1);
+
+  /* Glassmorphism — blur + tint for floating panels */
+  --glass-bg: rgba(255, 255, 255, 0.72);
+  --glass-bg-strong: rgba(255, 255, 255, 0.88);
+  --glass-blur: blur(14px);
 
   /* Layout */
   --container-max: 1280px;
   --rail-collapsed: 64px;
-  --rail-expanded: 240px;
-  --topbar-height: 56px;
+  --rail-expanded: 264px;
+  --topbar-height: 60px;
   --right-rail-width: 320px;
   --grid-gutter-desktop: 24px;
   --grid-gutter-tablet: 16px;
