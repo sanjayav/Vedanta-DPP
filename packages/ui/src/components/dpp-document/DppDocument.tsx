@@ -391,8 +391,8 @@ export async function DppDocument({ dpp }: { dpp: DppDocumentInput }) {
         productName={titlePrimary}
       />
 
-      {/* 3. Identification */}
-      <Section eyebrow="Section 01" title="Identification">
+      {/* Section 01 · Identification */}
+      <Section eyebrow="01 · Identification" title="What it is">
         <KvGrid
           rows={[
             ['Material', metal ? humanise(metal) : '—'],
@@ -414,8 +414,8 @@ export async function DppDocument({ dpp }: { dpp: DppDocumentInput }) {
         ) : null}
       </Section>
 
-      {/* 3. Producer + BPDM identifiers */}
-      <Section eyebrow="Section 02" title="Producer · BPDM identity">
+      {/* Section 02 · Producer */}
+      <Section eyebrow="02 · Producer" title="Who issued it">
         <div className="dpp-doc__producer-grid">
           <div>
             <p className="dpp-doc__producer-name">{legalName}</p>
@@ -465,12 +465,13 @@ export async function DppDocument({ dpp }: { dpp: DppDocumentInput }) {
         </div>
       </Section>
 
-      {/* 4. BPN trail · entity → site (the verifiable chain) */}
+      {/* Section 03 · BPN trail · entity → site (the verifiable chain) */}
       {sites.length ? (
-        <Section eyebrow="Section 03" title="BPN trail">
+        <Section eyebrow="03 · BPN trail" title="Where it came from">
           <p className="dpp-doc__lede">
-            Catena-X CX-0010 BPDM identifies every actor and site on the trail. Click any node to
-            resolve its DID Document via <code>/.well-known/did.json</code>.
+            Catena-X CX-0010 BPDM identifies every actor and site on the trail. Each BPN
+            resolves to a DID Document published at the issuer&rsquo;s
+            <code> /.well-known/did.json</code>.
           </p>
           <ol className="dpp-doc__trail">
             <li className="dpp-doc__trail-node">
@@ -509,8 +510,8 @@ export async function DppDocument({ dpp }: { dpp: DppDocumentInput }) {
         </Section>
       ) : null}
 
-      {/* 5. Origin */}
-      <Section eyebrow="Section 04" title="Origin">
+      {/* Section 04 · Origin */}
+      <Section eyebrow="04 · Origin" title="When it was made">
         <KvGrid
           rows={[
             [
@@ -526,16 +527,16 @@ export async function DppDocument({ dpp }: { dpp: DppDocumentInput }) {
         />
       </Section>
 
-      {/* 6. Physical */}
+      {/* Section 05 · Physical */}
       {Object.keys(physical).length ? (
-        <Section eyebrow="Section 05" title="Physical specification">
+        <Section eyebrow="05 · Physical" title="How it ships">
           <PhysicalBlock physical={physical} />
         </Section>
       ) : null}
 
-      {/* 7. Chemistry · composition table */}
+      {/* Section 06 · Chemistry */}
       {compositionRows.length ? (
-        <Section eyebrow="Section 06" title="Chemistry">
+        <Section eyebrow="06 · Chemistry" title="What it&rsquo;s made of">
           <table className="dpp-doc__table dpp-doc__table--wide">
             <thead>
               <tr>
@@ -574,11 +575,11 @@ export async function DppDocument({ dpp }: { dpp: DppDocumentInput }) {
         </Section>
       ) : null}
 
-      {/* 8. Six EF 3.1 LCIA · the Chem-X hero */}
+      {/* Section 07 · Six EF 3.1 LCIA · the Chem-X hero */}
       <Section
-        eyebrow="Section 07"
-        title="Six measures · EF 3.1"
-        lede="Chem-X Sustainability Guideline v1.0 · six EF 3.1 life-cycle impact categories per declared unit, with data-quality and primary-data-share disclosed for each."
+        eyebrow="07 · Sustainability"
+        title="Six EF 3.1 measures"
+        lede="Per the Chem-X Sustainability Guideline v1.0. Every category reports its value, declared unit, methodology, data-quality rating, and primary-data share."
       >
         <div className="dpp-doc__lcia-grid">
           {LCIA_ORDER.map((cat) => {
@@ -628,21 +629,21 @@ export async function DppDocument({ dpp }: { dpp: DppDocumentInput }) {
         ) : null}
       </Section>
 
-      {/* 9. PCF breakdown */}
+      {/* Section 08 · PCF breakdown */}
       {Object.keys(pcfBreakdown).length ? (
-        <Section eyebrow="Section 08" title="PCF stage breakdown">
+        <Section eyebrow="08 · PCF breakdown" title="Where the carbon comes from">
           <PcfBreakdown breakdown={pcfBreakdown} unit={pcfUnit} total={pcfValue} />
         </Section>
       ) : null}
 
-      {/* 10. Recycled content + circularity */}
-      <Section eyebrow="Section 09" title="Circularity">
+      {/* Section 09 · Recycled content + circularity */}
+      <Section eyebrow="09 · Circularity" title="What happens after use">
         <RecycledBlock recycled={recycled} circularity={circularity} />
       </Section>
 
-      {/* 11. ESPR + Use & Life */}
+      {/* Section 10 · ESPR + Use & Life */}
       {Object.keys(espr).length || Object.keys(useAndLife).length ? (
-        <Section eyebrow="Section 10" title="ESPR · use and end-of-life">
+        <Section eyebrow="10 · ESPR" title="How to use it safely">
           {Object.keys(espr).length ? (
             <KvGrid
               rows={[
@@ -683,9 +684,9 @@ export async function DppDocument({ dpp }: { dpp: DppDocumentInput }) {
         </Section>
       ) : null}
 
-      {/* 12. Compliance */}
+      {/* Section 11 · Compliance */}
       {regulations.length || certifications.length ? (
-        <Section eyebrow="Section 11" title="Compliance">
+        <Section eyebrow="11 · Compliance" title="What it conforms to">
           {regulations.length ? (
             <>
               <p className="dpp-doc__sub-eyebrow">Regulations</p>
@@ -758,13 +759,15 @@ export async function DppDocument({ dpp }: { dpp: DppDocumentInput }) {
           <div>
             <p className="dpp-doc__footer-eyebrow">Documents on file</p>
             <p className="dpp-doc__footer-count">{documents.length}</p>
-            <p className="dpp-doc__footer-hint">See the documentation vault below.</p>
+            <p className="dpp-doc__footer-hint">
+              EPD report, BIS certificate, ISO certificates, SDS — bundled with the passport.
+            </p>
           </div>
         </div>
         <p className="dpp-doc__disclaimer">
           {dpp.isDemo
-            ? 'This is a demonstration passport. Cryptographic signature placeholders only — no production attestation.'
-            : 'Issued under Hindustan Zinc Limited · Verifiable via /.well-known/did.json on the issuer host.'}
+            ? 'This is a demonstration passport. The cryptographic signature is a placeholder; production passports are signed Ed25519 by Hindustan Zinc Limited.'
+            : 'Issued by Hindustan Zinc Limited. Cryptographic verification available at the issuer&rsquo;s /.well-known/did.json endpoint.'}
         </p>
       </footer>
     </article>
@@ -1457,10 +1460,26 @@ const DOC_CSS = `
 }
 
 .dpp-doc__section {
-  padding: 48px 0;
+  padding: 64px 0;
   border-bottom: 1px solid var(--doc-border);
 }
-.dpp-doc__section-head { margin-bottom: 24px; }
+.dpp-doc__section:last-of-type {
+  border-bottom: none;
+}
+.dpp-doc__section-head {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 32px;
+  padding-bottom: 22px;
+  border-bottom: 1px solid rgba(11, 37, 69, 0.06);
+  max-width: 720px;
+}
+.dpp-doc__section-head .dpp-doc__eyebrow {
+  color: var(--doc-green, #0e7c5a);
+  font-weight: 700;
+  letter-spacing: 0.22em;
+}
 .dpp-doc__h2 {
   font-family: var(--font-display, Fraunces, Inter, serif);
   font-weight: 400; font-size: clamp(26px, 3.5vw, 36px); line-height: 1.1;
@@ -1476,61 +1495,146 @@ const DOC_CSS = `
 }
 
 .dpp-doc__kv {
-  display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 14px 32px; margin: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px 32px;
+  margin: 0;
+  padding: 8px 0;
 }
-.dpp-doc__kv-row { display: flex; flex-direction: column; gap: 4px; }
+@media (max-width: 880px) { .dpp-doc__kv { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 480px) { .dpp-doc__kv { grid-template-columns: 1fr; } }
+.dpp-doc__kv-row {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding-left: 14px;
+  border-left: 1px solid rgba(11, 37, 69, 0.08);
+}
 .dpp-doc__kv-row dt {
   font-family: var(--font-mono, JetBrains Mono, monospace);
-  font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase;
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
   color: var(--doc-subtle);
+  font-weight: 700;
 }
-.dpp-doc__kv-row dd { margin: 0; font-size: 14px; color: var(--doc-ink); }
+.dpp-doc__kv-row dd {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--doc-ink);
+  line-height: 1.4;
+}
 
 .dpp-doc__chips {
-  display: flex; flex-wrap: wrap; gap: 6px; margin-top: 18px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 24px;
+  padding-top: 22px;
+  border-top: 1px dashed rgba(11, 37, 69, 0.10);
 }
 .dpp-doc__chip {
+  display: inline-flex;
+  align-items: center;
+  height: 26px;
+  padding: 0 11px;
+  border-radius: 9999px;
   font-family: var(--font-mono, JetBrains Mono, monospace);
-  font-size: 11px; padding: 4px 8px; border-radius: 4px;
-  background: var(--doc-recessed); color: var(--doc-muted);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  background: var(--doc-recessed, #fafaf6);
+  color: var(--doc-ink);
   border: 1px solid var(--doc-border);
 }
 
-.dpp-doc__producer-grid { display: grid; grid-template-columns: 1fr 1.4fr; gap: 32px; }
-@media (max-width: 720px) { .dpp-doc__producer-grid { grid-template-columns: 1fr; } }
+.dpp-doc__producer-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr);
+  gap: 40px;
+  align-items: start;
+}
+@media (max-width: 880px) { .dpp-doc__producer-grid { grid-template-columns: 1fr; gap: 28px; } }
 .dpp-doc__producer-name {
   font-family: var(--font-display, Fraunces, Inter, serif);
-  font-size: 22px; font-weight: 500; margin: 0; color: var(--doc-ink);
+  font-size: 24px;
+  font-weight: 500;
+  letter-spacing: -0.014em;
+  margin: 0;
+  color: var(--doc-ink);
+  line-height: 1.15;
 }
-.dpp-doc__producer-trade { color: var(--doc-muted); margin: 4px 0 0; font-size: 14px; }
+.dpp-doc__producer-trade {
+  color: var(--doc-muted);
+  margin: 6px 0 0;
+  font-size: 14px;
+  line-height: 1.45;
+}
 .dpp-doc__bpn {
-  margin: 14px 0 0; display: flex; align-items: center; gap: 8px;
+  margin: 18px 0 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 .dpp-doc__bpn span {
   font-family: var(--font-mono, JetBrains Mono, monospace);
-  font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--doc-subtle);
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--doc-subtle);
+  font-weight: 700;
 }
 .dpp-doc__bpn code {
   font-family: var(--font-mono, JetBrains Mono, monospace);
-  font-size: 13px; padding: 4px 8px; border-radius: 4px;
-  background: var(--doc-ink); color: #fff;
+  font-size: 13px;
+  padding: 5px 10px;
+  border-radius: 5px;
+  background: linear-gradient(135deg, #0e7c5a 0%, #0b2545 100%);
+  color: #fff;
+  letter-spacing: 0.02em;
 }
-.dpp-doc__contact { margin: 12px 0 0; font-size: 13px; color: var(--doc-muted); }
+.dpp-doc__contact {
+  margin: 14px 0 0;
+  font-size: 13px;
+  color: var(--doc-muted);
+  line-height: 1.5;
+}
 .dpp-doc__contact a { color: var(--doc-accent); }
 
 .dpp-doc__table {
-  width: 100%; border-collapse: collapse; font-size: 13px;
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 13px;
 }
-.dpp-doc__table--wide { font-size: 12px; }
+.dpp-doc__table--wide { font-size: 12.5px; }
 .dpp-doc__table th {
-  text-align: left; font-weight: 500;
+  text-align: left;
   font-family: var(--font-mono, JetBrains Mono, monospace);
-  font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase;
-  color: var(--doc-subtle); padding: 8px 12px; border-bottom: 1px solid var(--doc-border);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--doc-subtle);
+  padding: 12px 14px;
+  background: var(--doc-recessed, #fafaf6);
+  border-bottom: 1px solid var(--doc-border);
 }
+.dpp-doc__table th:first-child { border-top-left-radius: 8px; }
+.dpp-doc__table th:last-child  { border-top-right-radius: 8px; }
 .dpp-doc__table td {
-  padding: 10px 12px; border-bottom: 1px solid var(--doc-border); vertical-align: top;
+  padding: 12px 14px;
+  border-bottom: 1px solid rgba(11, 37, 69, 0.06);
+  vertical-align: middle;
+  line-height: 1.4;
+}
+.dpp-doc__table tbody tr:last-child td { border-bottom: 0; }
+.dpp-doc__table tbody tr {
+  transition: background 150ms ease;
+}
+.dpp-doc__table tbody tr:hover {
+  background: rgba(14, 124, 90, 0.03);
 }
 .dpp-doc__table td code {
   font-family: var(--font-mono, JetBrains Mono, monospace);
@@ -1676,28 +1780,73 @@ const DOC_CSS = `
 .dpp-doc__use a { color: var(--doc-accent); }
 
 .dpp-doc__footer {
-  padding: 48px 0 64px;
+  padding: 56px 0 72px;
+  background: linear-gradient(180deg, transparent 0%, rgba(11, 37, 69, 0.02) 100%);
+  border-top: 1px solid var(--doc-border);
 }
 .dpp-doc__footer-grid {
-  display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 32px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 40px;
+}
+@media (max-width: 720px) {
+  .dpp-doc__footer-grid { grid-template-columns: 1fr; gap: 28px; }
 }
 .dpp-doc__footer-eyebrow {
   font-family: var(--font-mono, JetBrains Mono, monospace);
-  font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase;
-  color: var(--doc-subtle); margin: 0 0 12px;
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--doc-subtle);
+  font-weight: 700;
+  margin: 0 0 14px;
 }
 .dpp-doc__footer p {
-  margin: 6px 0; display: flex; gap: 12px; align-items: baseline; font-size: 13px;
+  margin: 8px 0;
+  display: grid;
+  grid-template-columns: 88px minmax(0, 1fr);
+  gap: 12px;
+  align-items: baseline;
+  font-size: 13px;
 }
-.dpp-doc__footer p span { color: var(--doc-subtle); min-width: 86px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.12em; font-family: var(--font-mono, JetBrains Mono, monospace); }
-.dpp-doc__footer p code { font-family: var(--font-mono, JetBrains Mono, monospace); font-size: 12px; color: var(--doc-ink); }
+.dpp-doc__footer p span {
+  color: var(--doc-subtle);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  font-family: var(--font-mono, JetBrains Mono, monospace);
+  font-weight: 700;
+}
+.dpp-doc__footer p code {
+  font-family: var(--font-mono, JetBrains Mono, monospace);
+  font-size: 12px;
+  color: var(--doc-ink);
+  word-break: break-all;
+}
 .dpp-doc__footer-count {
   font-family: var(--font-display, Fraunces, Inter, serif);
-  font-size: 38px; font-weight: 500; line-height: 1; color: var(--doc-ink); margin: 0 0 6px;
+  font-size: 42px;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  color: var(--doc-ink);
+  margin: 0 0 8px;
+  font-variant-numeric: tabular-nums;
 }
-.dpp-doc__footer-hint { font-size: 12px; color: var(--doc-muted); margin: 0; }
+.dpp-doc__footer-hint {
+  font-size: 12px;
+  color: var(--doc-muted);
+  margin: 0;
+  line-height: 1.55;
+}
 .dpp-doc__disclaimer {
-  margin-top: 32px; padding-top: 16px; border-top: 1px solid var(--doc-border);
-  font-size: 11px; color: var(--doc-subtle); line-height: 1.6;
+  margin-top: 40px;
+  padding-top: 20px;
+  border-top: 1px solid var(--doc-border);
+  font-size: 11.5px;
+  font-style: italic;
+  color: var(--doc-subtle);
+  line-height: 1.65;
+  max-width: 720px;
 }
 `
