@@ -1137,6 +1137,7 @@ async def publish_draft(
     envelope = sign_dpp_envelope(body)
 
     upi = body["upi"]["digitalLinkUrl"]
+    pcf_value = _safe_float(body.get("sustainability", {}).get("pcf", {}).get("value"))
     record = DppRecord(
         tenant_id=tenant_id,
         upi=upi,
@@ -1146,17 +1147,12 @@ async def publish_draft(
         brand=product.brand,
         alloy=body["identification"].get("gradeCode") or product.alloy_family,
         form=body["physical"].get("form", product.form),
-        weight_kg=float(
-            body["physical"].get("unitMassKg") or body["physical"].get("weightKg") or 0.0
+        weight_kg=_safe_float(
+            body["physical"].get("unitMassKg") or body["physical"].get("weightKg")
         ),
-        cfp_kg_co2e_per_tonne=float(
-            body.get("sustainability", {}).get("pcf", {}).get("value", 0.0) * 1000
-            or body.get("carbon", {}).get("valueKgCo2ePerTonne", 0.0)
-            or 0.0
-        ),
-        recycled_content_pct=float(
-            (body.get("recycledContent", {}).get("totalPercent", 0.0)) or 0.0
-        ),
+        cfp_kg_co2e_per_tonne=(pcf_value * 1000)
+        or _safe_float(body.get("carbon", {}).get("valueKgCo2ePerTonne")),
+        recycled_content_pct=_safe_float(body.get("recycledContent", {}).get("totalPercent")),
         dpp_version=draft.dpp_version,
         state="published",
         body=body,
@@ -1220,6 +1216,25 @@ def _flatten_selection(selections: dict[str, Any]) -> list[int]:
                 except (TypeError, ValueError):
                     continue
     return sorted(set(out))
+
+
+def _safe_float(value: Any, default: float = 0.0) -> float:
+    """Coerce a JSON attribute value to float, swallowing the synthesized
+    string fallbacks ("Auto-fill (…)") that the wizard's AI auto-fill writes
+    when no numeric heuristic matches. Without this, publish would 500 on a
+    ValueError from `float("Auto-fill …")`."""
+    if value is None:
+        return default
+    if isinstance(value, bool):
+        return float(value)
+    if isinstance(value, (int, float)):
+        return float(value)
+    if isinstance(value, str):
+        try:
+            return float(value.strip())
+        except (TypeError, ValueError):
+            return default
+    return default
 
 
 def _is_present(value: Any) -> bool:

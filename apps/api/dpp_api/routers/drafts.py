@@ -456,3 +456,11 @@ async def publish_endpoint(
         )
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except (KeyError, TypeError) as exc:
+        # Most often: an autofill string that broke a numeric coercion or a
+        # required body section missing. Surface a usable detail instead of a
+        # bare 500 so the wizard banner can show something actionable.
+        raise HTTPException(
+            status_code=422,
+            detail=f"draft body could not be assembled: {exc}",
+        ) from exc

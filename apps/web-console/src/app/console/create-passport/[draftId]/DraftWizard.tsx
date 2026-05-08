@@ -586,12 +586,15 @@ function synthesizeAttrValue(attr: DraftAttribute): unknown {
   if (path.includes('temperature')) return 38
 
   // Physical dimensions · HZL standard ingot 25 kg, jumbo 950 kg, bundle 1000 kg
+  if (path.endsWith('.unitmasskg')) return 25
+  if (path.endsWith('.bundlemasskg')) return 1000
   if (path.endsWith('.weightkg') || path.includes('weight')) return 25
   if (path.endsWith('.lengthmm') || path.includes('length')) return 700
   if (path.endsWith('.widthmm') || path.includes('width')) return 100
   if (path.endsWith('.heightmm') || path.includes('height')) return 60
   if (path.endsWith('.diametermm') || path.includes('diameter')) return 0
   if (path.includes('tolerance')) return 0.5
+  if (path.endsWith('.puritypercent')) return 99.995
 
   // Recycled / circularity · HZL primary metal · 0% recycled, mass_balance custody
   if (path.includes('recycled') || path.includes('postconsumer') || path.includes('preconsumer')) {
@@ -634,6 +637,26 @@ function synthesizeAttrValue(attr: DraftAttribute): unknown {
   if (label.includes('percent') || label.includes('%')) return 0
   if (label.includes('number') || label.includes('quantity') || label.includes('count')) return 1
   if (label.includes('frequency')) return 0.3
+
+  // Path-based numeric heuristic — required-numeric fields in the schema use
+  // these suffixes. Returning a string fallback for these would 500 the
+  // publish step (float coercion of "Auto-fill (...)") and silently break
+  // schema validation, so default to 0 instead.
+  if (
+    path.endsWith('kg') ||
+    path.endsWith('mm') ||
+    path.endsWith('cm') ||
+    path.endsWith('pct') ||
+    path.endsWith('percent') ||
+    path.endsWith('ratio') ||
+    path.endsWith('kwh') ||
+    path.endsWith('mwh') ||
+    path.endsWith('kgco2e') ||
+    path.endsWith('co2e') ||
+    path.endsWith('value')
+  ) {
+    return 0
+  }
 
   // Default · short string placeholder. Schema validators that require a
   // specific format will reject this; logged as a soft fail at publish time.
