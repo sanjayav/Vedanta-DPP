@@ -231,7 +231,7 @@ function ActivityFeed({ events }: { events: RecentEvent[] }) {
       ) : (
         <ul className="divide-y divide-[var(--surface-divider)]">
           {events.map((e) => (
-            <EventRow key={e.castEventId} event={e} />
+            <EventRow key={`${e.castEventId}:${e.upi ?? 'pending'}`} event={e} />
           ))}
         </ul>
       )}
@@ -408,7 +408,7 @@ function SidePanel({
           <ul className="space-y-2">
             {inFlight.map((e) => (
               <li
-                key={e.castEventId}
+                key={`${e.castEventId}:${e.upi ?? 'pending'}`}
                 className="rounded-[var(--radius-sm)] border border-[var(--surface-border)] bg-[var(--surface-page)] px-3 py-2"
               >
                 <div className="flex items-center justify-between">
@@ -433,7 +433,7 @@ function SidePanel({
           <ul className="space-y-2">
             {failures.map((e) => (
               <li
-                key={e.castEventId}
+                key={`${e.castEventId}:${e.upi ?? 'pending'}`}
                 className="rounded-[var(--radius-sm)] border border-[#FCA5A5] bg-[#FEF2F2] px-3 py-2"
               >
                 <div className="flex items-center justify-between gap-2">
